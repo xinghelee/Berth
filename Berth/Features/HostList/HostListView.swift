@@ -7,9 +7,11 @@ struct HostListView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(SessionManager.self) private var sessionManager
     @Query(sort: \Host.sortOrder) private var allHosts: [Host]
+    @Query(sort: \HostGroup.sortOrder) private var groups: [HostGroup]
 
     @State private var searchText = ""
     @State private var selectedHostID: UUID?
+    @State private var hoveredHostID: UUID?
     @State private var editingHost: Host?
     @State private var isCreatingHost = false
     @State private var hostPendingDeletion: Host?
@@ -103,7 +105,13 @@ struct HostListView: View {
     }
 
     private func groupName(_ id: UUID) -> String? {
-        allHosts.first { $0.group?.id == id }?.group?.name
+        groups.first { $0.id == id }?.name
+    }
+
+    private func rowBackground(for host: Host) -> Color {
+        if selectedHostID == host.id { return ThemeStore.shared.current.accentSoft }
+        if hoveredHostID == host.id { return Color.primary.opacity(0.05) }
+        return .clear
     }
 
     private var columnHeader: some View {
@@ -150,12 +158,12 @@ struct HostListView: View {
                     .buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal, 9)
+            .padding(.horizontal, 11)
             .padding(.vertical, 6)
             .background(
-                RoundedRectangle(cornerRadius: 8)
+                Capsule()
                     .fill(theme.elevatedBackground)
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(theme.borderColor, lineWidth: 1))
+                    .overlay(Capsule().stroke(theme.borderColor, lineWidth: 1))
             )
         }
         .padding(.horizontal, 12)
@@ -170,12 +178,17 @@ struct HostListView: View {
                     .listRowSeparator(.hidden)
                     .listRowBackground(
                         RoundedRectangle(cornerRadius: 7)
-                            .fill(selectedHostID == host.id ? ThemeStore.shared.current.accentSoft : .clear)
+                            .fill(rowBackground(for: host))
                             .padding(.horizontal, 6)
                             .padding(.vertical, 1)
+                            .animation(.easeOut(duration: 0.12), value: hoveredHostID)
                     )
                     .tag(host.id)
                     .contentShape(Rectangle())
+                    .onHover { hovering in
+                        hoveredHostID = hovering ? host.id : (hoveredHostID == host.id ? nil : hoveredHostID)
+                    }
+                    .draggable(host.id.uuidString)
                     .onTapGesture(count: 2) {
                         connect(to: host)
                     }
@@ -183,6 +196,26 @@ struct HostListView: View {
                         Button("连接") { connect(to: host) }
                         Button("复制 IP") { copyIP(for: host) }
                         Button("复制 ssh 命令") { copySSHCommand(for: host) }
+                        if !groups.isEmpty {
+                            Divider()
+                            Menu("移动到分组") {
+                                ForEach(groups) { group in
+                                    Button {
+                                        host.group = group
+                                    } label: {
+                                        if host.group?.id == group.id {
+                                            Label(group.name, systemImage: "checkmark")
+                                        } else {
+                                            Text(group.name)
+                                        }
+                                    }
+                                }
+                                if host.group != nil {
+                                    Divider()
+                                    Button("移出分组") { host.group = nil }
+                                }
+                            }
+                        }
                         if host.source == .sshConfig {
                             Divider()
                             Button("转为托管主机…") { convertToManaged(host) }

@@ -13,6 +13,7 @@ struct SFTPPanelView: View {
     @State private var newDirName = ""
     @State private var pendingDelete: SFTPBrowser.Entry?
     @State private var isDropTargeted = false
+    @State private var hoveredEntryID: UUID?
 
     private var theme: TerminalTheme { ThemeStore.shared.current }
 
@@ -48,29 +49,12 @@ struct SFTPPanelView: View {
     }
 
     private var header: some View {
-        HStack {
-            Text("文件")
-                .font(.headline)
-            Spacer()
-            Button {
-                creatingDir = true
-            } label: { Image(systemName: "folder.badge.plus") }
-                .buttonStyle(.plain).foregroundStyle(.secondary).help("新建文件夹")
-            Button {
-                uploadPick()
-            } label: { Image(systemName: "square.and.arrow.up") }
-                .buttonStyle(.plain).foregroundStyle(.secondary).help("上传文件")
-            Button {
-                Task { await browser?.refresh() }
-            } label: { Image(systemName: "arrow.clockwise") }
-                .buttonStyle(.plain).foregroundStyle(.secondary).help("刷新")
-            Button(action: onClose) { Image(systemName: "xmark") }
-                .buttonStyle(.plain).foregroundStyle(.secondary)
+        PanelHeader(title: "文件") {
+            PanelIconButton(symbol: "folder.badge.plus", help: "新建文件夹") { creatingDir = true }
+            PanelIconButton(symbol: "square.and.arrow.up", help: "上传文件") { uploadPick() }
+            PanelIconButton(symbol: "arrow.clockwise", help: "刷新") { Task { await browser?.refresh() } }
+            PanelIconButton(symbol: "xmark", help: "关闭") { onClose() }
         }
-        .frame(height: AppLayout.topBarHeight)
-        .padding(.horizontal, 12)
-        .padding(.top, AppLayout.columnTopPadding)
-        .padding(.bottom, 8)
         .alert("新建文件夹", isPresented: $creatingDir) {
             TextField("名称", text: $newDirName)
             Button("创建") {
@@ -171,7 +155,16 @@ struct SFTPPanelView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 5)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(hoveredEntryID == entry.id ? Color.primary.opacity(0.05) : .clear)
+                .padding(.horizontal, 6)
+                .animation(.easeOut(duration: 0.12), value: hoveredEntryID)
+        )
         .contentShape(Rectangle())
+        .onHover { hovering in
+            hoveredEntryID = hovering ? entry.id : (hoveredEntryID == entry.id ? nil : hoveredEntryID)
+        }
         .onTapGesture(count: 2) {
             if entry.isDirectory || entry.isSymlink {
                 Task { await browser?.enter(entry) }

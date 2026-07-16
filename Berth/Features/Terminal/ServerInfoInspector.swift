@@ -36,30 +36,12 @@ struct ServerInfoInspector: View {
     }
 
     private var header: some View {
-        HStack {
-            Text("信息")
-                .font(.headline)
-            Spacer()
-            Button {
+        PanelHeader(title: "信息") {
+            PanelIconButton(symbol: "arrow.clockwise", help: "刷新", spinning: isLoading) {
                 Task { await refresh() }
-            } label: {
-                Image(systemName: "arrow.clockwise")
-                    .rotationEffect(.degrees(isLoading ? 360 : 0))
-                    .animation(isLoading ? .linear(duration: 0.8).repeatForever(autoreverses: false) : .default, value: isLoading)
             }
-            .buttonStyle(.plain)
-            .foregroundStyle(.secondary)
-            .help("刷新")
-            Button(action: onClose) {
-                Image(systemName: "xmark")
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(.secondary)
+            PanelIconButton(symbol: "xmark", help: "关闭") { onClose() }
         }
-        .frame(height: AppLayout.topBarHeight)
-        .padding(.horizontal, 14)
-        .padding(.top, AppLayout.columnTopPadding)
-        .padding(.bottom, 8)
     }
 
     private var connectionSection: some View {

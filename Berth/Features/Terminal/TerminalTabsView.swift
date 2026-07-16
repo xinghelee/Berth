@@ -78,27 +78,25 @@ struct TerminalTabsView: View {
                 }
                 .padding(.leading, 6)
             }
-            Button {
+            PanelIconButton(
+                symbol: "folder",
+                help: "SFTP 文件(⌘⇧F)",
+                tint: sessionManager.isSFTPVisible ? ThemeStore.shared.current.accentColor : nil
+            ) {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
                     sessionManager.isSFTPVisible.toggle()
                 }
-            } label: {
-                Image(systemName: "folder")
-                    .foregroundStyle(sessionManager.isSFTPVisible ? ThemeStore.shared.current.accentColor : Color.secondary)
             }
-            .buttonStyle(.plain)
-            .help("SFTP 文件(⌘⇧F)")
-            Button {
+            PanelIconButton(
+                symbol: "sidebar.right",
+                help: "服务器信息(⌘I)",
+                tint: sessionManager.isInspectorVisible ? ThemeStore.shared.current.accentColor : nil
+            ) {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
                     sessionManager.isInspectorVisible.toggle()
                 }
-            } label: {
-                Image(systemName: "sidebar.right")
-                    .foregroundStyle(sessionManager.isInspectorVisible ? ThemeStore.shared.current.accentColor : Color.secondary)
             }
-            .buttonStyle(.plain)
-            .help("服务器信息(⌘I)")
-            .padding(.trailing, 10)
+            .padding(.trailing, 8)
         }
         .frame(height: AppLayout.topBarHeight)
         .padding(.top, AppLayout.columnTopPadding)
@@ -159,18 +157,19 @@ private struct TerminalTabChip: View {
             .buttonStyle(.plain)
             .opacity(isHovering || isSelected ? 0.7 : 0)
         }
-        .padding(.horizontal, 10)
+        .padding(.horizontal, 11)
         .padding(.vertical, 5)
         .background(
-            RoundedRectangle(cornerRadius: 6)
+            Capsule()
                 .fill(isSelected ? ThemeStore.shared.current.accentSoft : (isHovering ? Color.primary.opacity(0.06) : .clear))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 6)
+            Capsule()
                 .stroke(isSelected ? ThemeStore.shared.current.accentColor.opacity(0.35) : .clear, lineWidth: 1)
         )
         .foregroundStyle(isSelected ? .primary : .secondary)
-        .contentShape(Rectangle())
+        .contentShape(Capsule())
+        .animation(.easeOut(duration: 0.12), value: isHovering)
         .onTapGesture(perform: select)
         .onHover { isHovering = $0 }
     }

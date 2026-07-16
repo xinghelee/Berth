@@ -72,6 +72,10 @@ struct QuickConnectPanel: View {
                 VStack(spacing: 0) {
                     ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
                         rowView(row, isSelected: index == selectionIndex)
+                            .onHover { hovering in
+                                // 悬停即选中(launcher 惯例),与键盘上下键共用同一选中态
+                                if hovering { selectionIndex = index }
+                            }
                             .onTapGesture {
                                 selectionIndex = index
                                 activateSelection()
