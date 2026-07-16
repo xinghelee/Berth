@@ -11,6 +11,12 @@ enum SSHErrorMapper {
         if raw.localizedCaseInsensitiveContains("refused") {
             return "连不上 \(hostname):\(port):连接被拒绝,检查端口号和 sshd 是否在运行。"
         }
+        // Citadel 的 Disconnected():TCP 已通但服务器在认证完成前关闭了连接。
+        // 典型原因是源 IP 触发了服务器的连接频率限制(OpenSSH 9.8+ PerSourcePenalties / fail2ban)。
+        if raw.contains("Disconnected") {
+            return "服务器在握手阶段关闭了连接:多半是本机 IP 触发了 \(hostname) 的连接频率限制"
+                + "(OpenSSH PerSourcePenalties 或 fail2ban)。请等待几分钟后再试,期间不要反复重连。"
+        }
         if raw.localizedCaseInsensitiveContains("timed out") || raw.localizedCaseInsensitiveContains("timeout") {
             return "连不上 \(hostname):\(port):连接超时,检查地址、防火墙或网络。"
         }

@@ -149,10 +149,18 @@ final class TerminalSession: Identifiable {
             stdinWriter?.finish()
             stdinWriter = nil
             let releasing = self.connection
+            // 连接建立中途失败(如跳板链某一跳出错)时,已连上的跳板还没转入 SSHConnection,
+            // 留在 jumpClients 里,须在此关闭,否则泄漏半开连接(还会占满服务器 MaxStartups)
+            let orphanedJumps = self.jumpClients
             self.client = nil
             self.connection = nil
             self.jumpClients = []
             sessionTask = nil
+            if !orphanedJumps.isEmpty {
+                Task.detached {
+                    for jump in orphanedJumps.reversed() { try? await jump.close() }
+                }
+            }
             // 引用归零才真正关闭底层连接/跳板;借用会话的 release 不会误关共享连接
             releasing?.release()
             maybeScheduleReconnect(after: disconnectReason)

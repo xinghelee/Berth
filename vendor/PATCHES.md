@@ -56,6 +56,18 @@ event loop 上执行。`SSHClient.connect(on:settings:)`(经代理自建 channel
 数据。补丁把类与其协议方法、init 设为 `public`,Berth 在 `withRemotePortForward` 的
 `configure` 闭包里手动 `addHandler(DataToBufferCodec())`。标记 `[Berth patch]`。
 
+## 补丁:握手/认证失败时关闭底层 channel
+
+Citadel 三条连接路径(`SSHClientSession.connect(settings:)` 直连、`SSHClient.connect(on:settings:)`
+代理、`SSHClient.jump(to:)` 跳板)在 `handshakeHandler.authenticated` 失败时都**不关闭 channel**,
+每次失败连接会留下一条半开 TCP,直到服务器 LoginGraceTime(默认 2 分钟)回收。半开连接
+占用 sshd 的 MaxStartups 名额,并助长 OpenSSH 9.8+ PerSourcePenalties 的源 IP 封禁
+(表现为后续连接在版本交换前即被服务器关闭)。补丁在三处失败路径统一 `channel.close(promise: nil)`:
+- `ClientSession.swift` `connect(settings:)`:future 链尾加 `flatMapError`。
+- `Client.swift` `connect(on:settings:)` 与 `jump(to:)`:`authenticated` 外包 do/catch。
+
+均标记 `[Berth patch]`。
+
 ## 升级 Citadel/nio-ssh 时
 本地 vendor 已脱离 SPM 版本管理。若要升级,需重新 vendor 对应版本并重放上述 `[Berth patch]`
 改动(`grep -rn "\[Berth patch\]" vendor/` 可列出全部补丁点)。

@@ -181,9 +181,17 @@ public final class SSHClient {
         
         let sshHandler = try await channel.pipeline.handler(type: NIOSSHHandler.self).get()
         let handshakeHandler = try await channel.pipeline.handler(type: ClientHandshakeHandler.self).get()
-        let session = try await handshakeHandler.authenticated.map {
-            SSHClientSession(channel: channel, inboundChannelHandler: inboundChannelHandler, sshHandler: sshHandler)
-        }.get()
+        // [Berth patch] Close the channel when the handshake/authentication fails, so a
+        // failed connect doesn't leave a half-open connection (MaxStartups/PerSourcePenalties).
+        let session: SSHClientSession
+        do {
+            session = try await handshakeHandler.authenticated.map {
+                SSHClientSession(channel: channel, inboundChannelHandler: inboundChannelHandler, sshHandler: sshHandler)
+            }.get()
+        } catch {
+            channel.close(promise: nil)
+            throw error
+        }
 
         return SSHClient(
             session: session,
@@ -213,9 +221,17 @@ public final class SSHClient {
         
         let sshHandler = try await channel.pipeline.handler(type: NIOSSHHandler.self).get()
         let handshakeHandler = try await channel.pipeline.handler(type: ClientHandshakeHandler.self).get()
-        let session = try await handshakeHandler.authenticated.map {
-            SSHClientSession(channel: channel, inboundChannelHandler: inboundChannelHandler, sshHandler: sshHandler)
-        }.get()
+        // [Berth patch] Close the child channel when the jump-target handshake fails,
+        // so a failed hop doesn't leave a dangling direct-tcpip channel on the parent connection.
+        let session: SSHClientSession
+        do {
+            session = try await handshakeHandler.authenticated.map {
+                SSHClientSession(channel: channel, inboundChannelHandler: inboundChannelHandler, sshHandler: sshHandler)
+            }.get()
+        } catch {
+            channel.close(promise: nil)
+            throw error
+        }
 
         return SSHClient(
             session: session,
@@ -225,7 +241,7 @@ public final class SSHClient {
             protocolOptions: settings.protocolOptions
         )
     }
-    
+
     /// Connects to an SSH server.
     /// - Parameters:
     ///  - channel: The channel to use for the connection.

@@ -232,6 +232,13 @@ final class SSHClientSession: Sendable {
                 channel.pipeline.handler(type: NIOSSHHandler.self)
             }.map { sshHandler in
                 SSHClientSession(channel: channel, inboundChannelHandler: inboundChannelHandler, sshHandler: sshHandler)
+            }.flatMapError { error in
+                // [Berth patch] Close the TCP channel when the handshake/authentication fails.
+                // Without this, each failed connect leaves a half-open connection until the
+                // server's LoginGraceTime reaps it, counting against sshd MaxStartups and
+                // feeding OpenSSH 9.8+ PerSourcePenalties.
+                channel.close(promise: nil)
+                return channel.eventLoop.makeFailedFuture(error)
             }
         }.get()
     }
