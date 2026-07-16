@@ -63,6 +63,8 @@ final class TerminalSession: Identifiable {
     private(set) var state: State = .idle
     /// 最近一次连接建立的时间(用于 inspector 显示连接时长)
     private(set) var connectedAt: Date?
+    /// 端口转发运行态(inspector 展示,可单独开关)
+    private(set) var forwardStates: [UUID: PortForwardService.ForwardState] = [:]
     /// 等待用户决策的主机密钥确认(首次连接指纹 / 密钥变更警告)
     var hostKeyPrompt: HostKeyPrompt?
     /// 自动重连:当前第几次尝试、是否已排定下一次
@@ -72,6 +74,7 @@ final class TerminalSession: Identifiable {
     @ObservationIgnored private var client: SSHClient?
     /// 跳板链上的中间 client,必须保活以维持隧道;断开时一并关闭
     @ObservationIgnored private var jumpClients: [SSHClient] = []
+    @ObservationIgnored private var forwardService: PortForwardService?
     @ObservationIgnored private var sessionTask: Task<Void, Never>?
     @ObservationIgnored private var stdinWriter: AsyncStream<StdinEvent>.Continuation?
     @ObservationIgnored private var userInitiatedDisconnect = false
@@ -120,6 +123,7 @@ final class TerminalSession: Identifiable {
                     : .error(SSHErrorMapper.friendlyMessage(for: error, hostname: spec.hostname, port: spec.port))
             }
             state = .disconnected(disconnectReason)
+            stopPortForwards()
             stdinWriter?.finish()
             stdinWriter = nil
             let client = self.client
@@ -231,6 +235,24 @@ final class TerminalSession: Identifiable {
         terminalView.window?.makeFirstResponder(terminalView)
     }
 
+    // MARK: - 端口转发
+
+    private func startPortForwards() {
+        guard let client, !spec.forwards.isEmpty else { return }
+        forwardStates = Dictionary(uniqueKeysWithValues: spec.forwards.map { ($0.id, .starting) })
+        let service = PortForwardService(client: client) { [weak self] id, state in
+            Task { @MainActor in self?.forwardStates[id] = state }
+        }
+        forwardService = service
+        service.start(spec.forwards)
+    }
+
+    private func stopPortForwards() {
+        forwardService?.stopAll()
+        forwardService = nil
+        forwardStates = [:]
+    }
+
     // MARK: - 连接实现
 
     /// 建立到目标主机的 SSHClient:无跳板则直连;有跳板则连最外层跳板后逐跳 jump。
@@ -287,6 +309,7 @@ final class TerminalSession: Identifiable {
                 self.everConnected = true
                 self.reconnectAttempt = 0
                 self.focusTerminal()
+                self.startPortForwards()
             }
 
             // 单一消费者串行写入,保证按键与 resize 的顺序

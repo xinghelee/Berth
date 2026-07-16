@@ -181,6 +181,58 @@ enum M2AcceptanceTest {
         log("JUMP_CONNECT_TIMEOUT state=\(session.state)")
     }
 
+    /// 端口转发验收:BERTH_FORWARD_AUTOTEST=1。连目标后建一条 local/dynamic 转发,
+    /// 打印实际绑定端口,保持会话存活让外部脚本验证。
+    /// 环境:BERTH_TEST_HOST/USER/KEYFILE + BERTH_FWD_KIND(local/dynamic)
+    ///       + BERTH_FWD_TARGET_HOST/BERTH_FWD_TARGET_PORT(local 用)+ BERTH_TEST_DUMP
+    static func runForwardIfRequested(container: ModelContainer) async {
+        let env = ProcessInfo.processInfo.environment
+        guard env["BERTH_FORWARD_AUTOTEST"] == "1",
+              let host = env["BERTH_TEST_HOST"],
+              let user = env["BERTH_TEST_USER"],
+              let keyFile = env["BERTH_TEST_KEYFILE"],
+              let dumpBase = env["BERTH_TEST_DUMP"] else { return }
+        let kind = PortForwardKind(rawValue: env["BERTH_FWD_KIND"] ?? "local") ?? .local
+        let targetHost = env["BERTH_FWD_TARGET_HOST"] ?? "127.0.0.1"
+        let targetPort = Int(env["BERTH_FWD_TARGET_PORT"] ?? "22") ?? 22
+
+        func log(_ line: String) {
+            try? line.write(toFile: dumpBase + ".forward.log", atomically: true, encoding: .utf8)
+        }
+
+        log("FORWARD_TEST_STARTED host=\(host) kind=\(kind.rawValue)")
+        UserDefaults.standard.set(false, forKey: SettingsKeys.requireTouchIDForKeys)
+        let bindPort = Int(env["BERTH_FWD_BIND_PORT"] ?? "0") ?? 0
+        let forward = PortForwardSpec(kind: kind, bindHost: "127.0.0.1", bindPort: bindPort, targetHost: targetHost, targetPort: targetPort)
+        let spec = HostSpec(
+            hostID: UUID(), label: "fwd", hostname: host, port: 22,
+            username: user, authMethod: .privateKeyFile, privateKeyPath: keyFile,
+            forwards: [forward]
+        )
+        let session = SessionManager.shared.open(spec: spec)
+
+        let deadline = Date().addingTimeInterval(30)
+        while Date() < deadline {
+            if session.hostKeyPrompt != nil { session.resolveHostKeyPrompt(accepted: true) }
+            if case .disconnected(let reason) = session.state {
+                log("FORWARD_SESSION_DISCONNECTED \(reason)")
+                return
+            }
+            if case .failed(let reason)? = session.forwardStates[forward.id] {
+                log("FORWARD_FAILED \(reason)")
+                return
+            }
+            if case .active(let boundPort)? = session.forwardStates[forward.id] {
+                log("FORWARD_ACTIVE port=\(boundPort) kind=\(kind.rawValue)")
+                // 保持存活让外部脚本连本地端口验证
+                try? await Task.sleep(for: .seconds(30))
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(200))
+        }
+        log("FORWARD_TIMEOUT state=\(session.state)")
+    }
+
     /// 断线自动重连验收:BERTH_RECONNECT_AUTOTEST=1。
     /// 打开真实 UI 会话 → 连上后由外部 `docker restart` 掐断 → 观察进入
     /// disconnected 且排定自动重连 → 最终重新 connected。全程状态写入 <dump>.reconnect.log。

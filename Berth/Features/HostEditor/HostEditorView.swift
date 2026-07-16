@@ -109,6 +109,28 @@ struct HostEditorView: View {
                     }
                 }
 
+                if isEditing {
+                    Section("端口转发") {
+                        ForEach(forwards) { forward in
+                            forwardRow(forward)
+                        }
+                        Button {
+                            addForward()
+                        } label: {
+                            Label("添加转发", systemImage: "plus")
+                        }
+                        Text("连接时自动建立;可在会话信息面板单独查看状态。")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                } else {
+                    Section("端口转发") {
+                        Text("保存主机后可添加端口转发。")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
                 Section("整理") {
                     Picker("分组", selection: $groupID) {
                         Text("无分组").tag(UUID?.none)
@@ -175,6 +197,31 @@ struct HostEditorView: View {
         jumpHostID = host.jumpHostID
         tagColor = host.tagColor
         note = host.note
+    }
+
+    private var forwards: [PortForward] {
+        (host?.portForwards ?? []).sorted { $0.sortOrder < $1.sortOrder }
+    }
+
+    private func addForward() {
+        guard let host else { return }
+        let forward = PortForward(
+            kind: .local,
+            bindHost: "127.0.0.1",
+            bindPort: 8080,
+            targetHost: "127.0.0.1",
+            targetPort: 80,
+            sortOrder: (forwards.last?.sortOrder ?? 0) + 1
+        )
+        forward.host = host
+        modelContext.insert(forward)
+    }
+
+    @ViewBuilder
+    private func forwardRow(_ forward: PortForward) -> some View {
+        ForwardRowView(forward: forward) {
+            modelContext.delete(forward)
+        }
     }
 
     /// 可选跳板机:排除自己,避免形成环(不允许选择会指回自己的主机)
@@ -283,5 +330,50 @@ struct HostEditorView: View {
         case .blue: return "蓝"
         case .purple: return "紫"
         }
+    }
+}
+
+/// 单条端口转发的编辑行
+private struct ForwardRowView: View {
+    @Bindable var forward: PortForward
+    let onDelete: () -> Void
+
+    var body: some View {
+        VStack(spacing: 6) {
+            HStack {
+                Picker("", selection: $forward.kindRaw) {
+                    ForEach(PortForwardKind.allCases) { kind in
+                        Text(kind.label).tag(kind.rawValue)
+                    }
+                }
+                .labelsHidden()
+                .frame(width: 150)
+                Spacer()
+                Toggle("启用", isOn: $forward.enabled)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.mini)
+                Button(role: .destructive, action: onDelete) {
+                    Image(systemName: "trash")
+                }
+                .buttonStyle(.borderless)
+            }
+            HStack(spacing: 6) {
+                portField(forward.kind == .remote ? "远端端口" : "本地端口", value: $forward.bindPort)
+                if forward.kind != .dynamic {
+                    Image(systemName: "arrow.right").font(.caption2).foregroundStyle(.tertiary)
+                    TextField("目标主机", text: $forward.targetHost)
+                        .textFieldStyle(.roundedBorder)
+                    portField("端口", value: $forward.targetPort)
+                }
+            }
+        }
+        .padding(.vertical, 2)
+    }
+
+    private func portField(_ prompt: String, value: Binding<Int>) -> some View {
+        TextField(prompt, value: value, format: .number.grouping(.never))
+            .textFieldStyle(.roundedBorder)
+            .frame(width: 78)
     }
 }

@@ -19,6 +19,9 @@ struct ServerInfoInspector: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     connectionSection
+                    if !session.spec.forwards.isEmpty {
+                        forwardsSection
+                    }
                     if !session.spec.hostname.isEmpty {
                         serverSection
                     }
@@ -70,6 +73,45 @@ struct ServerInfoInspector: View {
             } else {
                 infoRow("状态", stateLabel)
             }
+        }
+    }
+
+    private var forwardsSection: some View {
+        section("端口转发") {
+            ForEach(session.spec.forwards) { forward in
+                HStack(alignment: .top, spacing: 6) {
+                    Circle()
+                        .fill(forwardColor(forward.id))
+                        .frame(width: 7, height: 7)
+                        .padding(.top, 4)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(forward.summary)
+                            .font(.caption)
+                            .textSelection(.enabled)
+                        Text(forwardStatusText(forward.id))
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+    }
+
+    private func forwardColor(_ id: UUID) -> Color {
+        switch session.forwardStates[id] {
+        case .active: return .green
+        case .starting: return .yellow
+        case .failed: return .red
+        case .none: return .gray
+        }
+    }
+
+    private func forwardStatusText(_ id: UUID) -> String {
+        switch session.forwardStates[id] {
+        case .active(let port): return "运行中 · 端口 \(port)"
+        case .starting: return "启动中…"
+        case .failed(let reason): return reason
+        case .none: return "未启动"
         }
     }
 

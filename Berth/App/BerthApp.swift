@@ -15,11 +15,14 @@ struct BerthApp: App {
         WindowGroup("Berth") {
             MainWindowView()
                 .environment(sessionManager)
-                .task { await M1AcceptanceTest.runIfRequested(container: container) }
-                .task { await M2AcceptanceTest.runIfRequested(container: container) }
-                .task { await M2AcceptanceTest.runReconnectIfRequested(container: container) }
-                .task { await M2AcceptanceTest.runKeyConnectIfRequested(container: container) }
-                .task { await M2AcceptanceTest.runJumpIfRequested(container: container) }
+                .task {
+                    await M1AcceptanceTest.runIfRequested(container: container)
+                    await M2AcceptanceTest.runIfRequested(container: container)
+                    await M2AcceptanceTest.runReconnectIfRequested(container: container)
+                    await M2AcceptanceTest.runKeyConnectIfRequested(container: container)
+                    await M2AcceptanceTest.runJumpIfRequested(container: container)
+                    await M2AcceptanceTest.runForwardIfRequested(container: container)
+                }
         }
         .modelContainer(container)
         .commands {

@@ -1,5 +1,41 @@
 import Foundation
 
+/// 端口转发的值快照(Sendable,供连接层使用)
+struct PortForwardSpec: Equatable, Sendable, Identifiable {
+    let id: UUID
+    let kind: PortForwardKind
+    let bindHost: String
+    let bindPort: Int
+    let targetHost: String
+    let targetPort: Int
+
+    init(_ forward: PortForward) {
+        self.id = forward.id
+        self.kind = forward.kind
+        self.bindHost = forward.bindHost
+        self.bindPort = forward.bindPort
+        self.targetHost = forward.targetHost
+        self.targetPort = forward.targetPort
+    }
+
+    init(id: UUID = UUID(), kind: PortForwardKind, bindHost: String, bindPort: Int, targetHost: String, targetPort: Int) {
+        self.id = id
+        self.kind = kind
+        self.bindHost = bindHost
+        self.bindPort = bindPort
+        self.targetHost = targetHost
+        self.targetPort = targetPort
+    }
+
+    var summary: String {
+        switch kind {
+        case .local: return "本地 \(bindHost):\(bindPort) → \(targetHost):\(targetPort)"
+        case .remote: return "远程 \(bindHost):\(bindPort) → \(targetHost):\(targetPort)"
+        case .dynamic: return "SOCKS5 \(bindHost):\(bindPort)"
+        }
+    }
+}
+
 /// Host 的连接参数值快照:会话层不直接持有 SwiftData 对象,
 /// 避免跨线程访问模型上下文;凭据在连接时按 hostID 从 Keychain 解析。
 struct HostSpec: Equatable, Sendable {
@@ -15,6 +51,8 @@ struct HostSpec: Equatable, Sendable {
     /// 跳板链(由外到内,已解析)。连接时:连 jump[0] → jump[1] → … → 目标本机。
     /// 空 = 直连。由 SessionManager 从 Host.jumpHostID 递归解析后填入。
     var jump: [HostSpec]
+    /// 连接后自动建立的端口转发(仅启用的)
+    let forwards: [PortForwardSpec]
 
     init(
         hostID: UUID,
@@ -26,7 +64,8 @@ struct HostSpec: Equatable, Sendable {
         privateKeyPath: String?,
         keyID: UUID? = nil,
         proxy: ProxyConfig = ProxyConfig(),
-        jump: [HostSpec] = []
+        jump: [HostSpec] = [],
+        forwards: [PortForwardSpec] = []
     ) {
         self.hostID = hostID
         self.label = label
@@ -38,6 +77,7 @@ struct HostSpec: Equatable, Sendable {
         self.keyID = keyID
         self.proxy = proxy
         self.jump = jump
+        self.forwards = forwards
     }
 
     init(host: Host) {
@@ -51,6 +91,10 @@ struct HostSpec: Equatable, Sendable {
         self.keyID = host.keyID
         self.proxy = host.proxy
         self.jump = []
+        self.forwards = host.portForwards
+            .filter(\.enabled)
+            .sorted { $0.sortOrder < $1.sortOrder }
+            .map(PortForwardSpec.init)
     }
 
     /// 递归解析 host.jumpHostID → 完整跳板链(由外到内)。防环。
@@ -64,7 +108,7 @@ struct HostSpec: Equatable, Sendable {
             chain.insert(HostSpec(host: jumpHost), at: 0) // 外层在前
             current = jumpHost.jumpHostID
         }
-        var spec = HostSpec(host: host)
+        var spec = HostSpec(host: host) // forwards 已在 init(host:) 里解析
         spec.jump = chain
         return spec
     }
