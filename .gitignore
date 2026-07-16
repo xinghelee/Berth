@@ -1,0 +1,7 @@
+.DS_Store
+/Berth.xcodeproj
+/DerivedData
+/build
+xcuserdata/
+*.xcresult
+docker/test-sshd/test_ed25519*
