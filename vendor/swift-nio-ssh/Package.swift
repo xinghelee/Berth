@@ -44,11 +44,11 @@ let package = Package(
     products: [
         .library(name: "NIOSSH", targets: ["NIOSSH"])
     ],
+    // [Berth] 已 vendor 精简:只保留库目标,删掉示例可执行 + Tests(见 vendor/PATCHES.md)。
     dependencies: [
         .package(url: "https://github.com/apple/swift-nio.git", from: "2.81.0"),
         .package(url: "https://github.com/apple/swift-crypto.git", "1.0.0"..<"4.0.0"),
         .package(url: "https://github.com/apple/swift-atomics.git", from: "1.0.2"),
-        .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0"),
     ],
     targets: [
         .target(
@@ -59,44 +59,6 @@ let package = Package(
                 .product(name: "NIOFoundationCompat", package: "swift-nio"),
                 .product(name: "Crypto", package: "swift-crypto"),
                 .product(name: "Atomics", package: "swift-atomics"),
-            ],
-            swiftSettings: strictConcurrencySettings
-        ),
-        .executableTarget(
-            name: "NIOSSHClient",
-            dependencies: [
-                "NIOSSH",
-                .product(name: "NIOCore", package: "swift-nio"),
-                .product(name: "NIOPosix", package: "swift-nio"),
-                .product(name: "NIOConcurrencyHelpers", package: "swift-nio"),
-            ]
-        ),
-        .executableTarget(
-            name: "NIOSSHServer",
-            dependencies: [
-                "NIOSSH",
-                .product(name: "NIOCore", package: "swift-nio"),
-                .product(name: "NIOPosix", package: "swift-nio"),
-                .product(name: "NIOFoundationCompat", package: "swift-nio"),
-                .product(name: "Crypto", package: "swift-crypto"),
-            ]
-        ),
-        .executableTarget(
-            name: "NIOSSHPerformanceTester",
-            dependencies: [
-                "NIOSSH",
-                .product(name: "NIOCore", package: "swift-nio"),
-                .product(name: "NIOEmbedded", package: "swift-nio"),
-                .product(name: "Crypto", package: "swift-crypto"),
-            ]
-        ),
-        .testTarget(
-            name: "NIOSSHTests",
-            dependencies: [
-                "NIOSSH",
-                .product(name: "NIOCore", package: "swift-nio"),
-                .product(name: "NIOEmbedded", package: "swift-nio"),
-                .product(name: "NIOFoundationCompat", package: "swift-nio"),
             ],
             swiftSettings: strictConcurrencySettings
         ),
