@@ -135,6 +135,52 @@ enum M2AcceptanceTest {
         log("KEY_CONNECT_TIMEOUT state=\(session.state)")
     }
 
+    /// 跳板机验收:BERTH_JUMP_AUTOTEST=1,经 JUMP 主机跳到 TARGET 主机,建立 PTY + 取到目标服务器信息即成功。
+    /// 环境:BERTH_JUMP_HOST/BERTH_JUMP_USER + BERTH_TEST_HOST(目标)/BERTH_TEST_USER + BERTH_TEST_KEYFILE + BERTH_TEST_DUMP
+    static func runJumpIfRequested(container: ModelContainer) async {
+        let env = ProcessInfo.processInfo.environment
+        guard env["BERTH_JUMP_AUTOTEST"] == "1",
+              let jumpHost = env["BERTH_JUMP_HOST"],
+              let jumpUser = env["BERTH_JUMP_USER"],
+              let target = env["BERTH_TEST_HOST"],
+              let user = env["BERTH_TEST_USER"],
+              let keyFile = env["BERTH_TEST_KEYFILE"],
+              let dumpBase = env["BERTH_TEST_DUMP"] else { return }
+
+        func log(_ line: String) {
+            try? line.write(toFile: dumpBase + ".jump.log", atomically: true, encoding: .utf8)
+        }
+
+        UserDefaults.standard.set(false, forKey: SettingsKeys.requireTouchIDForKeys)
+
+        let jumpSpec = HostSpec(
+            hostID: UUID(), label: "jump", hostname: jumpHost, port: 22,
+            username: jumpUser, authMethod: .privateKeyFile, privateKeyPath: keyFile
+        )
+        let targetSpec = HostSpec(
+            hostID: UUID(), label: "target", hostname: target, port: 22,
+            username: user, authMethod: .privateKeyFile, privateKeyPath: keyFile,
+            jump: [jumpSpec]
+        )
+        let session = SessionManager.shared.open(spec: targetSpec)
+
+        let deadline = Date().addingTimeInterval(30)
+        while Date() < deadline {
+            if session.hostKeyPrompt != nil { session.resolveHostKeyPrompt(accepted: true) }
+            if case .connected = session.state {
+                let info = await session.fetchServerInfo()
+                log("JUMP_CONNECT_OK via=\(jumpHost) target=\(target) kernel=\(info?.kernel ?? "?")")
+                return
+            }
+            if case .disconnected(let reason) = session.state {
+                log("JUMP_CONNECT_FAIL \(reason)")
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(200))
+        }
+        log("JUMP_CONNECT_TIMEOUT state=\(session.state)")
+    }
+
     /// 断线自动重连验收:BERTH_RECONNECT_AUTOTEST=1。
     /// 打开真实 UI 会话 → 连上后由外部 `docker restart` 掐断 → 观察进入
     /// disconnected 且排定自动重连 → 最终重新 connected。全程状态写入 <dump>.reconnect.log。

@@ -19,6 +19,7 @@ struct BerthApp: App {
                 .task { await M2AcceptanceTest.runIfRequested(container: container) }
                 .task { await M2AcceptanceTest.runReconnectIfRequested(container: container) }
                 .task { await M2AcceptanceTest.runKeyConnectIfRequested(container: container) }
+                .task { await M2AcceptanceTest.runJumpIfRequested(container: container) }
         }
         .modelContainer(container)
         .commands {

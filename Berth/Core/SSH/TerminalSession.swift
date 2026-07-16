@@ -70,6 +70,8 @@ final class TerminalSession: Identifiable {
     private(set) var isAutoReconnectScheduled = false
 
     @ObservationIgnored private var client: SSHClient?
+    /// 跳板链上的中间 client,必须保活以维持隧道;断开时一并关闭
+    @ObservationIgnored private var jumpClients: [SSHClient] = []
     @ObservationIgnored private var sessionTask: Task<Void, Never>?
     @ObservationIgnored private var stdinWriter: AsyncStream<StdinEvent>.Continuation?
     @ObservationIgnored private var userInitiatedDisconnect = false
@@ -121,9 +123,15 @@ final class TerminalSession: Identifiable {
             stdinWriter?.finish()
             stdinWriter = nil
             let client = self.client
+            let jumps = self.jumpClients
             self.client = nil
+            self.jumpClients = []
             sessionTask = nil
-            Task.detached { try? await client?.close() }
+            Task.detached {
+                try? await client?.close()
+                // 由内到外关闭跳板隧道
+                for jump in jumps.reversed() { try? await jump.close() }
+            }
             maybeScheduleReconnect(after: disconnectReason)
         }
     }
@@ -225,22 +233,37 @@ final class TerminalSession: Identifiable {
 
     // MARK: - 连接实现
 
-    private func runSession() async throws {
-        let method = try await makeAuthenticationMethod()
-        let validator = InteractiveHostKeyValidator(
-            hostname: spec.hostname,
-            port: spec.port
-        ) { [weak self] prompt in
-            guard let self else { return false }
-            return await self.requestHostKeyDecision(prompt)
+    /// 建立到目标主机的 SSHClient:无跳板则直连;有跳板则连最外层跳板后逐跳 jump。
+    /// 中间跳板的 client 必须保活(隧道依赖它),存入 jumpClients。
+    private func establishClient() async throws -> SSHClient {
+        guard !spec.jump.isEmpty else {
+            return try await SSHClient.connect(to: try settings(for: spec, useTransient: true))
         }
-        let client = try await SSHClient.connect(
-            host: spec.hostname,
-            port: spec.port,
-            authenticationMethod: method,
-            hostKeyValidator: .custom(validator),
-            reconnect: .never
-        )
+
+        // 连最外层跳板
+        let first = spec.jump[0]
+        state = .connecting(detail: "正在连接跳板机 \(first.hostname):\(first.port)…")
+        var current = try await SSHClient.connect(to: try settings(for: first, useTransient: false))
+        jumpClients.append(current)
+
+        // 逐跳 jump 到后续跳板
+        for hop in spec.jump.dropFirst() {
+            state = .connecting(detail: "经跳板机 → \(hop.hostname):\(hop.port)…")
+            current = try await current.jump(to: try settings(for: hop, useTransient: false))
+            jumpClients.append(current)
+        }
+
+        // 最后 jump 到目标本机
+        state = .connecting(detail: "经跳板机 → \(spec.hostname):\(spec.port)…")
+        return try await current.jump(to: try settings(for: spec, useTransient: true))
+    }
+
+    private func runSession() async throws {
+        // 目标或任一跳板用密钥时,连接前统一过一次 Touch ID(避免链路上多次弹窗)
+        let usesKeys = ([spec] + spec.jump).contains { $0.authMethod != .password }
+        if usesKeys { try await requireTouchIDIfEnabled() }
+
+        let client = try await establishClient()
         self.client = client
         state = .connecting(detail: "认证成功,正在打开终端通道…")
 
@@ -293,37 +316,57 @@ final class TerminalSession: Identifiable {
         }
     }
 
-    private func makeAuthenticationMethod() async throws -> SSHAuthenticationMethod {
-        switch spec.authMethod {
+    /// 为某一跳(目标或跳板)构建认证方式。凭据按该跳自己的 hostID 从 Keychain 解析;
+    /// useTransient 仅对目标本机成立(临时直连时用户当场输入的密码/passphrase)。
+    private func authenticationMethod(for hop: HostSpec, useTransient: Bool) throws -> SSHAuthenticationMethod {
+        let transientPW = useTransient ? transientPassword : nil
+        let transientPP = useTransient ? transientPassphrase : nil
+        switch hop.authMethod {
         case .password:
-            let password = try transientPassword
-                ?? KeychainStore.read(account: KeychainStore.passwordAccount(for: spec.hostID))
+            let password = try transientPW
+                ?? KeychainStore.read(account: KeychainStore.passwordAccount(for: hop.hostID))
                 ?? ""
-            return .passwordBased(username: spec.username, password: password)
+            return .passwordBased(username: hop.username, password: password)
 
         case .privateKeyFile:
-            guard let path = spec.privateKeyPath, !path.isEmpty else { throw SessionError.unsupportedKey }
-            try await requireTouchIDIfEnabled()
+            guard let path = hop.privateKeyPath, !path.isEmpty else { throw SessionError.unsupportedKey }
             let expanded = NSString(string: path).expandingTildeInPath
             let keyText = try String(contentsOfFile: expanded, encoding: .utf8)
-            let passphrase = try transientPassphrase
-                ?? KeychainStore.read(account: KeychainStore.passphraseAccount(for: spec.hostID))
-            return try Self.keyAuthentication(username: spec.username, keyText: keyText, passphrase: passphrase)
+            let passphrase = try transientPP
+                ?? KeychainStore.read(account: KeychainStore.passphraseAccount(for: hop.hostID))
+            return try Self.keyAuthentication(username: hop.username, keyText: keyText, passphrase: passphrase)
 
         case .storedKey:
-            guard let keyID = spec.keyID,
+            guard let keyID = hop.keyID,
                   let material = try KeychainStore.read(account: KeychainStore.privateKeyAccount(for: keyID)) else {
                 throw SessionError.missingStoredKey
             }
-            try await requireTouchIDIfEnabled()
             // 生成的密钥存 raw ed25519(base64 32 字节);导入的存 OpenSSH PEM
             if let raw = Data(base64Encoded: material), raw.count == 32,
                let key = try? Curve25519.Signing.PrivateKey(rawRepresentation: raw) {
-                return .ed25519(username: spec.username, privateKey: key)
+                return .ed25519(username: hop.username, privateKey: key)
             }
             let passphrase = try KeychainStore.read(account: KeychainStore.keyPassphraseAccount(for: keyID))
-            return try Self.keyAuthentication(username: spec.username, keyText: material, passphrase: passphrase)
+            return try Self.keyAuthentication(username: hop.username, keyText: material, passphrase: passphrase)
         }
+    }
+
+    private func hostKeyValidator(for hop: HostSpec) -> SSHHostKeyValidator {
+        let validator = InteractiveHostKeyValidator(hostname: hop.hostname, port: hop.port) { [weak self] prompt in
+            guard let self else { return false }
+            return await self.requestHostKeyDecision(prompt)
+        }
+        return .custom(validator)
+    }
+
+    private func settings(for hop: HostSpec, useTransient: Bool) throws -> SSHClientSettings {
+        let method = try authenticationMethod(for: hop, useTransient: useTransient)
+        return SSHClientSettings(
+            host: hop.hostname,
+            port: hop.port,
+            authenticationMethod: { method },
+            hostKeyValidator: hostKeyValidator(for: hop)
+        )
     }
 
     private static func keyAuthentication(username: String, keyText: String, passphrase: String?) throws -> SSHAuthenticationMethod {

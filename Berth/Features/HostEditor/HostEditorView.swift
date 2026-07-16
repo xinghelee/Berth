@@ -12,6 +12,7 @@ struct HostEditorView: View {
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \HostGroup.sortOrder) private var groups: [HostGroup]
     @Query(sort: \SSHKeyRecord.createdAt, order: .reverse) private var storedKeys: [SSHKeyRecord]
+    @Query(sort: \Host.label) private var allHosts: [Host]
 
     @State private var label = ""
     @State private var hostname = ""
@@ -23,6 +24,7 @@ struct HostEditorView: View {
     @State private var passphrase = ""
     @State private var selectedKeyID: UUID?
     @State private var groupID: UUID?
+    @State private var jumpHostID: UUID?
     @State private var tagColor: TagColor = .none
     @State private var note = ""
     @State private var validationMessage: String?
@@ -93,6 +95,20 @@ struct HostEditorView: View {
                     }
                 }
 
+                Section("高级") {
+                    Picker("跳板机", selection: $jumpHostID) {
+                        Text("不使用").tag(UUID?.none)
+                        ForEach(availableJumpHosts) { candidate in
+                            Text(candidate.label).tag(UUID?.some(candidate.id))
+                        }
+                    }
+                    if jumpHostID != nil {
+                        Text("连接时先经跳板机(等效 ProxyJump),支持链式。")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
                 Section("整理") {
                     Picker("分组", selection: $groupID) {
                         Text("无分组").tag(UUID?.none)
@@ -156,8 +172,29 @@ struct HostEditorView: View {
         privateKeyPath = host.privateKeyPath ?? ""
         selectedKeyID = host.keyID
         groupID = host.group?.id
+        jumpHostID = host.jumpHostID
         tagColor = host.tagColor
         note = host.note
+    }
+
+    /// 可选跳板机:排除自己,避免形成环(不允许选择会指回自己的主机)
+    private var availableJumpHosts: [Host] {
+        allHosts.filter { candidate in
+            guard candidate.id != host?.id else { return false }
+            return !reachesSelf(from: candidate)
+        }
+    }
+
+    private func reachesSelf(from candidate: Host) -> Bool {
+        guard let selfID = host?.id else { return false }
+        var seen: Set<UUID> = []
+        var current: UUID? = candidate.jumpHostID
+        while let id = current, !seen.contains(id) {
+            if id == selfID { return true }
+            seen.insert(id)
+            current = allHosts.first { $0.id == id }?.jumpHostID
+        }
+        return false
     }
 
     private func save() {
@@ -201,6 +238,7 @@ struct HostEditorView: View {
             : nil
         target.keyID = authMethod == .storedKey ? selectedKeyID : nil
         target.group = group
+        target.jumpHostID = jumpHostID
         target.tagColor = tagColor
         target.note = note
 
