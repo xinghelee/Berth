@@ -42,6 +42,12 @@ struct StatusBarView: View {
                             .help("服务器内存占用(\(stats.memory))")
                         separatorDot
                     }
+                    if let diskText = diskText(stats) {
+                        Text(diskText)
+                            .foregroundStyle(.secondary)
+                            .help("根分区已用/总量:\(stats.disk)")
+                        separatorDot
+                    }
                 }
                 Text(context.date.formatted(date: .omitted, time: .standard))
                     .foregroundStyle(.tertiary)
@@ -53,7 +59,6 @@ struct StatusBarView: View {
             .font(.system(size: 11, design: .monospaced))
             .lineLimit(1)
             .padding(.horizontal, 12)
-            // 与侧栏底部工具行(密钥/主题/设置)同高贴底,分隔线连成一条
             .frame(height: 30)
             .background(theme.elevatedBackground)
             .overlay(alignment: .top) {
@@ -62,6 +67,8 @@ struct StatusBarView: View {
                     .frame(height: 1)
             }
         }
+        // macOS 浮动侧栏整体带 ~11pt 底部内边距,状态栏抬同样的量与侧栏底行(密钥/主题/设置)水平对齐
+        .padding(.bottom, 11)
         .task(id: session.id) {
             // 资源轮询:连接中每 5s 拉一次;断开时清空,避免残留旧数据
             while !Task.isCancelled {
@@ -125,6 +132,11 @@ struct StatusBarView: View {
     private func memText(_ info: ServerInfo) -> String? {
         guard let usage = info.memoryUsage, usage.total > 0 else { return nil }
         return "内存 \(Int((usage.used / usage.total * 100).rounded()))%"
+    }
+
+    private func diskText(_ info: ServerInfo) -> String? {
+        guard let percent = info.diskPercent else { return nil }
+        return "磁盘 \(Int(percent))%"
     }
 
     private var forwardAllActive: Bool {
