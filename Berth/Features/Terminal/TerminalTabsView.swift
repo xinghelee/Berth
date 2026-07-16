@@ -21,6 +21,14 @@ struct TerminalTabsView: View {
                                     .id(session.id)
                             }
                         }
+                        if sessionManager.isSFTPVisible {
+                            Divider().overlay(ThemeStore.shared.current.borderColor)
+                            SFTPPanelView(session: session) {
+                                sessionManager.isSFTPVisible = false
+                            }
+                            .id(session.id)
+                            .transition(.move(edge: .trailing).combined(with: .opacity))
+                        }
                         if sessionManager.isInspectorVisible {
                             Divider().overlay(ThemeStore.shared.current.borderColor)
                             ServerInfoInspector(session: session) {
@@ -70,6 +78,16 @@ struct TerminalTabsView: View {
                 }
                 .padding(.leading, 6)
             }
+            Button {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                    sessionManager.isSFTPVisible.toggle()
+                }
+            } label: {
+                Image(systemName: "folder")
+                    .foregroundStyle(sessionManager.isSFTPVisible ? ThemeStore.shared.current.accentColor : Color.secondary)
+            }
+            .buttonStyle(.plain)
+            .help("SFTP 文件(⌘⇧F)")
             Button {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
                     sessionManager.isInspectorVisible.toggle()

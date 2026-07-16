@@ -1,0 +1,242 @@
+import SwiftUI
+import UniformTypeIdentifiers
+
+/// 终端右侧 SFTP 文件面板:路径栏 + 文件列表 + 上传/新建 + 拖入上传。
+struct SFTPPanelView: View {
+    let session: TerminalSession
+    let onClose: () -> Void
+
+    @State private var browser: SFTPBrowser?
+    @State private var renaming: SFTPBrowser.Entry?
+    @State private var renameText = ""
+    @State private var creatingDir = false
+    @State private var newDirName = ""
+    @State private var pendingDelete: SFTPBrowser.Entry?
+    @State private var isDropTargeted = false
+
+    private var theme: TerminalTheme { ThemeStore.shared.current }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            header
+            Divider().overlay(theme.borderColor)
+            pathBar
+            Divider().overlay(theme.borderColor)
+            content
+            if let transfer = browser?.transfer {
+                transferBar(transfer)
+            }
+        }
+        .frame(width: 300)
+        .background(theme.panelBackground)
+        .overlay {
+            if isDropTargeted {
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(theme.accentColor, style: StrokeStyle(lineWidth: 2, dash: [6]))
+                    .padding(4)
+            }
+        }
+        .onDrop(of: [.fileURL], isTargeted: $isDropTargeted) { providers in
+            handleDrop(providers)
+        }
+        .task(id: session.id) {
+            let browser = SFTPBrowser { try await session.openSFTP() }
+            self.browser = browser
+            await browser.start()
+        }
+        .onDisappear { browser?.close() }
+    }
+
+    private var header: some View {
+        HStack {
+            Text("文件")
+                .font(.headline)
+            Spacer()
+            Button {
+                creatingDir = true
+            } label: { Image(systemName: "folder.badge.plus") }
+                .buttonStyle(.plain).foregroundStyle(.secondary).help("新建文件夹")
+            Button {
+                uploadPick()
+            } label: { Image(systemName: "square.and.arrow.up") }
+                .buttonStyle(.plain).foregroundStyle(.secondary).help("上传文件")
+            Button {
+                Task { await browser?.refresh() }
+            } label: { Image(systemName: "arrow.clockwise") }
+                .buttonStyle(.plain).foregroundStyle(.secondary).help("刷新")
+            Button(action: onClose) { Image(systemName: "xmark") }
+                .buttonStyle(.plain).foregroundStyle(.secondary)
+        }
+        .frame(height: AppLayout.topBarHeight)
+        .padding(.horizontal, 12)
+        .padding(.top, AppLayout.columnTopPadding)
+        .padding(.bottom, 8)
+        .alert("新建文件夹", isPresented: $creatingDir) {
+            TextField("名称", text: $newDirName)
+            Button("创建") {
+                let name = newDirName.trimmingCharacters(in: .whitespaces)
+                newDirName = ""
+                Task { await browser?.makeDirectory(name: name) }
+            }
+            Button("取消", role: .cancel) { newDirName = "" }
+        }
+    }
+
+    private var pathBar: some View {
+        HStack(spacing: 4) {
+            Button {
+                Task { await browser?.goUp() }
+            } label: { Image(systemName: "chevron.up") }
+                .buttonStyle(.plain)
+                .foregroundStyle(browser?.path == "/" ? .tertiary : .secondary)
+                .disabled(browser?.path == "/")
+            Text(browser?.path ?? "/")
+                .font(.system(size: 11, design: .monospaced))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .truncationMode(.head)
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        switch browser?.state {
+        case .loading, .idle, nil:
+            centered { ProgressView().controlSize(.small) }
+        case .failed(let message):
+            centered {
+                VStack(spacing: 6) {
+                    Image(systemName: "exclamationmark.triangle").foregroundStyle(.orange)
+                    Text(message).font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                }
+                .padding()
+            }
+        case .ready:
+            if browser?.entries.isEmpty == true {
+                centered { Text("空目录").font(.caption).foregroundStyle(.secondary) }
+            } else {
+                fileList
+            }
+        }
+    }
+
+    private var fileList: some View {
+        ScrollView {
+            LazyVStack(spacing: 0) {
+                ForEach(browser?.entries ?? []) { entry in
+                    row(entry)
+                }
+            }
+            .padding(.vertical, 4)
+        }
+        .confirmationDialog(
+            "删除「\(pendingDelete?.name ?? "")」?",
+            isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } })
+        ) {
+            Button("删除", role: .destructive) {
+                if let entry = pendingDelete { Task { await browser?.delete(entry) } }
+                pendingDelete = nil
+            }
+            Button("取消", role: .cancel) { pendingDelete = nil }
+        }
+        .alert("重命名", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
+            TextField("新名称", text: $renameText)
+            Button("确定") {
+                if let entry = renaming { Task { await browser?.rename(entry, to: renameText) } }
+                renaming = nil
+            }
+            Button("取消", role: .cancel) { renaming = nil }
+        }
+    }
+
+    private func row(_ entry: SFTPBrowser.Entry) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: entry.isDirectory ? "folder.fill" : (entry.isSymlink ? "arrow.up.right" : "doc"))
+                .font(.system(size: 13))
+                .foregroundStyle(entry.isDirectory ? theme.accentColor : Color.secondary)
+                .frame(width: 16)
+            Text(entry.name)
+                .font(.system(size: 12))
+                .lineLimit(1)
+                .truncationMode(.middle)
+            Spacer(minLength: 4)
+            if !entry.isDirectory {
+                Text(sizeText(entry.size))
+                    .font(.system(size: 10, design: .monospaced))
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 5)
+        .contentShape(Rectangle())
+        .onTapGesture(count: 2) {
+            if entry.isDirectory || entry.isSymlink {
+                Task { await browser?.enter(entry) }
+            } else {
+                downloadPick(entry)
+            }
+        }
+        .contextMenu {
+            if entry.isDirectory {
+                Button("打开") { Task { await browser?.enter(entry) } }
+            } else {
+                Button("下载…") { downloadPick(entry) }
+            }
+            Button("重命名…") { renaming = entry; renameText = entry.name }
+            Divider()
+            Button("删除…", role: .destructive) { pendingDelete = entry }
+        }
+    }
+
+    private func transferBar(_ text: String) -> some View {
+        HStack(spacing: 6) {
+            ProgressView().controlSize(.mini)
+            Text(text).font(.caption).foregroundStyle(.secondary)
+            Spacer()
+        }
+        .padding(.horizontal, 12).padding(.vertical, 6)
+        .background(theme.elevatedBackground)
+    }
+
+    private func centered<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        VStack { Spacer(); content(); Spacer() }.frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    // MARK: - 操作
+
+    private func downloadPick(_ entry: SFTPBrowser.Entry) {
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = entry.name
+        if panel.runModal() == .OK, let url = panel.url {
+            Task { await browser?.download(entry, to: url) }
+        }
+    }
+
+    private func uploadPick() {
+        let panel = NSOpenPanel()
+        panel.allowsMultipleSelection = true
+        panel.canChooseDirectories = false
+        if panel.runModal() == .OK {
+            for url in panel.urls {
+                Task { await browser?.upload(from: url) }
+            }
+        }
+    }
+
+    private func handleDrop(_ providers: [NSItemProvider]) -> Bool {
+        for provider in providers {
+            _ = provider.loadObject(ofClass: URL.self) { url, _ in
+                guard let url, url.isFileURL else { return }
+                Task { @MainActor in await browser?.upload(from: url) }
+            }
+        }
+        return true
+    }
+
+    private func sizeText(_ bytes: UInt64) -> String {
+        ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file)
+    }
+}
