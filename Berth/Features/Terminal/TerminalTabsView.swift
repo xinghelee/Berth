@@ -212,29 +212,40 @@ private struct SessionTitleCapsule: View {
         return "\(session.spec.username)@\(session.spec.hostname)\(port)"
     }
 
+    private var isProd: Bool { session.spec.isProduction }
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: 7) {
-                Circle()
-                    .fill(stateColor)
-                    .frame(width: 6, height: 6)
+                if isProd {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 9))
+                } else {
+                    Circle()
+                        .fill(stateColor)
+                        .frame(width: 6, height: 6)
+                }
                 Text(session.spec.label)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 12, weight: isProd ? .semibold : .medium))
                 Text(address)
                     .font(.system(size: 11, design: .monospaced))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(isProd ? Color.white.opacity(0.85) : Color.secondary)
             }
             .lineLimit(1)
-            // 系统工具栏 principal 项自带一层胶囊底,不再自绘背景避免「双层」
-            .padding(.horizontal, 6)
+            .foregroundStyle(isProd ? .white : .primary)
+            .padding(.horizontal, isProd ? 12 : 6)
             .padding(.vertical, 3)
+            // 生产环境:整颗胶囊染红警戒(其余情况沿用系统 principal 胶囊底)
+            .background(
+                Capsule().fill(isProd ? Color(red: 0.78, green: 0.13, blue: 0.13) : .clear)
+            )
             .contentShape(Capsule())
-            .opacity(hovering ? 1 : 0.88)
+            .opacity(hovering ? 1 : 0.9)
         }
         .buttonStyle(.plain)
         .animation(.easeOut(duration: 0.12), value: hovering)
         .onHover { hovering = $0 }
-        .help("当前会话:\(address) —— 点按查看服务器信息(⌘I)")
+        .help(isProd ? "⚠️ 生产环境:\(address)" : "当前会话:\(address) —— 点按查看服务器信息(⌘I)")
     }
 }
 
@@ -389,30 +400,15 @@ struct TerminalPaneView: View {
         }
     }
 
-    /// 主机环境色条:生产=红色警戒条(带文字);否则若设了标签色=一条细色带
+    /// 非生产主机若设了标签色,顶部一条细色带区分环境(生产环境改由标题胶囊变红提示)
     @ViewBuilder
     private var hostStrip: some View {
-        if session.spec.isProduction {
-            HStack(spacing: 6) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.system(size: 10))
-                Text("生产环境 · \(session.spec.label)")
-                    .font(.system(size: 11, weight: .semibold))
-                Spacer()
-            }
-            .foregroundStyle(.white)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 3)
-            .frame(maxWidth: .infinity)
-            .background(Color(red: 0.78, green: 0.13, blue: 0.13))
-        } else {
-            let tag = TagColor(rawValue: session.spec.tagColorRaw) ?? .none
-            if tag != .none {
-                Rectangle()
-                    .fill(tag.color)
-                    .frame(height: 3)
-                    .frame(maxWidth: .infinity)
-            }
+        let tag = TagColor(rawValue: session.spec.tagColorRaw) ?? .none
+        if !session.spec.isProduction, tag != .none {
+            Rectangle()
+                .fill(tag.color)
+                .frame(height: 3)
+                .frame(maxWidth: .infinity)
         }
     }
 

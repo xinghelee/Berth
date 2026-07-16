@@ -46,7 +46,7 @@ struct HostEditorView: View {
                         TextField(
                             "快速新建",
                             text: $quickFill,
-                            prompt: Text("粘贴 user@host:port 或 ssh 命令,自动填充下方字段")
+                            prompt: Text("粘贴 user@host:port 或 ssh 命令,自动填充下方字段").foregroundStyle(.quaternary)
                         )
                         .onChange(of: quickFill) { _, newValue in
                             applyQuickFill(newValue)
@@ -54,8 +54,8 @@ struct HostEditorView: View {
                     }
                 }
                 Section("连接") {
-                    TextField("显示名", text: $label, prompt: Text(hostname.isEmpty ? "例如:生产环境 API" : hostname))
-                    TextField("主机地址", text: $hostname, prompt: Text("example.com 或 IP"))
+                    TextField("显示名", text: $label, prompt: Text(hostname.isEmpty ? "例如:生产环境 API" : hostname).foregroundStyle(.quaternary))
+                    TextField("主机地址", text: $hostname, prompt: Text("example.com 或 IP").foregroundStyle(.quaternary))
                     TextField("端口", text: $port)
                     TextField("用户名", text: $username)
                 }
@@ -74,17 +74,17 @@ struct HostEditorView: View {
                         SecureField(
                             "密码",
                             text: $password,
-                            prompt: Text(isEditing ? "留空保持不变" : "密码")
+                            prompt: Text(isEditing ? "留空保持不变" : "密码").foregroundStyle(.quaternary)
                         )
                     case .privateKeyFile:
                         HStack {
-                            TextField("私钥路径", text: $privateKeyPath, prompt: Text("~/.ssh/id_ed25519"))
+                            TextField("私钥路径", text: $privateKeyPath, prompt: Text("~/.ssh/id_ed25519").foregroundStyle(.quaternary))
                             Button("选择…") { pickPrivateKey() }
                         }
                         SecureField(
                             "Passphrase",
                             text: $passphrase,
-                            prompt: Text(isEditing ? "留空保持不变" : "没有则不填")
+                            prompt: Text(isEditing ? "留空保持不变" : "没有则不填").foregroundStyle(.quaternary)
                         )
                     case .storedKey:
                         if storedKeys.isEmpty {
