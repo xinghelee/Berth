@@ -130,11 +130,6 @@ struct SidebarView: View {
             )
 
             PanelIconButton(symbol: "plus", help: "新建主机") { isCreatingHost = true }
-            PanelIconButton(symbol: "paintpalette", help: "终端配色") { isThemePanelPresented.toggle() }
-                .popover(isPresented: $isThemePanelPresented, arrowEdge: .bottom) {
-                    ThemePanelView()
-                }
-            SettingsIconLink()
         }
         .padding(.horizontal, 10)
         .padding(.top, 8)
@@ -199,23 +194,34 @@ struct SidebarView: View {
         }
     }
 
-    /// 底部固定「密钥」入口 → 独立窗口
+    /// 底部工具行:左「密钥」入口(独立窗口),右 主题配色 + 设置(应用级功能放左下角,macOS 惯例)
     private var keysRow: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "key")
-                .font(.system(size: 12))
-                .foregroundStyle(.secondary)
-                .frame(width: 16)
-            Text("密钥")
-                .font(.system(size: 13))
+        HStack(spacing: 2) {
+            HStack(spacing: 6) {
+                Image(systemName: "key")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 16)
+                Text("密钥")
+                    .font(.system(size: 13))
+            }
+            .padding(.vertical, 6)
+            .padding(.horizontal, 8)
+            .contentShape(Rectangle())
+            .modifier(RowHover())
+            .onTapGesture { openWindow(id: "keys") }
+            .help("密钥管理(独立窗口)")
+
             Spacer()
+
+            PanelIconButton(symbol: "paintpalette", help: "终端配色") { isThemePanelPresented.toggle() }
+                .popover(isPresented: $isThemePanelPresented, arrowEdge: .top) {
+                    ThemePanelView()
+                }
+            SettingsIconLink()
         }
-        .padding(.vertical, 6)
-        .padding(.horizontal, 16)
-        .contentShape(Rectangle())
-        .modifier(RowHover())
-        .onTapGesture { openWindow(id: "keys") }
-        .help("密钥管理(独立窗口)")
+        .padding(.horizontal, 8)
+        .padding(.vertical, 3)
     }
 
     private var emptyState: some View {
@@ -404,7 +410,6 @@ private struct RowHover: ViewModifier {
             .background(
                 RoundedRectangle(cornerRadius: 6)
                     .fill(hovering ? Color.primary.opacity(0.05) : .clear)
-                    .padding(.horizontal, 8)
             )
             .animation(.easeOut(duration: 0.12), value: hovering)
             .onHover { hovering = $0 }
