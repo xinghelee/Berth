@@ -5,6 +5,51 @@ import SwiftTerm
 /// 防止误粘贴直接执行。可在 设置 → 安全 关闭。
 final class BerthTerminalView: SwiftTerm.TerminalView {
 
+    // MARK: - 右键菜单(复制/粘贴 + 分屏)
+
+    override func menu(for event: NSEvent) -> NSMenu? {
+        let menu = NSMenu()
+
+        let copyItem = NSMenuItem(title: "复制", action: #selector(copy(_:)), keyEquivalent: "c")
+        copyItem.target = self
+        menu.addItem(copyItem)
+
+        let pasteItem = NSMenuItem(title: "粘贴", action: #selector(paste(_:)), keyEquivalent: "v")
+        pasteItem.target = self
+        menu.addItem(pasteItem)
+
+        menu.addItem(.separator())
+
+        let hItem = NSMenuItem(title: "左右分屏", action: #selector(berthSplitHorizontal), keyEquivalent: "d")
+        hItem.target = self
+        menu.addItem(hItem)
+
+        let vItem = NSMenuItem(title: "上下分屏", action: #selector(berthSplitVertical), keyEquivalent: "d")
+        vItem.keyEquivalentModifierMask = [.command, .shift]
+        vItem.target = self
+        menu.addItem(vItem)
+
+        menu.addItem(.separator())
+
+        let findItem = NSMenuItem(title: "查找…", action: #selector(berthFind), keyEquivalent: "f")
+        findItem.target = self
+        menu.addItem(findItem)
+
+        return menu
+    }
+
+    @objc private func berthSplitHorizontal() {
+        MainActor.assumeIsolated { SessionManager.shared.toggleSplit(axis: .horizontal) }
+    }
+
+    @objc private func berthSplitVertical() {
+        MainActor.assumeIsolated { SessionManager.shared.toggleSplit(axis: .vertical) }
+    }
+
+    @objc private func berthFind() {
+        MainActor.assumeIsolated { SessionManager.shared.requestSearch() }
+    }
+
     override func paste(_ sender: Any) {
         let enabled = UserDefaults.standard.object(forKey: SettingsKeys.pasteProtection) as? Bool ?? true
         guard enabled,
