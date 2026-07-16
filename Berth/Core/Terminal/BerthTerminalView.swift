@@ -9,6 +9,8 @@ final class BerthTerminalView: SwiftTerm.TerminalView {
 
     override func menu(for event: NSEvent) -> NSMenu? {
         let menu = NSMenu()
+        // SwiftTerm 未实现菜单校验,自动校验会把自定义项判为禁用;这里手动管理启用态
+        menu.autoenablesItems = false
 
         let copyItem = NSMenuItem(title: "复制", action: #selector(copy(_:)), keyEquivalent: "c")
         copyItem.target = self
@@ -35,6 +37,7 @@ final class BerthTerminalView: SwiftTerm.TerminalView {
         findItem.target = self
         menu.addItem(findItem)
 
+        menu.items.forEach { $0.isEnabled = true }
         return menu
     }
 
