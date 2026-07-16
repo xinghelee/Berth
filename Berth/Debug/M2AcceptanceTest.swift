@@ -117,7 +117,15 @@ enum M2AcceptanceTest {
         let deadline = Date().addingTimeInterval(20)
         while Date() < deadline {
             if session.hostKeyPrompt != nil { session.resolveHostKeyPrompt(accepted: true) }
-            if case .connected = session.state { log("KEY_CONNECT_OK"); return }
+            if case .connected = session.state {
+                // 顺带验证 inspector 的 executeCommand 能与 PTY 并存
+                if let info = await session.fetchServerInfo(), !info.rows.isEmpty {
+                    log("KEY_CONNECT_OK SERVERINFO_OK kernel=\(info.kernel)")
+                } else {
+                    log("KEY_CONNECT_OK SERVERINFO_FAIL")
+                }
+                return
+            }
             if case .disconnected(let reason) = session.state {
                 log("KEY_CONNECT_FAIL \(reason)")
                 return

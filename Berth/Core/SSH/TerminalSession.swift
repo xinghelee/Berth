@@ -61,6 +61,8 @@ final class TerminalSession: Identifiable {
     let terminalView: TerminalView
 
     private(set) var state: State = .idle
+    /// 最近一次连接建立的时间(用于 inspector 显示连接时长)
+    private(set) var connectedAt: Date?
     /// 等待用户决策的主机密钥确认(首次连接指纹 / 密钥变更警告)
     var hostKeyPrompt: HostKeyPrompt?
     /// 自动重连:当前第几次尝试、是否已排定下一次
@@ -190,6 +192,33 @@ final class TerminalSession: Identifiable {
         stdinWriter?.yield(.bytes(Array(text.utf8)))
     }
 
+    /// inspector 用:在同一连接上另开通道跑一条命令取服务器信息(不影响 PTY)。
+    /// 命令保证 exit 0 且不写 stderr,避免 Citadel executeCommand 抛错。
+    func fetchServerInfo() async -> ServerInfo? {
+        guard let client else { return nil }
+        let script = """
+        printf 'HOSTNAME=%s\\n' "$(hostname 2>/dev/null)"
+        printf 'KERNEL=%s\\n' "$(uname -sr 2>/dev/null)"
+        printf 'OS=%s\\n' "$(. /etc/os-release 2>/dev/null; printf '%s' "$PRETTY_NAME")"
+        printf 'UPTIME=%s\\n' "$(uptime -p 2>/dev/null || uptime 2>/dev/null)"
+        printf 'LOAD=%s\\n' "$(cut -d' ' -f1-3 /proc/loadavg 2>/dev/null)"
+        printf 'CPUS=%s\\n' "$(nproc 2>/dev/null)"
+        printf 'MEM=%s\\n' "$(free -m 2>/dev/null | awk '/Mem:/{print $3\"/\"$2\" MB\"}')"
+        printf 'DISK=%s\\n' "$(df -h / 2>/dev/null | awk 'NR==2{print $3\"/\"$2\" (\"$5\")\"}')"
+        """
+        do {
+            let buffer = try await client.executeCommand("sh -c \(shellQuote(script))")
+            let text = String(buffer: buffer)
+            return ServerInfo(parsing: text)
+        } catch {
+            return nil
+        }
+    }
+
+    private func shellQuote(_ s: String) -> String {
+        "'" + s.replacingOccurrences(of: "'", with: "'\\''") + "'"
+    }
+
     func focusTerminal() {
         terminalView.window?.makeFirstResponder(terminalView)
     }
@@ -231,6 +260,7 @@ final class TerminalSession: Identifiable {
             await MainActor.run {
                 self.stdinWriter = continuation
                 self.state = .connected
+                self.connectedAt = Date()
                 self.everConnected = true
                 self.reconnectAttempt = 0
                 self.focusTerminal()

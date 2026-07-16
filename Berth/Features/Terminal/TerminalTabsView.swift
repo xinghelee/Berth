@@ -12,11 +12,22 @@ struct TerminalTabsView: View {
             } else {
                 tabStrip
                 if let session = sessionManager.selected {
-                    if let secondary = sessionManager.splitSecondary {
-                        splitContainer(primary: session, secondary: secondary)
-                    } else {
-                        TerminalPaneView(session: session)
-                            .id(session.id)
+                    HStack(spacing: 0) {
+                        Group {
+                            if let secondary = sessionManager.splitSecondary {
+                                splitContainer(primary: session, secondary: secondary)
+                            } else {
+                                TerminalPaneView(session: session)
+                                    .id(session.id)
+                            }
+                        }
+                        if sessionManager.isInspectorVisible {
+                            Divider().overlay(ThemeStore.shared.current.borderColor)
+                            ServerInfoInspector(session: session) {
+                                sessionManager.isInspectorVisible = false
+                            }
+                            .transition(.move(edge: .trailing).combined(with: .opacity))
+                        }
                     }
                 }
             }
@@ -45,19 +56,31 @@ struct TerminalTabsView: View {
     }
 
     private var tabStrip: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 2) {
-                ForEach(sessionManager.sessions) { session in
-                    TerminalTabChip(
-                        session: session,
-                        isSelected: session.id == sessionManager.selectedID,
-                        select: { sessionManager.selectedID = session.id },
-                        close: { sessionManager.requestClose(session) }
-                    )
+        HStack(spacing: 4) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 2) {
+                    ForEach(sessionManager.sessions) { session in
+                        TerminalTabChip(
+                            session: session,
+                            isSelected: session.id == sessionManager.selectedID,
+                            select: { sessionManager.selectedID = session.id },
+                            close: { sessionManager.requestClose(session) }
+                        )
+                    }
                 }
+                .padding(.leading, 6)
             }
-            .padding(.horizontal, 6)
-            .frame(height: AppLayout.topBarHeight)
+            Button {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                    sessionManager.isInspectorVisible.toggle()
+                }
+            } label: {
+                Image(systemName: "sidebar.right")
+                    .foregroundStyle(sessionManager.isInspectorVisible ? ThemeStore.shared.current.accentColor : Color.secondary)
+            }
+            .buttonStyle(.plain)
+            .help("服务器信息(⌘I)")
+            .padding(.trailing, 10)
         }
         .frame(height: AppLayout.topBarHeight)
         .padding(.top, AppLayout.columnTopPadding)

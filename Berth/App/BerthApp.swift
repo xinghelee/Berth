@@ -74,6 +74,11 @@ struct TerminalCommands: Commands {
         }
 
         CommandMenu("终端") {
+            Button("服务器信息面板") {
+                SessionManager.shared.isInspectorVisible.toggle()
+            }
+            .keyboardShortcut("i", modifiers: .command)
+
             Button("左右分屏") {
                 SessionManager.shared.toggleSplit(axis: .horizontal)
             }

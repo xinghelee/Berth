@@ -16,6 +16,8 @@ final class SessionManager {
     var pendingCloseSession: TerminalSession?
     /// ⌘F:请求在当前会话打开搜索条(UI 消费后自增以触发)
     var searchRequestToken = 0
+    /// 右侧服务器信息 inspector 是否可见
+    var isInspectorVisible = false
     /// 分屏:与当前选中会话并排显示的第二个会话
     var splitSecondaryID: TerminalSession.ID?
     var splitAxis: SplitAxis = .horizontal
