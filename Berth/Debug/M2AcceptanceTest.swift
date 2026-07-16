@@ -86,6 +86,47 @@ enum M2AcceptanceTest {
         mark("ALL_DONE")
     }
 
+    /// 真机密钥连通验收:BERTH_KEYCONNECT_AUTOTEST=1,用私钥文件连真实主机,建立 PTY 即成功。
+    /// 环境:BERTH_TEST_HOST/PORT/USER + BERTH_TEST_KEYFILE + BERTH_TEST_DUMP。
+    static func runKeyConnectIfRequested(container: ModelContainer) async {
+        let env = ProcessInfo.processInfo.environment
+        guard env["BERTH_KEYCONNECT_AUTOTEST"] == "1",
+              let host = env["BERTH_TEST_HOST"],
+              let user = env["BERTH_TEST_USER"],
+              let keyFile = env["BERTH_TEST_KEYFILE"],
+              let dumpBase = env["BERTH_TEST_DUMP"] else { return }
+        let port = Int(env["BERTH_TEST_PORT"] ?? "22") ?? 22
+
+        func log(_ line: String) {
+            try? line.write(toFile: dumpBase + ".keyconnect.log", atomically: true, encoding: .utf8)
+        }
+
+        let spec = HostSpec(
+            hostID: UUID(),
+            label: "key-connect-test",
+            hostname: host,
+            port: port,
+            username: user,
+            authMethod: .privateKeyFile,
+            privateKeyPath: keyFile
+        )
+        // 关掉 Touch ID 门,避免自动化卡在生物识别
+        UserDefaults.standard.set(false, forKey: SettingsKeys.requireTouchIDForKeys)
+        let session = SessionManager.shared.open(spec: spec)
+
+        let deadline = Date().addingTimeInterval(20)
+        while Date() < deadline {
+            if session.hostKeyPrompt != nil { session.resolveHostKeyPrompt(accepted: true) }
+            if case .connected = session.state { log("KEY_CONNECT_OK"); return }
+            if case .disconnected(let reason) = session.state {
+                log("KEY_CONNECT_FAIL \(reason)")
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(200))
+        }
+        log("KEY_CONNECT_TIMEOUT state=\(session.state)")
+    }
+
     /// 断线自动重连验收:BERTH_RECONNECT_AUTOTEST=1。
     /// 打开真实 UI 会话 → 连上后由外部 `docker restart` 掐断 → 观察进入
     /// disconnected 且排定自动重连 → 最终重新 connected。全程状态写入 <dump>.reconnect.log。

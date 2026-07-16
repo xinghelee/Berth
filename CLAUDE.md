@@ -9,6 +9,13 @@
 - 终端模拟: [SwiftTerm](https://github.com/migueldeicaza/SwiftTerm) **锁定 1.11.2**(1.12+ 引入 Metal GPU 渲染,构建需 Metal Toolchain,本机下载被网络阻断;解决后可升级换取渲染性能)
 - ⚠️ 最低系统 **macOS 15**(规格原定 14,但 Citadel 的 `withPTY`/`TTYOutput` API 标注 `@available(macOS 15.0+)`)
 
+## 已知限制:RSA 密钥连不上现代服务器
+
+Citadel 0.12 的 RSA 实现只用 **SHA-1**(`ssh-rsa`)签名(`Algorithms/RSA.swift`,`NID_sha1`),
+而 OpenSSH 8.8+ 默认禁用 SHA-1 RSA,只收 `rsa-sha2-256/512`。其依赖的 nio-ssh 老 fork 也无 rsa-sha2 支持。
+**现象**:RSA 密钥认证报「服务器拒绝了认证」;ed25519 密钥与密码认证均正常。
+**建议**:优先 ed25519(spec 的默认密钥类型)。彻底修复需 vendor+patch Citadel 或切 libssh2(留作后续决策)。
+
 ## 构建
 
 工程由 XcodeGen 生成,`Berth.xcodeproj` 不入库:
