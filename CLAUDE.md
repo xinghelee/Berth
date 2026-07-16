@@ -6,7 +6,7 @@
 
 - Swift + SwiftUI(AppKit 桥接终端视图),SPM 依赖管理
 - SSH: [Citadel](https://github.com/orlandos-nl/Citadel) **已 vendor 到 `vendor/Citadel`(基线 0.12.0)+ 打补丁**;nio-ssh fork 也 vendor 在 `vendor/swift-nio-ssh`。补丁让 RSA 用 rsa-sha2-512 签名,详见 `vendor/PATCHES.md`。升级需重新 vendor 并重放补丁
-- 终端模拟: [SwiftTerm](https://github.com/migueldeicaza/SwiftTerm) **锁定 1.11.2**(1.12+ 引入 Metal GPU 渲染,构建需 Metal Toolchain,本机下载被网络阻断;解决后可升级换取渲染性能)
+- 终端模拟: [SwiftTerm](https://github.com/migueldeicaza/SwiftTerm) 1.14+(含 Metal GPU 渲染后端)
 - ⚠️ 最低系统 **macOS 15**(规格原定 14,但 Citadel 的 `withPTY`/`TTYOutput` API 标注 `@available(macOS 15.0+)`)
 
 ## RSA 密钥支持(已通过 vendor 补丁解决)
@@ -26,7 +26,7 @@ xcodebuildmcp macos build --project-path Berth.xcodeproj --scheme Berth
 xcodebuildmcp macos build-and-run --project-path Berth.xcodeproj --scheme Berth
 ```
 
-若将来升级 SwiftTerm ≥1.12,构建需 Metal 工具链:`xcodebuild -downloadComponent metalToolchain`(需能访问 Apple 资产 CDN)。
+SwiftTerm ≥1.12 的 Metal shader 编译需 Xcode Metal 工具链(已安装:`xcodebuild -showComponent metalToolchain` 应为 installed)。若换机重装,用 `xcodebuild -downloadComponent metalToolchain` 补装。
 
 ## 测试
 
