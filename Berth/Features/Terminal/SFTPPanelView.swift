@@ -14,6 +14,10 @@ struct SFTPPanelView: View {
     @State private var pendingDelete: SFTPBrowser.Entry?
     @State private var isDropTargeted = false
     @State private var hoveredEntryID: UUID?
+    @State private var chmodEntry: SFTPBrowser.Entry?
+    @State private var chmodMode: UInt32 = 0
+    @State private var previewEntry: SFTPBrowser.Entry?
+    @State private var previewText: String?
 
     private var theme: TerminalTheme { ThemeStore.shared.current }
 
@@ -57,6 +61,15 @@ struct SFTPPanelView: View {
             }
         }
         .onDisappear { browser?.close() }
+        .sheet(item: $chmodEntry) { entry in
+            ChmodSheet(entry: entry, mode: $chmodMode) {
+                Task { await browser?.chmod(entry, mode: chmodMode) }
+                chmodEntry = nil
+            } cancel: { chmodEntry = nil }
+        }
+        .sheet(item: $previewEntry) { entry in
+            PreviewSheet(name: entry.name, text: previewText) { previewEntry = nil }
+        }
     }
 
     private var header: some View {
@@ -91,6 +104,26 @@ struct SFTPPanelView: View {
                 .lineLimit(1)
                 .truncationMode(.head)
             Spacer()
+            // 书签菜单
+            Menu {
+                Button(browser?.isCurrentBookmarked == true ? "取消收藏此目录" : "收藏此目录") {
+                    browser?.toggleBookmark()
+                }
+                if let bms = browser?.bookmarks, !bms.isEmpty {
+                    Divider()
+                    ForEach(bms, id: \.self) { path in
+                        Button(path) { Task { await browser?.navigate(to: path) } }
+                    }
+                }
+            } label: {
+                Image(systemName: browser?.isCurrentBookmarked == true ? "star.fill" : "star")
+                    .font(.system(size: 11))
+                    .foregroundStyle(browser?.isCurrentBookmarked == true ? theme.accentColor : .secondary)
+            }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .help("目录书签")
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
@@ -188,6 +221,7 @@ struct SFTPPanelView: View {
             if entry.isDirectory {
                 Button("打开") { Task { await browser?.enter(entry) } }
             } else {
+                Button("预览") { previewEntry = entry; Task { previewText = await browser?.previewText(entry) ?? "(无法预览:二进制或过大)" } }
                 Button("用本地编辑器打开") { browser?.editRemotely(entry) }
                 if browser?.editing[browserRemotePath(entry)] != nil {
                     Button("停止编辑(取消自动回传)") { browser?.stopEditing(browserRemotePath(entry)) }
@@ -195,6 +229,7 @@ struct SFTPPanelView: View {
                 Button("下载…") { downloadPick(entry) }
             }
             Button("重命名…") { renaming = entry; renameText = entry.name }
+            Button("权限…") { chmodEntry = entry; chmodMode = entry.mode }
             Divider()
             Button("删除…", role: .destructive) { pendingDelete = entry }
         }
@@ -287,5 +322,84 @@ struct SFTPPanelView: View {
 
     private func sizeText(_ bytes: UInt64) -> String {
         ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file)
+    }
+}
+
+/// chmod 权限编辑:owner/group/other × r/w/x 复选 + 八进制显示
+private struct ChmodSheet: View {
+    let entry: SFTPBrowser.Entry
+    @Binding var mode: UInt32
+    let apply: () -> Void
+    let cancel: () -> Void
+
+    private let rows: [(String, Int)] = [("所有者", 6), ("组", 3), ("其他", 0)]
+    private let bits: [(String, UInt32)] = [("读", 4), ("写", 2), ("执行", 1)]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("权限:\(entry.name)").font(.headline)
+            Grid(alignment: .leading) {
+                GridRow {
+                    Text("").frame(width: 48)
+                    ForEach(bits, id: \.0) { Text($0.0).font(.caption).frame(width: 40) }
+                }
+                ForEach(rows, id: \.0) { rowName, shift in
+                    GridRow {
+                        Text(rowName).frame(width: 48, alignment: .leading)
+                        ForEach(bits, id: \.0) { label, bit in
+                            Toggle("", isOn: Binding(
+                                get: { (mode >> shift) & bit != 0 },
+                                set: { on in
+                                    if on { mode |= (bit << shift) } else { mode &= ~(bit << shift) }
+                                }
+                            ))
+                            .labelsHidden()
+                            .frame(width: 40)
+                        }
+                    }
+                }
+            }
+            Text(String(format: "八进制:%03o", mode))
+                .font(.system(size: 12, design: .monospaced))
+                .foregroundStyle(.secondary)
+            HStack {
+                Spacer()
+                Button("取消", action: cancel)
+                Button("应用", action: apply).keyboardShortcut(.return).buttonStyle(.borderedProminent)
+            }
+        }
+        .padding(16)
+        .frame(width: 300)
+    }
+}
+
+/// 文本文件快速预览
+private struct PreviewSheet: View {
+    let name: String
+    let text: String?
+    let close: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(name).font(.headline)
+                Spacer()
+                Button("关闭", action: close)
+            }
+            if let text {
+                ScrollView {
+                    Text(text)
+                        .font(.system(size: 12, design: .monospaced))
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(8)
+                }
+                .background(RoundedRectangle(cornerRadius: 6).fill(Color.primary.opacity(0.05)))
+            } else {
+                ProgressView().frame(maxWidth: .infinity, minHeight: 100)
+            }
+        }
+        .padding(16)
+        .frame(width: 560, height: 460)
     }
 }

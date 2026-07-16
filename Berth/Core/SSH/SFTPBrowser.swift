@@ -15,6 +15,9 @@ final class SFTPBrowser {
         let isSymlink: Bool
         let size: UInt64
         let modified: Date?
+        var permissions: UInt32 = 0
+        /// 权限低 9 位(rwxrwxrwx)
+        var mode: UInt32 { permissions & 0o777 }
     }
 
     enum State: Equatable {
@@ -98,7 +101,8 @@ final class SFTPBrowser {
                     isDirectory: type == .directory,
                     isSymlink: type == .symlink,
                     size: component.attributes.size ?? 0,
-                    modified: component.attributes.accessModificationTime?.modificationTime
+                    modified: component.attributes.accessModificationTime?.modificationTime,
+                    permissions: component.attributes.permissions ?? 0
                 )
             }
             entries = mapped.sorted {
@@ -261,6 +265,52 @@ final class SFTPBrowser {
         editLocalURLs[remotePath] = nil
         editing[remotePath] = nil
     }
+
+    // MARK: - chmod / 预览 / 书签
+
+    /// 修改权限(保留文件类型高位,仅换低 12 位)
+    func chmod(_ entry: Entry, mode: UInt32) async {
+        guard let sftp else { return }
+        do {
+            var attrs = SFTPFileAttributes()
+            attrs.permissions = (entry.permissions & ~0o7777) | (mode & 0o7777)
+            try await sftp.setAttributes(at: join(path, entry.name), to: attrs)
+            await refresh()
+        } catch {
+            state = .failed(friendly(error))
+        }
+    }
+
+    /// 快速预览:下载小文本文件(≤256KB)返回内容;过大或二进制返回 nil
+    func previewText(_ entry: Entry) async -> String? {
+        guard let sftp, !entry.isDirectory, entry.size <= 256 * 1024 else { return nil }
+        do {
+            let file = try await sftp.openFile(filePath: join(path, entry.name), flags: .read)
+            let buffer = try await file.readAll()
+            try? await file.close()
+            let data = Data(buffer.readableBytesView)
+            // 含 NUL 视为二进制
+            if data.prefix(8000).contains(0) { return nil }
+            return String(data: data, encoding: .utf8)
+        } catch {
+            return nil
+        }
+    }
+
+    // 书签(常用远端目录,全局持久化)
+    private static let bookmarksKey = "sftp.bookmarks"
+    private(set) var bookmarks: [String] = UserDefaults.standard.stringArray(forKey: SFTPBrowser.bookmarksKey) ?? []
+
+    func toggleBookmark() {
+        if let idx = bookmarks.firstIndex(of: path) {
+            bookmarks.remove(at: idx)
+        } else {
+            bookmarks.append(path)
+        }
+        UserDefaults.standard.set(bookmarks, forKey: Self.bookmarksKey)
+    }
+
+    var isCurrentBookmarked: Bool { bookmarks.contains(path) }
 
     func makeDirectory(name: String) async {
         guard let sftp, !name.isEmpty else { return }
