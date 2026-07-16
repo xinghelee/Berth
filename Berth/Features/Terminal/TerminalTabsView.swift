@@ -45,11 +45,17 @@ struct TerminalTabsView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(ThemeStore.shared.current.chromeBackground)
-        // 顶部统一一行:标签 chips 靠左 | 会话胶囊居中 | 面板按钮组靠右(原独立标签条撤掉)
+        // 顶部统一一行:标签 chips 靠左 | 会话胶囊居中 | 面板按钮组靠右(原独立标签条撤掉)。
+        // chips 与按钮组自带胶囊样式,隐藏系统工具栏 item 的玻璃底避免双层;居中胶囊用系统底。
         .toolbar {
-            ToolbarItem(placement: .navigation) {
-                if !sessionManager.sessions.isEmpty {
-                    tabChips
+            if #available(macOS 26.0, *) {
+                ToolbarItem(placement: .navigation) {
+                    if !sessionManager.sessions.isEmpty { tabChips }
+                }
+                .sharedBackgroundVisibility(.hidden)
+            } else {
+                ToolbarItem(placement: .navigation) {
+                    if !sessionManager.sessions.isEmpty { tabChips }
                 }
             }
             ToolbarItem(placement: .principal) {
@@ -61,9 +67,14 @@ struct TerminalTabsView: View {
                     }
                 }
             }
-            ToolbarItem(placement: .primaryAction) {
-                if !sessionManager.sessions.isEmpty {
-                    panelButtons
+            if #available(macOS 26.0, *) {
+                ToolbarItem(placement: .primaryAction) {
+                    if !sessionManager.sessions.isEmpty { panelButtons }
+                }
+                .sharedBackgroundVisibility(.hidden)
+            } else {
+                ToolbarItem(placement: .primaryAction) {
+                    if !sessionManager.sessions.isEmpty { panelButtons }
                 }
             }
         }
@@ -88,21 +99,40 @@ struct TerminalTabsView: View {
         }
     }
 
-    /// 标签 chips(标题栏左侧,横向滚动)
+    /// 标签 chips(标题栏左侧):横向滚动,两端渐隐提示还有更多,选中自动滚入视野
     private var tabChips: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 2) {
-                ForEach(sessionManager.sessions) { session in
-                    TerminalTabChip(
-                        session: session,
-                        isSelected: session.id == sessionManager.selectedID,
-                        select: { sessionManager.select(id: session.id) },
-                        close: { sessionManager.requestClose(session) }
-                    )
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 2) {
+                    ForEach(sessionManager.sessions) { session in
+                        TerminalTabChip(
+                            session: session,
+                            isSelected: session.id == sessionManager.selectedID,
+                            select: { sessionManager.select(id: session.id) },
+                            close: { sessionManager.requestClose(session) }
+                        )
+                        .id(session.id)
+                    }
+                }
+                .padding(.horizontal, 10)
+            }
+            .frame(maxWidth: 560, alignment: .leading)
+            .mask(
+                HStack(spacing: 0) {
+                    LinearGradient(colors: [.clear, .black], startPoint: .leading, endPoint: .trailing)
+                        .frame(width: 12)
+                    Color.black
+                    LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing)
+                        .frame(width: 12)
+                }
+            )
+            .onChange(of: sessionManager.selectedID) { _, selected in
+                guard let selected else { return }
+                withAnimation(.easeOut(duration: 0.2)) {
+                    proxy.scrollTo(selected, anchor: .center)
                 }
             }
         }
-        .frame(maxWidth: 560, alignment: .leading)
     }
 
     /// Safari 式按钮组(标题栏右侧):一个大胶囊容器,内含各个圆形悬停按钮

@@ -94,6 +94,9 @@ final class TerminalSession: Identifiable {
     /// 临时直连/自动化验收用:绕过 Keychain 的一次性凭据(不落任何持久化)
     @ObservationIgnored var transientPassword: String?
     @ObservationIgnored var transientPassphrase: String?
+    /// 后台长任务通知:上次输出/上次通知时间
+    @ObservationIgnored private var lastOutputAt: Date?
+    @ObservationIgnored private var lastNotifiedAt: Date?
 
     private enum StdinEvent {
         case bytes([UInt8])
@@ -103,7 +106,7 @@ final class TerminalSession: Identifiable {
     init(spec: HostSpec) {
         self.spec = spec
         let fontSize = CGFloat(UserDefaults.standard.object(forKey: SettingsKeys.terminalFontSize) as? Double ?? 13)
-        self.terminalView = TerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
+        self.terminalView = BerthTerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
         terminalView.font = .monospacedSystemFont(ofSize: fontSize, weight: .regular)
         ThemeStore.shared.apply(to: terminalView)
         CursorPrefs.apply(to: terminalView)
@@ -263,6 +266,19 @@ final class TerminalSession: Identifiable {
         "'" + s.replacingOccurrences(of: "'", with: "'\\''") + "'"
     }
 
+    /// 后台时长任务完成提醒:app 不在前台,且本次输出距上次输出静默 ≥10s → 视为长命令出结果
+    private func noteOutputForNotification() {
+        let now = Date()
+        defer { lastOutputAt = now }
+        let enabled = UserDefaults.standard.object(forKey: SettingsKeys.notifyLongCommand) as? Bool ?? true
+        guard enabled, !NSApp.isActive, case .connected = state else { return }
+        guard let last = lastOutputAt, now.timeIntervalSince(last) >= 10 else { return }
+        // 同会话 30s 内不重复打扰
+        if let lastNotified = lastNotifiedAt, now.timeIntervalSince(lastNotified) < 30 { return }
+        lastNotifiedAt = now
+        NotificationService.post(title: spec.label, body: "长任务有新输出(静默 \(Int(now.timeIntervalSince(last))) 秒后)")
+    }
+
     func focusTerminal() {
         terminalView.window?.makeFirstResponder(terminalView)
     }
@@ -410,6 +426,7 @@ final class TerminalSession: Identifiable {
                 }
                 let bytes = Array(buffer.readableBytesView)
                 await MainActor.run {
+                    self.noteOutputForNotification()
                     self.terminalView.feed(byteArray: bytes[...])
                 }
             }
@@ -526,6 +543,16 @@ extension TerminalSession: TerminalViewDelegate {
     nonisolated func scrolled(source: TerminalView, position: Double) {}
 
     nonisolated func rangeChanged(source: TerminalView, startY: Int, endY: Int) {}
+
+    nonisolated func bell(source: TerminalView) {
+        MainActor.assumeIsolated {
+            let enabled = UserDefaults.standard.object(forKey: SettingsKeys.notifyLongCommand) as? Bool ?? true
+            guard enabled, !NSApp.isActive else { return }
+            if let lastNotified = lastNotifiedAt, Date().timeIntervalSince(lastNotified) < 30 { return }
+            lastNotifiedAt = Date()
+            NotificationService.post(title: spec.label, body: "终端响铃")
+        }
+    }
 
     nonisolated func clipboardCopy(source: TerminalView, content: Data) {
         if let text = String(data: content, encoding: .utf8) {

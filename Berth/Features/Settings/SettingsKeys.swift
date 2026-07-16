@@ -9,4 +9,7 @@ enum SettingsKeys {
     static let cursorShape = "terminal.cursorShape"
     static let cursorBlink = "terminal.cursorBlink"
     static let requireTouchIDForKeys = "security.requireTouchIDForKeys"
+    static let pasteProtection = "terminal.pasteProtection"
+    static let notifyLongCommand = "session.notifyLongCommand"
+    static let restoreSessions = "session.restoreOnLaunch"
 }

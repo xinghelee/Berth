@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import SwiftData
 
 /// 全局活跃会话管理:持有所有 TerminalSession,标签页 UI 与快捷键都通过它操作。
 /// 关闭窗口不等于断开连接 —— 会话生命周期跟随本对象(App 级单例),不跟随视图。
@@ -63,7 +64,36 @@ final class SessionManager {
         sessions.append(session)
         selectedID = session.id
         session.connect()
+        persistOpenTabs()
         return session
+    }
+
+    // MARK: - 会话恢复(启动时重开上次的标签页)
+
+    private static let openTabsKey = "session.openTabs"
+
+    /// 打开的标签页(排除分屏副会话)按顺序持久化主机 ID
+    private func persistOpenTabs() {
+        let ids = sessions
+            .filter { $0.id != splitSecondaryID }
+            .map { $0.spec.hostID.uuidString }
+        UserDefaults.standard.set(ids, forKey: Self.openTabsKey)
+    }
+
+    /// 启动时恢复上次的标签页:按保存顺序错峰自动连接(400ms 间隔,避免连接风暴)
+    func restoreSessions(container: ModelContainer) async {
+        let enabled = UserDefaults.standard.object(forKey: SettingsKeys.restoreSessions) as? Bool ?? true
+        guard enabled, sessions.isEmpty,
+              let ids = UserDefaults.standard.stringArray(forKey: Self.openTabsKey),
+              !ids.isEmpty else { return }
+        let context = ModelContext(container)
+        guard let hosts = try? context.fetch(FetchDescriptor<Host>()), !hosts.isEmpty else { return }
+        for idString in ids {
+            guard let uuid = UUID(uuidString: idString),
+                  let host = hosts.first(where: { $0.id == uuid }) else { continue }
+            open(spec: HostSpec.resolve(host, in: hosts))
+            try? await Task.sleep(for: .milliseconds(400))
+        }
     }
 
     /// ⌘T:以当前标签页的主机再开一个终端。复用当前连接(在其上开新 PTY 通道),不新建 TCP。
@@ -115,6 +145,7 @@ final class SessionManager {
             isSFTPVisible = false
             isInspectorVisible = false
         }
+        persistOpenTabs()
     }
 
     /// 统一选中入口(标签 chip / ⌘1-9 都走这里):

@@ -28,6 +28,11 @@ struct BerthApp: App {
                     await M2AcceptanceTest.runSFTPIfRequested(container: container)
                     await M2AcceptanceTest.runReuseIfRequested(container: container)
                     await M2AcceptanceTest.runKeychainProbeIfRequested()
+                    // 自动化验收/临时库环境不做会话恢复
+                    let env = ProcessInfo.processInfo.environment
+                    if !env.keys.contains(where: { $0.hasPrefix("BERTH_") }) {
+                        await SessionManager.shared.restoreSessions(container: container)
+                    }
                 }
         }
         .modelContainer(container)

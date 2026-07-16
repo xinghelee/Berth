@@ -10,6 +10,9 @@ struct SettingsView: View {
     @AppStorage(SettingsKeys.confirmBeforeClosingTab) private var confirmBeforeClosingTab = true
     @AppStorage(SettingsKeys.autoReconnect) private var autoReconnect = true
     @AppStorage(SettingsKeys.requireTouchIDForKeys) private var requireTouchID = true
+    @AppStorage(SettingsKeys.pasteProtection) private var pasteProtection = true
+    @AppStorage(SettingsKeys.notifyLongCommand) private var notifyLongCommand = true
+    @AppStorage(SettingsKeys.restoreSessions) private var restoreSessions = true
     @State private var themeStore = ThemeStore.shared
     @State private var dataMessage: String?
     @Environment(\.modelContext) private var modelContext
@@ -51,9 +54,12 @@ struct SettingsView: View {
             }
             Section("会话") {
                 Toggle("非主动断开时自动重连(指数退避)", isOn: $autoReconnect)
+                Toggle("启动时恢复上次的标签页", isOn: $restoreSessions)
+                Toggle("后台时长任务完成/响铃通知", isOn: $notifyLongCommand)
             }
             Section("安全") {
                 Toggle("使用私钥连接前要求 Touch ID / 密码验证", isOn: $requireTouchID)
+                Toggle("粘贴保护:多行或危险命令先确认", isOn: $pasteProtection)
             }
             Section("数据") {
                 HStack {
