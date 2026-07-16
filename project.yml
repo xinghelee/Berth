@@ -49,8 +49,11 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.berthssh.Berth
         SWIFT_VERSION: "5.0"
+        # 用稳定的开发证书签名(而非 ad-hoc "-"):ad-hoc 下每次重建二进制指纹都变,
+        # Keychain 把新构建当陌生 app,读旧密码项报 errSecAuthFailed(发布用 Developer ID 另签)
         CODE_SIGN_STYLE: Automatic
-        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_IDENTITY: "Apple Development"
+        DEVELOPMENT_TEAM: 99LYH6FNPS
         ENABLE_HARDENED_RUNTIME: false
         DEAD_CODE_STRIPPING: true
 
@@ -68,4 +71,6 @@ targets:
         GENERATE_INFOPLIST_FILE: true
         BUNDLE_LOADER: $(TEST_HOST)
         TEST_HOST: $(BUILT_PRODUCTS_DIR)/Berth.app/Contents/MacOS/Berth
-        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: "Apple Development"
+        DEVELOPMENT_TEAM: 99LYH6FNPS

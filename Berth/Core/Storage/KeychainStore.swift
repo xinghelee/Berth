@@ -11,6 +11,9 @@ enum KeychainStore {
 
         var errorDescription: String? {
             switch self {
+            case .unexpectedStatus(errSecAuthFailed):
+                return "无法读取钥匙串中保存的密码(应用签名与保存时不一致,常见于开发构建更新后)。"
+                    + "请编辑该主机并重新输入密码,保存后即可恢复。"
             case .unexpectedStatus(let status):
                 let detail = SecCopyErrorMessageString(status, nil) as String? ?? "OSStatus \(status)"
                 return "Keychain 操作失败:\(detail)"
@@ -36,6 +39,12 @@ enum KeychainStore {
         let update: [String: Any] = [kSecValueData as String: data]
 
         var status = SecItemUpdate(query as CFDictionary, update as CFDictionary)
+        if status == errSecAuthFailed {
+            // 旧项的 ACL 绑定在别的构建上(如 ad-hoc 签名的历史版本),本构建无权更新。
+            // 删掉重建:重新输入密码即可恢复,不让用户卡死在无法覆盖的旧项上。
+            SecItemDelete(query as CFDictionary)
+            status = errSecItemNotFound
+        }
         if status == errSecItemNotFound {
             var attributes = query
             attributes[kSecValueData as String] = data
