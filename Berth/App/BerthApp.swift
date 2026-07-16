@@ -70,6 +70,11 @@ struct TerminalCommands: Commands {
             }
             .keyboardShortcut("k", modifiers: .command)
 
+            Button("命令面板…") {
+                CommandPaletteController.shared.toggle()
+            }
+            .keyboardShortcut("p", modifiers: .command)
+
             Button("新建标签页(复制当前连接)") {
                 SessionManager.shared.duplicateCurrent()
             }
