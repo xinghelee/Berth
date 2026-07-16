@@ -127,6 +127,11 @@ struct TerminalCommands: Commands {
                 SessionManager.shared.splitFocused(axis: .vertical)
             }
             .keyboardShortcut("d", modifiers: [.command, .shift])
+
+            Button("广播输入到所有分屏") {
+                SessionManager.shared.toggleBroadcast()
+            }
+            .keyboardShortcut("b", modifiers: [.command, .option])
         }
     }
 }

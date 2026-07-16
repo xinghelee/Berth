@@ -687,7 +687,14 @@ extension TerminalSession: TerminalViewDelegate {
         let bytes = Array(data)
         MainActor.assumeIsolated {
             _ = stdinWriter?.yield(.bytes(bytes))
+            // 广播输入:把本 pane 的键入同步到同标签其它 pane
+            SessionManager.shared.broadcastInput(from: id, bytes: bytes)
         }
+    }
+
+    /// 广播/自动化用:直接把字节写入本会话 stdin(不经过 terminalView)
+    func sendRawInput(_ bytes: [UInt8]) {
+        _ = stdinWriter?.yield(.bytes(bytes))
     }
 
     nonisolated func sizeChanged(source: TerminalView, newCols: Int, newRows: Int) {

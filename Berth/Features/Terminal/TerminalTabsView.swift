@@ -10,9 +10,17 @@ struct TerminalTabsView: View {
             if sessionManager.tabs.isEmpty {
                 emptyState
             } else if let tab = sessionManager.selectedTab {
+                if tab.isBroadcasting {
+                    broadcastBanner
+                }
                 HStack(spacing: 0) {
                     // 单 pane 不显示焦点边框(只有分屏时才需要区分)
-                    PaneTreeView(node: tab.root, focusedID: tab.focusedID, showsFocus: tab.root.leafIDs().count > 1) { id in
+                    PaneTreeView(
+                        node: tab.root,
+                        focusedID: tab.focusedID,
+                        showsFocus: tab.root.leafIDs().count > 1,
+                        broadcasting: tab.isBroadcasting
+                    ) { id in
                         sessionManager.focusPane(id)
                     }
                     if let session = sessionManager.selected {
@@ -189,6 +197,26 @@ struct TerminalTabsView: View {
         )
     }
 
+    /// 广播模式横幅:提示所有分屏同步接收键入
+    private var broadcastBanner: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "dot.radiowaves.left.and.right")
+                .font(.system(size: 10))
+            Text("广播输入:键入同步到当前标签所有分屏")
+                .font(.system(size: 11, weight: .medium))
+            Spacer()
+            Button("停止") { sessionManager.toggleBroadcast() }
+                .buttonStyle(.plain)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(.white)
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 3)
+        .frame(maxWidth: .infinity)
+        .background(Color.orange.opacity(0.85))
+    }
+
     private var emptyState: some View {
         VStack(spacing: 10) {
             Image(systemName: "terminal")
@@ -273,6 +301,7 @@ private struct PaneTreeView: View {
     let node: PaneNode
     let focusedID: UUID
     var showsFocus: Bool = true
+    var broadcasting: Bool = false
     let onFocus: (UUID) -> Void
     @Environment(SessionManager.self) private var sessionManager
 
@@ -284,10 +313,7 @@ private struct PaneTreeView: View {
                     .id(sid)
                     .overlay(
                         Rectangle()
-                            .stroke(
-                                (showsFocus && sid == focusedID) ? ThemeStore.shared.current.accentColor.opacity(0.55) : .clear,
-                                lineWidth: 1.5
-                            )
+                            .stroke(borderColor(sid), lineWidth: broadcasting ? 1.5 : 1.5)
                             .allowsHitTesting(false)
                     )
                     // 点非聚焦 pane 时先聚焦(不吞掉终端本身的交互)
@@ -300,13 +326,20 @@ private struct PaneTreeView: View {
                 ? AnyLayout(HStackLayout(spacing: 1))
                 : AnyLayout(VStackLayout(spacing: 1))
             layout {
-                PaneTreeView(node: first, focusedID: focusedID, showsFocus: showsFocus, onFocus: onFocus)
+                PaneTreeView(node: first, focusedID: focusedID, showsFocus: showsFocus, broadcasting: broadcasting, onFocus: onFocus)
                 Rectangle()
                     .fill(ThemeStore.shared.current.borderColor)
                     .frame(width: axis == .horizontal ? 1 : nil, height: axis == .vertical ? 1 : nil)
-                PaneTreeView(node: second, focusedID: focusedID, showsFocus: showsFocus, onFocus: onFocus)
+                PaneTreeView(node: second, focusedID: focusedID, showsFocus: showsFocus, broadcasting: broadcasting, onFocus: onFocus)
             }
         }
+    }
+
+    private func borderColor(_ sid: UUID) -> Color {
+        // 广播时所有 pane 橙色边框;否则仅聚焦 pane 强调色边框
+        if broadcasting { return .orange.opacity(0.7) }
+        if showsFocus, sid == focusedID { return ThemeStore.shared.current.accentColor.opacity(0.55) }
+        return .clear
     }
 }
 

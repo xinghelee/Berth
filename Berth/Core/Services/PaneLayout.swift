@@ -77,6 +77,8 @@ final class PaneTab: Identifiable {
     let id = UUID()
     var root: PaneNode
     var focusedID: UUID
+    /// 广播输入:开启后当前标签所有分屏 pane 同步接收键入
+    var isBroadcasting = false
 
     init(sessionID: UUID) {
         self.root = .leaf(sessionID)

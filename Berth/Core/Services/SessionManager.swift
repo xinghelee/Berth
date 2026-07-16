@@ -222,6 +222,25 @@ final class SessionManager {
         searchRequestToken += 1
     }
 
+    // MARK: - 广播输入
+
+    /// 焦点 pane 的键入 → 同步到同标签其它 pane(仅广播开启时)
+    func broadcastInput(from sessionID: UUID, bytes: [UInt8]) {
+        guard let tab = tabs.first(where: { $0.root.leafIDs().contains(sessionID) }),
+              tab.isBroadcasting else { return }
+        for id in tab.root.leafIDs() where id != sessionID {
+            session(id)?.sendRawInput(bytes)
+        }
+    }
+
+    /// 切换当前标签的广播输入(需 ≥2 个 pane 才有意义)
+    func toggleBroadcast() {
+        guard let tab = selectedTab, tab.root.leafIDs().count > 1 else { return }
+        tab.isBroadcasting.toggle()
+    }
+
+    var isBroadcasting: Bool { selectedTab?.isBroadcasting ?? false }
+
     // MARK: - 会话恢复
 
     private static let openTabsKey = "session.openTabs"

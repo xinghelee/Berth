@@ -44,6 +44,15 @@ struct CommandPaletteView: View {
             PaletteCommand(id: "close-pane", title: "关闭当前分屏", subtitle: "⌘W", icon: "xmark.rectangle", isEnabled: hasSession) {
                 m.requestCloseCurrent()
             },
+            PaletteCommand(
+                id: "broadcast",
+                title: m.isBroadcasting ? "停止广播输入" : "广播输入到所有分屏",
+                subtitle: "⌘⌥B",
+                icon: "dot.radiowaves.left.and.right",
+                isEnabled: (m.selectedTab?.root.leafIDs().count ?? 0) > 1
+            ) {
+                m.toggleBroadcast()
+            },
             PaletteCommand(id: "dup", title: "复制当前连接为新标签", subtitle: "⌘T", icon: "plus.square.on.square", isEnabled: hasSession) {
                 m.duplicateCurrent()
             },
