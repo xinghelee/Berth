@@ -1,9 +1,12 @@
 import SwiftUI
 
-/// 终端区底部状态栏:连接状态点 + user@host + 连接时长 + 端口转发状态 | 右侧终端行列数。
-/// 跟随当前选中会话,每秒随时长刷新。
+/// 终端区底部状态栏:连接状态点 + user@host + 连接时长 + 端口转发 | CPU/内存(5s 轮询)+ 本地时钟 + 终端行列数。
+/// 跟随当前选中会话,时钟与时长每秒刷新。
 struct StatusBarView: View {
     let session: TerminalSession
+
+    /// 服务器资源快照(每 5s 经 exec 通道拉取,与 PTY 并存)
+    @State private var stats: ServerInfo?
 
     private var theme: TerminalTheme { ThemeStore.shared.current }
 
@@ -18,13 +21,31 @@ struct StatusBarView: View {
                 Text(stateText(now: context.date))
                     .foregroundStyle(.tertiary)
                 if !session.forwardStates.isEmpty {
-                    Text("·")
-                        .foregroundStyle(.quaternary)
+                    separatorDot
                     Text(forwardText)
                         .foregroundStyle(forwardAllActive ? .secondary : Color.yellow)
                         .help("端口转发状态(详见 ⌘I 信息面板)")
                 }
+
                 Spacer()
+
+                if isConnected, let stats {
+                    if let cpuText = cpuText(stats) {
+                        Text(cpuText)
+                            .foregroundStyle(.secondary)
+                            .help("1 分钟负载 / 核数(\(stats.load)\(stats.cpuCount > 0 ? " · \(stats.cpuCount) 核" : ""))")
+                        separatorDot
+                    }
+                    if let memText = memText(stats) {
+                        Text(memText)
+                            .foregroundStyle(.secondary)
+                            .help("服务器内存占用(\(stats.memory))")
+                        separatorDot
+                    }
+                }
+                Text(context.date.formatted(date: .omitted, time: .standard))
+                    .foregroundStyle(.tertiary)
+                separatorDot
                 Text("\(session.terminalView.getTerminal().cols)×\(session.terminalView.getTerminal().rows)")
                     .foregroundStyle(.tertiary)
                     .help("终端列数 × 行数")
@@ -40,6 +61,29 @@ struct StatusBarView: View {
                     .frame(height: 1)
             }
         }
+        .padding(.bottom, 6)
+        .task(id: session.id) {
+            // 资源轮询:连接中每 5s 拉一次;断开时清空,避免残留旧数据
+            while !Task.isCancelled {
+                if isConnected {
+                    let fetched = await session.fetchServerInfo()
+                    guard !Task.isCancelled else { return }
+                    stats = fetched
+                } else {
+                    stats = nil
+                }
+                try? await Task.sleep(for: .seconds(5))
+            }
+        }
+    }
+
+    private var separatorDot: some View {
+        Text("·").foregroundStyle(.quaternary)
+    }
+
+    private var isConnected: Bool {
+        if case .connected = session.state { return true }
+        return false
     }
 
     private var addressText: String {
@@ -67,6 +111,20 @@ struct StatusBarView: View {
         case .disconnected(let reason):
             return reason == .userInitiated ? "已断开" : "连接断开"
         }
+    }
+
+    /// 1 分钟负载换算核占比;取不到核数时直接显示负载值
+    private func cpuText(_ info: ServerInfo) -> String? {
+        guard let load1 = info.loadValues.first else { return nil }
+        if info.cpuCount > 0 {
+            return "CPU \(Int((load1 / Double(info.cpuCount) * 100).rounded()))%"
+        }
+        return String(format: "负载 %.2f", load1)
+    }
+
+    private func memText(_ info: ServerInfo) -> String? {
+        guard let usage = info.memoryUsage, usage.total > 0 else { return nil }
+        return "内存 \(Int((usage.used / usage.total * 100).rounded()))%"
     }
 
     private var forwardAllActive: Bool {
