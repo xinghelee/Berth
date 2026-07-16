@@ -46,23 +46,30 @@ final class SessionManager {
     }
 
     @discardableResult
-    func open(spec: HostSpec, transientPassword: String? = nil, transientPassphrase: String? = nil) -> TerminalSession {
+    func open(
+        spec: HostSpec,
+        transientPassword: String? = nil,
+        transientPassphrase: String? = nil,
+        reusing connection: SSHConnection? = nil
+    ) -> TerminalSession {
         let session = TerminalSession(spec: spec)
         session.transientPassword = transientPassword
         session.transientPassphrase = transientPassphrase
+        if let connection { session.prepareToBorrow(connection) }
         sessions.append(session)
         selectedID = session.id
         session.connect()
         return session
     }
 
-    /// ⌘T:以当前标签页的主机再开一个连接
+    /// ⌘T:以当前标签页的主机再开一个终端。复用当前连接(在其上开新 PTY 通道),不新建 TCP。
     func duplicateCurrent() {
         guard let current = selected else { return }
         open(
             spec: current.spec,
             transientPassword: current.transientPassword,
-            transientPassphrase: current.transientPassphrase
+            transientPassphrase: current.transientPassphrase,
+            reusing: current.liveConnection
         )
     }
 
@@ -117,6 +124,8 @@ final class SessionManager {
         let secondary = TerminalSession(spec: current.spec)
         secondary.transientPassword = current.transientPassword
         secondary.transientPassphrase = current.transientPassphrase
+        // 分屏复用当前连接:在同一 SSH 连接上开第二个 PTY,不新建 TCP(避免触发频率惩罚)
+        if let connection = current.liveConnection { secondary.prepareToBorrow(connection) }
         sessions.append(secondary)
         splitSecondaryID = secondary.id
         secondary.connect()

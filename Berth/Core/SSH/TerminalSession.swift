@@ -75,7 +75,13 @@ final class TerminalSession: Identifiable {
     private(set) var isAutoReconnectScheduled = false
 
     @ObservationIgnored private var client: SSHClient?
-    /// 跳板链上的中间 client,必须保活以维持隧道;断开时一并关闭
+    /// 本会话当前所用连接的共享持有者(自建或借用);断开时 release,引用归零才真正关闭
+    @ObservationIgnored private(set) var connection: SSHConnection?
+    /// 待借用的连接(⌘T 复制 / 分屏 同主机时由 SessionManager 注入);一次性,消费后清空
+    @ObservationIgnored private var willBorrow: SSHConnection?
+    /// 本次运行是否走了借用路径(借用会话不自动重连,避免网络抖动时多会话各自新建 TCP 造成连接风暴)
+    @ObservationIgnored private var isBorrower = false
+    /// 跳板链上的中间 client,必须保活以维持隧道;所有权在建立后转入 SSHConnection
     @ObservationIgnored private var jumpClients: [SSHClient] = []
     @ObservationIgnored private var forwardService: PortForwardService?
     @ObservationIgnored private var sessionTask: Task<Void, Never>?
@@ -101,6 +107,19 @@ final class TerminalSession: Identifiable {
         terminalView.font = .monospacedSystemFont(ofSize: fontSize, weight: .regular)
         ThemeStore.shared.apply(to: terminalView)
         terminalView.terminalDelegate = self
+    }
+
+    // MARK: - 连接复用
+
+    /// 已连上时对外暴露本会话所用连接,供 SessionManager 让新会话(⌘T/分屏)复用。
+    var liveConnection: SSHConnection? {
+        guard case .connected = state else { return nil }
+        return connection
+    }
+
+    /// 注入一条待复用的连接(一次性,仅对下一次 connect 生效)。同主机复用时避免新建 TCP。
+    func prepareToBorrow(_ connection: SSHConnection) {
+        willBorrow = connection
     }
 
     // MARK: - 生命周期
@@ -129,16 +148,13 @@ final class TerminalSession: Identifiable {
             stopPortForwards()
             stdinWriter?.finish()
             stdinWriter = nil
-            let client = self.client
-            let jumps = self.jumpClients
+            let releasing = self.connection
             self.client = nil
+            self.connection = nil
             self.jumpClients = []
             sessionTask = nil
-            Task.detached {
-                try? await client?.close()
-                // 由内到外关闭跳板隧道
-                for jump in jumps.reversed() { try? await jump.close() }
-            }
+            // 引用归零才真正关闭底层连接/跳板;借用会话的 release 不会误关共享连接
+            releasing?.release()
             maybeScheduleReconnect(after: disconnectReason)
         }
     }
@@ -147,9 +163,9 @@ final class TerminalSession: Identifiable {
         userInitiatedDisconnect = true
         reconnectTask?.cancel()
         isAutoReconnectScheduled = false
+        // 取消会话任务即结束 PTY 循环 → withPTY 只关自己的通道 → teardown 里 release 连接。
+        // 不在此直接关 client:共享连接时会误伤其它复用会话(分屏/⌘T)。
         sessionTask?.cancel()
-        let client = self.client
-        Task.detached { try? await client?.close() }
     }
 
     // MARK: - 自动重连(指数退避,保留 scrollback)
@@ -161,6 +177,10 @@ final class TerminalSession: Identifiable {
 
     private func maybeScheduleReconnect(after reason: DisconnectReason) {
         guard reason != .userInitiated, everConnected else { return }
+        // 借用会话不自动重连:否则共享连接因网络抖动断开时,拥有者与所有分屏/复制会话会
+        // 同时各自新建 TCP,形成连接风暴,反而触发服务器的频率惩罚。拥有者正常重连(仅 1 条),
+        // 借用会话保持断线,由用户手动「立即重连」(此时走自建连接,单条,不成风暴)。
+        guard !isBorrower else { return }
         let enabled = UserDefaults.standard.object(forKey: SettingsKeys.autoReconnect) as? Bool ?? true
         guard enabled, reconnectAttempt < 8 else { return }
 
@@ -309,13 +329,32 @@ final class TerminalSession: Identifiable {
     }
 
     private func runSession() async throws {
-        // 目标或任一跳板用密钥时,连接前统一过一次 Touch ID(避免链路上多次弹窗)
-        let usesKeys = ([spec] + spec.jump).contains { $0.authMethod != .password }
-        if usesKeys { try await requireTouchIDIfEnabled() }
-
-        let client = try await establishClient()
+        let client: SSHClient
+        let connection: SSHConnection
+        if let borrow = willBorrow, borrow.isAlive {
+            // 借用已建立的连接:跳过 TCP/密钥交换/认证/主机密钥/Touch ID,直接在其上开 PTY 通道
+            isBorrower = true
+            willBorrow = nil
+            borrow.retain()
+            connection = borrow
+            client = borrow.client
+            state = .connecting(detail: "复用现有连接,正在打开终端通道…")
+        } else {
+            isBorrower = false
+            willBorrow = nil
+            // 目标或任一跳板用密钥时,连接前统一过一次 Touch ID(避免链路上多次弹窗)
+            let usesKeys = ([spec] + spec.jump).contains { $0.authMethod != .password }
+            if usesKeys { try await requireTouchIDIfEnabled() }
+            let established = try await establishClient()
+            // 跳板链所有权转入 SSHConnection,由引用计数统一管理关闭
+            connection = SSHConnection(client: established, jumpClients: jumpClients)
+            jumpClients = []
+            connection.retain()
+            client = established
+            state = .connecting(detail: "认证成功,正在打开终端通道…")
+        }
         self.client = client
-        state = .connecting(detail: "认证成功,正在打开终端通道…")
+        self.connection = connection
 
         let term = terminalView.getTerminal()
         let ptyRequest = SSHChannelRequestEvent.PseudoTerminalRequest(
@@ -337,7 +376,8 @@ final class TerminalSession: Identifiable {
                 self.everConnected = true
                 self.reconnectAttempt = 0
                 self.focusTerminal()
-                self.startPortForwards()
+                // 端口转发绑在连接层:仅拥有者建立,借用会话复用同一连接不重复绑定
+                if !self.isBorrower { self.startPortForwards() }
             }
 
             // 单一消费者串行写入,保证按键与 resize 的顺序

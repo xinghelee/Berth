@@ -290,6 +290,63 @@ enum M2AcceptanceTest {
         browser.close()
     }
 
+    /// 连接复用验收:BERTH_REUSE_AUTOTEST=1。连目标(拥有者)后,再开一个借用会话复用同一连接,
+    /// 验证:两者是同一条底层连接(同一 SSHConnection 对象)、借用会话能连上并跑通命令、
+    /// 关掉借用会话后拥有者仍在(引用计数不误关共享连接)。这直接证明分屏/⌘T 不再新建 TCP。
+    static func runReuseIfRequested(container: ModelContainer) async {
+        let env = ProcessInfo.processInfo.environment
+        guard env["BERTH_REUSE_AUTOTEST"] == "1",
+              let host = env["BERTH_TEST_HOST"],
+              let user = env["BERTH_TEST_USER"],
+              let keyFile = env["BERTH_TEST_KEYFILE"],
+              let dumpBase = env["BERTH_TEST_DUMP"] else { return }
+        func log(_ line: String) {
+            try? line.write(toFile: dumpBase + ".reuse.log", atomically: true, encoding: .utf8)
+        }
+        let port = Int(env["BERTH_TEST_PORT"] ?? "22") ?? 22
+        UserDefaults.standard.set(false, forKey: SettingsKeys.requireTouchIDForKeys)
+        let manager = SessionManager.shared
+        let spec = HostSpec(
+            hostID: UUID(), label: "reuse-test", hostname: host, port: port,
+            username: user, authMethod: .privateKeyFile, privateKeyPath: keyFile
+        )
+
+        func waitConnected(_ session: TerminalSession, _ tag: String) async -> Bool {
+            let deadline = Date().addingTimeInterval(20)
+            while Date() < deadline {
+                if session.hostKeyPrompt != nil { session.resolveHostKeyPrompt(accepted: true) }
+                if case .connected = session.state { return true }
+                if case .disconnected(let reason) = session.state { log("REUSE_FAIL \(tag) 断开 \(reason)"); return false }
+                try? await Task.sleep(for: .milliseconds(200))
+            }
+            log("REUSE_FAIL \(tag) 连接超时"); return false
+        }
+
+        // 1. 拥有者:自建连接
+        let owner = manager.open(spec: spec)
+        guard await waitConnected(owner, "owner") else { return }
+        guard let ownerConn = owner.liveConnection else { log("REUSE_FAIL 拥有者无 liveConnection"); return }
+
+        // 2. 借用者:复用拥有者的连接(等价于分屏/⌘T)
+        let borrower = manager.open(spec: spec, reusing: ownerConn)
+        guard await waitConnected(borrower, "borrower") else { return }
+
+        // 3. 同一条底层连接?(对象身份相同 = 没有新建 TCP)
+        let sameConnection = borrower.liveConnection === ownerConn
+        // 4. 借用会话的通道确实可用(在共享连接上另开 exec 通道取信息)
+        let borrowerWorks = (await borrower.fetchServerInfo())?.textRows.isEmpty == false
+
+        // 5. 关掉借用会话,拥有者应仍然在线(release 不误关共享连接)
+        manager.close(borrower)
+        try? await Task.sleep(for: .milliseconds(500))
+        let ownerStillUp: Bool = { if case .connected = owner.state { return true } else { return false } }()
+        // 拥有者仍能用共享连接(证明底层 client 没被借用会话关掉)
+        let ownerStillWorks = (await owner.fetchServerInfo())?.textRows.isEmpty == false
+
+        log("REUSE_OK sameConnection=\(sameConnection) borrowerWorks=\(borrowerWorks) ownerStillUp=\(ownerStillUp) ownerStillWorks=\(ownerStillWorks)")
+        manager.close(owner)
+    }
+
     /// ssh-agent 验收:BERTH_AGENT_AUTOTEST=1,用 agent 认证连目标(agent 里须已 ssh-add 目标可用密钥)。
     static func runAgentIfRequested(container: ModelContainer) async {
         let env = ProcessInfo.processInfo.environment

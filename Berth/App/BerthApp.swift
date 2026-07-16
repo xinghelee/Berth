@@ -26,6 +26,7 @@ struct BerthApp: App {
                     await M2AcceptanceTest.runBackupIfRequested(container: container)
                     await M2AcceptanceTest.runAgentIfRequested(container: container)
                     await M2AcceptanceTest.runSFTPIfRequested(container: container)
+                    await M2AcceptanceTest.runReuseIfRequested(container: container)
                 }
         }
         .modelContainer(container)
