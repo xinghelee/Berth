@@ -48,6 +48,14 @@ event loop 上执行。`SSHClient.connect(on:settings:)`(经代理自建 channel
 上下文调用它,触发 `assertInEventLoop` 崩溃。补丁把 addHandlers 包进 `channel.eventLoop.submit { … }`,
 使其在正确的 event loop 上运行。标记 `[Berth patch]`。
 
+## 补丁:DataToBufferCodec 设为 public
+
+`Sources/Citadel/DirectTCPIP/Client/DirectTCPIP+Client.swift` 的 `DataToBufferCodec`
+(SSHChannelData ↔ ByteBuffer)原为 `internal`。远程端口转发的 forwarded-tcpip 入通道
+**不会**自动安装此 codec(direct-tcpip 会),导致包成 `NIOAsyncChannel<ByteBuffer>` 后收不到
+数据。补丁把类与其协议方法、init 设为 `public`,Berth 在 `withRemotePortForward` 的
+`configure` 闭包里手动 `addHandler(DataToBufferCodec())`。标记 `[Berth patch]`。
+
 ## 升级 Citadel/nio-ssh 时
 本地 vendor 已脱离 SPM 版本管理。若要升级,需重新 vendor 对应版本并重放上述 `[Berth patch]`
 改动(`grep -rn "\[Berth patch\]" vendor/` 可列出全部补丁点)。

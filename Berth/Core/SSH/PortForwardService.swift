@@ -162,6 +162,9 @@ final class PortForwardService: @unchecked Sendable {
             port: forward.bindPort,
             inboundType: ByteBuffer.self,
             outboundType: ByteBuffer.self,
+            // forwarded-tcpip 入通道需手动装 codec(SSHChannelData ↔ ByteBuffer;
+            // direct-tcpip 是自动装的,forwarded-tcpip 不是)
+            configure: { channel in channel.pipeline.addHandler(DataToBufferCodec()) },
             onOpen: { remote in handler(id, .active(boundPort: remote.boundPort)) },
             onAccept: { incoming in
                 let local = try await ClientBootstrap(group: group)
