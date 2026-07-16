@@ -14,6 +14,8 @@ struct SidebarView: View {
     @State private var searchText = ""
     /// 键盘/单击选中的主机行
     @State private var selectedHostID: UUID?
+    /// 主题配色面板(popover)
+    @State private var isThemePanelPresented = false
 
     // 编辑/删除状态(删除只存快照,不持有模型 —— 模型可能被 config 同步等外部删除,悬空访问会崩溃)
     @State private var editingHost: Host?
@@ -128,6 +130,11 @@ struct SidebarView: View {
             )
 
             PanelIconButton(symbol: "plus", help: "新建主机") { isCreatingHost = true }
+            PanelIconButton(symbol: "paintpalette", help: "终端配色") { isThemePanelPresented.toggle() }
+                .popover(isPresented: $isThemePanelPresented, arrowEdge: .bottom) {
+                    ThemePanelView()
+                }
+            SettingsIconLink()
         }
         .padding(.horizontal, 10)
         .padding(.top, 8)
@@ -361,6 +368,30 @@ private struct HostRow: View {
         .animation(.easeOut(duration: 0.12), value: hovering)
         .onHover { hovering = $0 }
         .help("\(host.address)\(host.lastConnectedAt.map { " · 最近连接 " + $0.formatted(.relative(presentation: .named)) } ?? "")")
+    }
+}
+
+/// 设置入口:SettingsLink 套 PanelIconButton 同款外观(SettingsLink 不能换成普通 Button,
+/// macOS 14+ 打开设置窗口只有这一个受支持入口)
+private struct SettingsIconLink: View {
+    @State private var hovering = false
+
+    var body: some View {
+        SettingsLink {
+            Image(systemName: "gearshape")
+                .font(.system(size: 12, weight: .medium))
+                .frame(width: 24, height: 24)
+                .background(
+                    RoundedRectangle(cornerRadius: 5)
+                        .fill(hovering ? Color.primary.opacity(0.08) : .clear)
+                )
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(.secondary)
+        .animation(.easeOut(duration: 0.12), value: hovering)
+        .onHover { hovering = $0 }
+        .help("设置(⌘,)")
     }
 }
 
