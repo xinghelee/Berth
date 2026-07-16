@@ -20,8 +20,6 @@ struct HostListView: View {
     private var visibleHosts: [Host] {
         var hosts = allHosts
         switch sidebarSelection {
-        case .group(let groupID):
-            hosts = hosts.filter { $0.group?.id == groupID }
         case .sshConfig:
             hosts = hosts.filter { $0.source == .sshConfig }
         case .allHosts, .keys, nil:
@@ -49,7 +47,7 @@ struct HostListView: View {
         .toolbar(removing: .title)
         .toolbarBackground(.hidden, for: .windowToolbar)
         .sheet(isPresented: $isCreatingHost) {
-            HostEditorView(host: nil, defaultGroupID: currentGroupID)
+            HostEditorView(host: nil, defaultGroupID: nil)
         }
         .sheet(item: $editingHost) { host in
             HostEditorView(host: host, defaultGroupID: nil)
@@ -90,22 +88,11 @@ struct HostListView: View {
         }
     }
 
-    private var currentGroupID: UUID? {
-        if case .group(let id) = sidebarSelection { return id }
-        return nil
-    }
-
     private var columnTitle: String {
         switch sidebarSelection {
         case .sshConfig: return "SSH Config"
-        case .group(let id):
-            return groupName(id) ?? "分组"
         default: return "全部主机"
         }
-    }
-
-    private func groupName(_ id: UUID) -> String? {
-        groups.first { $0.id == id }?.name
     }
 
     private func rowBackground(for host: Host) -> Color {
@@ -188,7 +175,7 @@ struct HostListView: View {
                     .onHover { hovering in
                         hoveredHostID = hovering ? host.id : (hoveredHostID == host.id ? nil : hoveredHostID)
                     }
-                    .draggable(host.id.uuidString)
+                    .onDrag { NSItemProvider(object: host.id.uuidString as NSString) }
                     .onTapGesture(count: 2) {
                         connect(to: host)
                     }
