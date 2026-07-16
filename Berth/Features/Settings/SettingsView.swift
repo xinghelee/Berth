@@ -7,6 +7,8 @@ struct SettingsView: View {
     @AppStorage(SettingsKeys.terminalFontSize) private var fontSize: Double = 13
     @AppStorage(SettingsKeys.cursorShape) private var cursorShape = CursorPrefs.shapeBlock
     @AppStorage(SettingsKeys.cursorBlink) private var cursorBlink = true
+    @AppStorage(SettingsKeys.copyOnSelect) private var copyOnSelect = false
+    @AppStorage(SettingsKeys.middleClickPaste) private var middleClickPaste = false
     @AppStorage(SettingsKeys.confirmBeforeClosingTab) private var confirmBeforeClosingTab = true
     @AppStorage(SettingsKeys.autoReconnect) private var autoReconnect = true
     @AppStorage(SettingsKeys.requireTouchIDForKeys) private var requireTouchID = true
@@ -46,6 +48,10 @@ struct SettingsView: View {
                 }
                 .pickerStyle(.segmented)
                 Toggle("光标闪烁", isOn: $cursorBlink)
+                Toggle("选中即复制到剪贴板", isOn: $copyOnSelect)
+                Toggle("中键粘贴", isOn: $middleClickPaste)
+                Text("⌘点击可打开终端里的链接;双击选词、三击选行。")
+                    .font(.caption).foregroundStyle(.secondary)
             }
             .onChange(of: cursorShape) { _, _ in CursorPrefs.applyToAllSessions() }
             .onChange(of: cursorBlink) { _, _ in CursorPrefs.applyToAllSessions() }

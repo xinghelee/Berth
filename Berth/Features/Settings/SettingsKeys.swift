@@ -12,4 +12,6 @@ enum SettingsKeys {
     static let pasteProtection = "terminal.pasteProtection"
     static let notifyLongCommand = "session.notifyLongCommand"
     static let restoreSessions = "session.restoreOnLaunch"
+    static let copyOnSelect = "terminal.copyOnSelect"
+    static let middleClickPaste = "terminal.middleClickPaste"
 }

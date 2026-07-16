@@ -721,4 +721,19 @@ extension TerminalSession: TerminalViewDelegate {
             pasteboard.setString(text, forType: .string)
         }
     }
+
+    /// ⌘点击链接:http/https/ftp/mailto/file 用默认应用打开;补全裸域名的协议头
+    nonisolated func requestOpenLink(source: TerminalView, link: String, params: [String: String]) {
+        var s = link.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !s.isEmpty else { return }
+        // 裸域名(www. 开头或含点无协议)补 https://
+        if !s.contains("://"), !s.hasPrefix("mailto:") {
+            if s.hasPrefix("www.") || (s.contains(".") && !s.hasPrefix("/")) {
+                s = "https://" + s
+            }
+        }
+        guard let url = URL(string: s), let scheme = url.scheme?.lowercased(),
+              ["http", "https", "ftp", "mailto", "file"].contains(scheme) else { return }
+        MainActor.assumeIsolated { NSWorkspace.shared.open(url) }
+    }
 }

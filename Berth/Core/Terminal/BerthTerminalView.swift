@@ -66,6 +66,28 @@ final class BerthTerminalView: SwiftTerm.TerminalView {
         MainActor.assumeIsolated { SessionManager.shared.requestSearch() }
     }
 
+    // MARK: - 选中即复制 / 中键粘贴
+
+    override func mouseUp(with event: NSEvent) {
+        super.mouseUp(with: event)
+        // 选中即复制(Unix 习惯,默认关):拖选结束后有选区就写入剪贴板
+        let enabled = UserDefaults.standard.bool(forKey: SettingsKeys.copyOnSelect)
+        guard enabled, let text = getSelection(), !text.isEmpty else { return }
+        let pb = NSPasteboard.general
+        pb.clearContents()
+        pb.setString(text, forType: .string)
+    }
+
+    override func otherMouseUp(with event: NSEvent) {
+        // 中键粘贴(默认关):粘贴剪贴板内容,仍走粘贴保护
+        if event.buttonNumber == 2,
+           UserDefaults.standard.bool(forKey: SettingsKeys.middleClickPaste) {
+            paste(self)
+            return
+        }
+        super.otherMouseUp(with: event)
+    }
+
     override func paste(_ sender: Any) {
         let enabled = UserDefaults.standard.object(forKey: SettingsKeys.pasteProtection) as? Bool ?? true
         guard enabled,
