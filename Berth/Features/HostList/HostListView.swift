@@ -26,7 +26,14 @@ struct HostListView: View {
             break
         }
         let query = searchText.trimmingCharacters(in: .whitespaces)
-        guard !query.isEmpty else { return hosts }
+        guard !query.isEmpty else {
+            // 已分组主机在侧栏分组树展示,此处只列未分组的,避免两处重复
+            if sidebarSelection != .sshConfig {
+                hosts = hosts.filter { $0.group == nil }
+            }
+            return hosts
+        }
+        // 搜索时覆盖全部(含已分组),保证可检索
         return hosts.filter {
             $0.label.localizedCaseInsensitiveContains(query)
                 || $0.hostname.localizedCaseInsensitiveContains(query)
@@ -39,6 +46,8 @@ struct HostListView: View {
             columnHeader
             if allHosts.isEmpty {
                 emptyState
+            } else if visibleHosts.isEmpty {
+                quietEmpty
             } else {
                 hostList
             }
@@ -224,6 +233,19 @@ struct HostListView: View {
             }
             return .ignored
         }
+    }
+
+    /// 有主机但当前视图无可展示项(全部已分组 / 搜索无匹配)
+    private var quietEmpty: some View {
+        VStack(spacing: 6) {
+            Image(systemName: searchText.isEmpty ? "folder" : "magnifyingglass")
+                .font(.system(size: 22))
+                .foregroundStyle(.tertiary)
+            Text(searchText.isEmpty ? "主机都已归入左侧分组" : "没有匹配的主机")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var emptyState: some View {
