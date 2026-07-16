@@ -40,6 +40,7 @@ struct TerminalTabsView: View {
                             .transition(.move(edge: .trailing).combined(with: .opacity))
                         }
                     }
+                    StatusBarView(session: session)
                 }
             }
         }
