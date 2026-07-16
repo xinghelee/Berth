@@ -30,10 +30,15 @@ xcodebuildmcp macos build-and-run --project-path Berth.xcodeproj --scheme Berth
 docker rm -f berth-test-sshd   # 停止
 ```
 
-Spike 自动连接(自动化验证用):
+M1 自动化验收(凭据走环境变量,不进 argv;`BERTH_TRANSIENT_STORE=1` 用内存库):
 
 ```bash
-<app> --host 127.0.0.1 --port 2222 --user dev --password berth-spike --connect --send "ls /"
+BERTH_M1_AUTOTEST=1 BERTH_TRANSIENT_STORE=1 \
+  BERTH_TEST_HOST=127.0.0.1 BERTH_TEST_PORT=2222 \
+  BERTH_TEST_USER=dev BERTH_TEST_PASSWORD=berth-spike \
+  BERTH_TEST_DUMP=/tmp/m1 <app>/Contents/MacOS/Berth
+# 流程:Keychain 自检 → 建主机 → 连接 → vim 编辑保存 → 关闭 → 重连
+# 结果看 /tmp/m1.log 与 /tmp/m1.{first,second}.{normal,alt} 缓冲区 dump
 ```
 
 ## 工程约定
@@ -45,8 +50,8 @@ Spike 自动连接(自动化验证用):
 
 ## 里程碑状态
 
-- [x] M0 — 技术验证 spike:Citadel 连接 + 密码/密钥认证 + PTY + SwiftTerm 渲染 + resize(`Berth/Spike/`)
-- [ ] M1 — 骨架与连接:数据模型、Keychain、三栏布局、主机管理、终端标签页
+- [x] M0 — 技术验证 spike:Citadel 连接 + 密码/密钥认证 + PTY + SwiftTerm 渲染 + resize(spike 代码已被 M1 正式架构替代)
+- [x] M1 — 骨架与连接:SwiftData 模型、Keychain、三栏布局、主机管理、终端标签页(⌘T/⌘W/⌘1-9)、断线横幅重连、基础设置。自动化验收通过(建主机→连接→vim 编辑→关闭重连)
 - [ ] M2 — 体验完善:⌘K、ssh_config 导入、密钥管理、known_hosts、断线重连、主题、本地化
 - [ ] M3 — 高级连接:端口转发、跳板机、代理、ssh-agent、备份
 - [ ] M4 — 二期:SFTP、CloudKit 同步、本地回显、iTerm2 主题导入
