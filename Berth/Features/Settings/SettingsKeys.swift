@@ -6,6 +6,5 @@ enum SettingsKeys {
     static let confirmBeforeClosingTab = "terminal.confirmBeforeClosingTab"
     static let autoReconnect = "session.autoReconnect"
     static let terminalTheme = "terminal.theme"
-    static let importedThemes = "terminal.importedThemes"
     static let requireTouchIDForKeys = "security.requireTouchIDForKeys"
 }

@@ -126,7 +126,85 @@ extension TerminalTheme {
         ]
     )
 
-    static let builtIn: [TerminalTheme] = [.midnight, .berthDark, .catppuccinMacchiato, .solarizedDark, .oneLight]
+    static let dracula = TerminalTheme(
+        id: "dracula",
+        name: "Dracula",
+        isDark: true,
+        background: "#282A36",
+        foreground: "#F8F8F2",
+        cursor: "#F8F8F2",
+        selection: "#44475A",
+        accent: "#BD93F9",
+        ansi: [
+            "#21222C", "#FF5555", "#50FA7B", "#F1FA8C", "#BD93F9", "#FF79C6", "#8BE9FD", "#F8F8F2",
+            "#6272A4", "#FF6E6E", "#69FF94", "#FFFFA5", "#D6ACFF", "#FF92DF", "#A4FFFF", "#FFFFFF",
+        ]
+    )
+
+    static let nord = TerminalTheme(
+        id: "nord",
+        name: "Nord",
+        isDark: true,
+        background: "#2E3440",
+        foreground: "#D8DEE9",
+        cursor: "#D8DEE9",
+        selection: "#434C5E",
+        accent: "#88C0D0",
+        ansi: [
+            "#3B4252", "#BF616A", "#A3BE8C", "#EBCB8B", "#81A1C1", "#B48EAD", "#88C0D0", "#E5E9F0",
+            "#4C566A", "#BF616A", "#A3BE8C", "#EBCB8B", "#81A1C1", "#B48EAD", "#8FBCBB", "#ECEFF4",
+        ]
+    )
+
+    static let gruvboxDark = TerminalTheme(
+        id: "gruvbox-dark",
+        name: "Gruvbox Dark",
+        isDark: true,
+        background: "#282828",
+        foreground: "#EBDBB2",
+        cursor: "#EBDBB2",
+        selection: "#504945",
+        accent: "#FE8019",
+        ansi: [
+            "#282828", "#CC241D", "#98971A", "#D79921", "#458588", "#B16286", "#689D6A", "#A89984",
+            "#928374", "#FB4934", "#B8BB26", "#FABD2F", "#83A598", "#D3869B", "#8EC07C", "#EBDBB2",
+        ]
+    )
+
+    static let tokyoNight = TerminalTheme(
+        id: "tokyo-night",
+        name: "Tokyo Night",
+        isDark: true,
+        background: "#1A1B26",
+        foreground: "#C0CAF5",
+        cursor: "#C0CAF5",
+        selection: "#283457",
+        accent: "#7AA2F7",
+        ansi: [
+            "#15161E", "#F7768E", "#9ECE6A", "#E0AF68", "#7AA2F7", "#BB9AF7", "#7DCFFF", "#A9B1D6",
+            "#414868", "#F7768E", "#9ECE6A", "#E0AF68", "#7AA2F7", "#BB9AF7", "#7DCFFF", "#C0CAF5",
+        ]
+    )
+
+    static let githubLight = TerminalTheme(
+        id: "github-light",
+        name: "GitHub Light(浅色)",
+        isDark: false,
+        background: "#FFFFFF",
+        foreground: "#24292F",
+        cursor: "#044289",
+        selection: "#BBDFFF",
+        accent: "#0969DA",
+        ansi: [
+            "#24292E", "#D73A49", "#28A745", "#DBAB09", "#0366D6", "#5A32A3", "#0598BC", "#6A737D",
+            "#959DA5", "#CB2431", "#22863A", "#B08800", "#005CC5", "#5A32A3", "#3192AA", "#D1D5DA",
+        ]
+    )
+
+    static let builtIn: [TerminalTheme] = [
+        .midnight, .berthDark, .tokyoNight, .catppuccinMacchiato, .dracula,
+        .nord, .gruvboxDark, .solarizedDark, .oneLight, .githubLight,
+    ]
 }
 
 /// 主题状态:持有当前主题,负责应用到 TerminalView(含 live 切换所有活跃会话)
@@ -136,53 +214,20 @@ final class ThemeStore {
     static let shared = ThemeStore()
 
     private(set) var current: TerminalTheme
-    /// 用户导入的主题(iTerm2 等),持久化在 UserDefaults
-    private(set) var imported: [TerminalTheme]
-
-    /// 内置 + 导入,供设置页主题列表
-    var allThemes: [TerminalTheme] { TerminalTheme.builtIn + imported }
 
     init() {
-        let importedThemes = ThemeStore.loadImported()
-        self.imported = importedThemes
         let savedID = UserDefaults.standard.string(forKey: SettingsKeys.terminalTheme)
-        current = (TerminalTheme.builtIn + importedThemes).first { $0.id == savedID } ?? .midnight
+        current = TerminalTheme.builtIn.first { $0.id == savedID } ?? .midnight
     }
 
     func select(id: String) {
-        guard let theme = allThemes.first(where: { $0.id == id }) else { return }
+        guard let theme = TerminalTheme.builtIn.first(where: { $0.id == id }) else { return }
         current = theme
         UserDefaults.standard.set(theme.id, forKey: SettingsKeys.terminalTheme)
         for session in SessionManager.shared.sessions {
             apply(to: session.terminalView)
         }
         applyWindowChrome()
-    }
-
-    /// 导入一套主题(同 id 覆盖),并立即切换过去
-    func addImported(_ theme: TerminalTheme) {
-        imported.removeAll { $0.id == theme.id }
-        imported.append(theme)
-        persistImported()
-        select(id: theme.id)
-    }
-
-    func removeImported(id: String) {
-        imported.removeAll { $0.id == id }
-        persistImported()
-        if current.id == id { select(id: TerminalTheme.midnight.id) }
-    }
-
-    private static func loadImported() -> [TerminalTheme] {
-        guard let data = UserDefaults.standard.data(forKey: SettingsKeys.importedThemes),
-              let themes = try? JSONDecoder().decode([TerminalTheme].self, from: data) else { return [] }
-        return themes
-    }
-
-    private func persistImported() {
-        if let data = try? JSONEncoder().encode(imported) {
-            UserDefaults.standard.set(data, forKey: SettingsKeys.importedThemes)
-        }
     }
 
     /// 强制整个 app(含工具栏/标题栏/未着色区域)跟随主题深浅,不受系统浅色模式影响
