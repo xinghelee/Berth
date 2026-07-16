@@ -58,17 +58,21 @@ struct StatusBarView: View {
             }
             .font(.system(size: 11, design: .monospaced))
             .lineLimit(1)
-            .padding(.horizontal, 12)
-            .frame(height: 30)
-            .background(theme.elevatedBackground)
-            .overlay(alignment: .top) {
-                Rectangle()
-                    .fill(theme.borderColor)
-                    .frame(height: 1)
-            }
+            .padding(.horizontal, 14)
+            .frame(height: 28)
+            // 悬浮卡片:圆角 + 细描边 + 轻投影,与浮动侧栏气质一致
+            .background(
+                RoundedRectangle(cornerRadius: 9)
+                    .fill(theme.elevatedBackground)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 9)
+                            .stroke(theme.borderColor, lineWidth: 1)
+                    )
+                    .shadow(color: .black.opacity(0.22), radius: 7, y: 2)
+            )
         }
-        // macOS 浮动侧栏整体带 ~11pt 底部内边距,状态栏抬同样的量与侧栏底行(密钥/主题/设置)水平对齐
-        .padding(.bottom, 11)
+        .padding(.horizontal, 10)
+        .padding(.bottom, 10)
         .task(id: session.id) {
             // 资源轮询:连接中每 5s 拉一次;断开时清空,避免残留旧数据
             while !Task.isCancelled {

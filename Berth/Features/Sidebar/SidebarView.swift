@@ -388,7 +388,7 @@ private struct SettingsIconLink: View {
                 .font(.system(size: 12, weight: .medium))
                 .frame(width: 24, height: 24)
                 .background(
-                    RoundedRectangle(cornerRadius: 5)
+                    Circle()
                         .fill(hovering ? Color.primary.opacity(0.08) : .clear)
                 )
                 .contentShape(Rectangle())
