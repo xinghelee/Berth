@@ -5,16 +5,16 @@
 ## 技术栈
 
 - Swift + SwiftUI(AppKit 桥接终端视图),SPM 依赖管理
-- SSH: [Citadel](https://github.com/orlandos-nl/Citadel) **锁定 0.12.0**(0.12.1 将 swift-nio-ssh 换成了未评估的第三方个人 fork,勿随意升级)
+- SSH: [Citadel](https://github.com/orlandos-nl/Citadel) **已 vendor 到 `vendor/Citadel`(基线 0.12.0)+ 打补丁**;nio-ssh fork 也 vendor 在 `vendor/swift-nio-ssh`。补丁让 RSA 用 rsa-sha2-512 签名,详见 `vendor/PATCHES.md`。升级需重新 vendor 并重放补丁
 - 终端模拟: [SwiftTerm](https://github.com/migueldeicaza/SwiftTerm) **锁定 1.11.2**(1.12+ 引入 Metal GPU 渲染,构建需 Metal Toolchain,本机下载被网络阻断;解决后可升级换取渲染性能)
 - ⚠️ 最低系统 **macOS 15**(规格原定 14,但 Citadel 的 `withPTY`/`TTYOutput` API 标注 `@available(macOS 15.0+)`)
 
-## 已知限制:RSA 密钥连不上现代服务器
+## RSA 密钥支持(已通过 vendor 补丁解决)
 
-Citadel 0.12 的 RSA 实现只用 **SHA-1**(`ssh-rsa`)签名(`Algorithms/RSA.swift`,`NID_sha1`),
-而 OpenSSH 8.8+ 默认禁用 SHA-1 RSA,只收 `rsa-sha2-256/512`。其依赖的 nio-ssh 老 fork 也无 rsa-sha2 支持。
-**现象**:RSA 密钥认证报「服务器拒绝了认证」;ed25519 密钥与密码认证均正常。
-**建议**:优先 ed25519(spec 的默认密钥类型)。彻底修复需 vendor+patch Citadel 或切 libssh2(留作后续决策)。
+Citadel 原生只用 SHA-1(`ssh-rsa`)签 RSA,OpenSSH 8.8+ 拒收 → RSA 密钥连不上现代服务器。
+**已 vendor Citadel + nio-ssh 并打补丁**,改用 `rsa-sha2-512` 签名(RFC 8332),对 OpenSSH 9.2
+真机验证通过。补丁点见 `vendor/PATCHES.md`(`grep -rn "\[Berth patch\]" vendor/` 可列全)。
+已知边界:RSA 作 host key 且用 SHA-2 签 KEX 的服务器暂未覆盖验签(普遍用 ed25519 host key,不阻塞)。
 
 ## 构建
 

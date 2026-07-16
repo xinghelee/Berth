@@ -16,10 +16,10 @@ fileGroups:
 
 packages:
   Citadel:
-    url: https://github.com/orlandos-nl/Citadel.git
-    # 0.12.1 将 swift-nio-ssh 依赖切到了第三方个人 fork(Wellz26),供应链风险未评估;
-    # 0.12.0 使用维护者(Joannis)fork,PTY API 相同,故锁定 0.12.0。
-    exactVersion: 0.12.0
+    # 已 vendor 到本地并打补丁:让 RSA 用 rsa-sha2-512 签名(OpenSSH 8.8+ 拒收 Citadel
+    # 原生的 SHA-1 ssh-rsa 签名)。基线为 Citadel 0.12.0 + Joannis/swift-nio-ssh 0.3.4。
+    # 见 vendor/PATCHES.md。
+    path: vendor/Citadel
   SwiftTerm:
     url: https://github.com/migueldeicaza/SwiftTerm.git
     # 1.12.0 起引入 Metal GPU 渲染后端,构建需要 Xcode Metal Toolchain
