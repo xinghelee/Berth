@@ -1,3 +1,4 @@
+import AppKit
 import Citadel
 import Foundation
 import NIOCore
@@ -147,6 +148,82 @@ final class SFTPBrowser {
         }
     }
 
+    // MARK: - 服务端文件编辑(下载 → 本地编辑器 → 保存自动回传)
+
+    /// 正在编辑中的远端文件(远端绝对路径 → 状态),供 UI 显示角标
+    private(set) var editing: [String: EditState] = [:]
+    enum EditState: Equatable { case syncing, idle, failed }
+    @ObservationIgnored private var editTasks: [String: Task<Void, Never>] = [:]
+
+    /// 双击文件时:拉到本地临时目录,用默认编辑器打开,轮询本地改动自动回传到原路径。
+    /// openInEditor=false 仅供自动化验收(不真的启动编辑器),返回本地临时文件路径。
+    @discardableResult
+    func editRemotely(_ entry: Entry, openInEditor: Bool = true) -> URL? {
+        guard let sftp, !entry.isDirectory else { return nil }
+        let remotePath = join(path, entry.name)
+        guard editTasks[remotePath] == nil else { return nil } // 已在编辑
+
+        let dir = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("berth-edit-\(UUID().uuidString)", isDirectory: true)
+        let localURL = dir.appendingPathComponent(entry.name)
+
+        editing[remotePath] = .syncing
+        let task = Task { [weak self] in
+            do {
+                try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+                // 下载
+                let file = try await sftp.openFile(filePath: remotePath, flags: .read)
+                let buffer = try await file.readAll()
+                try? await file.close()
+                try Data(buffer.readableBytesView).write(to: localURL)
+                await MainActor.run {
+                    self?.editing[remotePath] = .idle
+                    if openInEditor { NSWorkspace.shared.open(localURL) }
+                }
+                await self?.watchAndSync(localURL: localURL, remotePath: remotePath, sftp: sftp)
+            } catch {
+                await MainActor.run { self?.editing[remotePath] = .failed }
+            }
+            try? FileManager.default.removeItem(at: dir)
+        }
+        editTasks[remotePath] = task
+        return localURL
+    }
+
+    /// 轮询本地文件 mtime,变化即回传(对 vim/VSCode 的原子保存-重命名也可靠)
+    private func watchAndSync(localURL: URL, remotePath: String, sftp: SFTPClient) async {
+        func mtime() -> Date? {
+            (try? FileManager.default.attributesOfItem(atPath: localURL.path)[.modificationDate]) as? Date
+        }
+        var lastModified = mtime()
+        while !Task.isCancelled {
+            try? await Task.sleep(for: .milliseconds(1200))
+            guard FileManager.default.fileExists(atPath: localURL.path) else { continue }
+            let current = mtime()
+            guard current != lastModified else { continue }
+            lastModified = current
+            editing[remotePath] = .syncing
+            do {
+                let data = try Data(contentsOf: localURL)
+                let file = try await sftp.openFile(filePath: remotePath, flags: [.write, .create, .truncate])
+                var buffer = ByteBufferAllocator().buffer(capacity: data.count)
+                buffer.writeBytes(data)
+                try await file.write(buffer, at: 0)
+                try? await file.close()
+                editing[remotePath] = .idle
+                if path == (remotePath as NSString).deletingLastPathComponent { await refresh() }
+            } catch {
+                editing[remotePath] = .failed
+            }
+        }
+    }
+
+    func stopEditing(_ remotePath: String) {
+        editTasks[remotePath]?.cancel()
+        editTasks[remotePath] = nil
+        editing[remotePath] = nil
+    }
+
     func makeDirectory(name: String) async {
         guard let sftp, !name.isEmpty else { return }
         do {
@@ -184,6 +261,9 @@ final class SFTPBrowser {
 
     func close() {
         isClosed = true
+        for task in editTasks.values { task.cancel() }
+        editTasks = [:]
+        editing = [:]
         let client = sftp
         sftp = nil
         Task.detached { try? await client?.close() }

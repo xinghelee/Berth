@@ -158,6 +158,7 @@ struct SFTPPanelView: View {
                 .lineLimit(1)
                 .truncationMode(.middle)
             Spacer(minLength: 4)
+            editBadge(entry)
             if !entry.isDirectory {
                 Text(sizeText(entry.size))
                     .font(.system(size: 10, design: .monospaced))
@@ -180,19 +181,46 @@ struct SFTPPanelView: View {
             if entry.isDirectory || entry.isSymlink {
                 Task { await browser?.enter(entry) }
             } else {
-                downloadPick(entry)
+                browser?.editRemotely(entry) // 双击文件 = 本地编辑器打开并自动回传
             }
         }
         .contextMenu {
             if entry.isDirectory {
                 Button("打开") { Task { await browser?.enter(entry) } }
             } else {
+                Button("用本地编辑器打开") { browser?.editRemotely(entry) }
                 Button("下载…") { downloadPick(entry) }
             }
             Button("重命名…") { renaming = entry; renameText = entry.name }
             Divider()
             Button("删除…", role: .destructive) { pendingDelete = entry }
         }
+    }
+
+    /// 编辑态角标:同步中转圈,失败显示叹号
+    @ViewBuilder
+    private func editBadge(_ entry: SFTPBrowser.Entry) -> some View {
+        if let state = browser?.editing[browserRemotePath(entry)] {
+            switch state {
+            case .syncing:
+                ProgressView().controlSize(.mini)
+            case .idle:
+                Image(systemName: "pencil.circle.fill")
+                    .font(.system(size: 11))
+                    .foregroundStyle(theme.accentColor)
+                    .help("编辑中,保存即自动回传")
+            case .failed:
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.orange)
+                    .help("回传失败")
+            }
+        }
+    }
+
+    private func browserRemotePath(_ entry: SFTPBrowser.Entry) -> String {
+        let base = browser?.path ?? "/"
+        return base == "/" ? "/\(entry.name)" : "\(base)/\(entry.name)"
     }
 
     private func transferBar(_ text: String) -> some View {

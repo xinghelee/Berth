@@ -290,6 +290,78 @@ enum M2AcceptanceTest {
         browser.close()
     }
 
+    /// 服务端文件编辑验收:BERTH_SFTPEDIT_AUTOTEST=1。上传文件 → editRemotely(不启动编辑器)拉到本地
+    /// → 改本地文件 → 等轮询自动回传 → 重新下载校验远端已更新 → 清理。
+    static func runSFTPEditIfRequested() async {
+        let env = ProcessInfo.processInfo.environment
+        guard env["BERTH_SFTPEDIT_AUTOTEST"] == "1",
+              let host = env["BERTH_TEST_HOST"],
+              let user = env["BERTH_TEST_USER"],
+              let keyFile = env["BERTH_TEST_KEYFILE"],
+              let dumpBase = env["BERTH_TEST_DUMP"] else { return }
+        func log(_ line: String) {
+            try? line.write(toFile: dumpBase + ".sftpedit.log", atomically: true, encoding: .utf8)
+        }
+        let port = Int(env["BERTH_TEST_PORT"] ?? "22") ?? 22
+        UserDefaults.standard.set(false, forKey: SettingsKeys.requireTouchIDForKeys)
+        let spec = HostSpec(
+            hostID: UUID(), label: "sftpedit-test", hostname: host, port: port,
+            username: user, authMethod: .privateKeyFile, privateKeyPath: keyFile
+        )
+        let session = SessionManager.shared.open(spec: spec)
+        let deadline = Date().addingTimeInterval(20)
+        while Date() < deadline {
+            if session.hostKeyPrompt != nil { session.resolveHostKeyPrompt(accepted: true) }
+            if case .connected = session.state { break }
+            if case .disconnected(let reason) = session.state { log("SFTPEDIT_FAIL 连接失败 \(reason)"); return }
+            try? await Task.sleep(for: .milliseconds(200))
+        }
+        guard case .connected = session.state else { log("SFTPEDIT_FAIL 连接超时"); return }
+
+        let browser = SFTPBrowser { try await session.openSFTP() }
+        await browser.start()
+        guard browser.state == .ready else { log("SFTPEDIT_FAIL list \(browser.state)"); return }
+
+        // 上传初始文件
+        let localUp = URL(fileURLWithPath: NSTemporaryDirectory() + "berth_edit_src.txt")
+        try? "before".data(using: .utf8)!.write(to: localUp)
+        await browser.upload(from: localUp)
+        await browser.refresh()
+        guard let entry = browser.entries.first(where: { $0.name == "berth_edit_src.txt" }) else {
+            log("SFTPEDIT_FAIL 上传后未找到文件"); return
+        }
+
+        // 开始编辑(不启动编辑器),拿到本地副本
+        guard let localCopy = browser.editRemotely(entry, openInEditor: false) else {
+            log("SFTPEDIT_FAIL editRemotely 返回空"); return
+        }
+        // 等下载完成
+        var downloaded = false
+        for _ in 0..<30 {
+            try? await Task.sleep(for: .milliseconds(200))
+            if FileManager.default.fileExists(atPath: localCopy.path),
+               (try? String(contentsOf: localCopy, encoding: .utf8)) == "before" { downloaded = true; break }
+        }
+        guard downloaded else { log("SFTPEDIT_FAIL 本地副本未就绪"); return }
+
+        // 模拟编辑器保存:改本地文件
+        try? "after-edited".data(using: .utf8)!.write(to: localCopy)
+
+        // 等轮询回传(轮询间隔 1.2s),再从远端重新下载校验
+        var synced = false
+        for _ in 0..<15 {
+            try? await Task.sleep(for: .milliseconds(400))
+            let verifyLocal = URL(fileURLWithPath: NSTemporaryDirectory() + "berth_edit_verify.txt")
+            await browser.download(entry, to: verifyLocal)
+            if (try? String(contentsOf: verifyLocal, encoding: .utf8)) == "after-edited" { synced = true; break }
+        }
+
+        browser.stopEditing(browser.path == "/" ? "/berth_edit_src.txt" : "\(browser.path)/berth_edit_src.txt")
+        await browser.delete(entry)
+        log(synced ? "SFTPEDIT_OK downloaded=\(downloaded) synced=\(synced)" : "SFTPEDIT_FAIL 回传未生效")
+        browser.close()
+    }
+
     /// 连接复用验收:BERTH_REUSE_AUTOTEST=1。连目标(拥有者)后,再开一个借用会话复用同一连接,
     /// 验证:两者是同一条底层连接(同一 SSHConnection 对象)、借用会话能连上并跑通命令、
     /// 关掉借用会话后拥有者仍在(引用计数不误关共享连接)。这直接证明分屏/⌘T 不再新建 TCP。
