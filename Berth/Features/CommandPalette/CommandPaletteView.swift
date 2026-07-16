@@ -7,6 +7,7 @@ struct CommandPaletteView: View {
     @Environment(SessionManager.self) private var sessionManager
     @Environment(\.openWindow) private var openWindow
     @Query private var hosts: [Host]
+    @Query(sort: [SortDescriptor(\Snippet.useCount, order: .reverse)]) private var snippets: [Snippet]
 
     @State private var query = ""
     @State private var selectionIndex = 0
@@ -18,10 +19,12 @@ struct CommandPaletteView: View {
     private enum Row: Identifiable {
         case command(PaletteCommand)
         case host(Host)
+        case snippet(Snippet)
         var id: String {
             switch self {
             case .command(let c): return "cmd." + c.id
             case .host(let h): return "host." + h.id.uuidString
+            case .snippet(let s): return "snip." + s.id.uuidString
             }
         }
     }
@@ -68,6 +71,9 @@ struct CommandPaletteView: View {
             PaletteCommand(id: "keys", title: "密钥管理", icon: "key") {
                 openWindow(id: "keys")
             },
+            PaletteCommand(id: "snippets", title: "管理命令片段", icon: "text.badge.plus") {
+                openWindow(id: "snippets")
+            },
         ]
         // 主题切换命令
         for theme in TerminalTheme.builtIn {
@@ -86,25 +92,30 @@ struct CommandPaletteView: View {
     private var rows: [Row] {
         let trimmed = query.trimmingCharacters(in: .whitespaces)
         if trimmed.isEmpty {
-            // 空查询:常用动作在前 + 最近连接的主机
+            // 空查询:常用动作 + 常用片段 + 最近连接的主机
             let recentHosts = hosts
                 .sorted { ($0.lastConnectedAt ?? .distantPast) > ($1.lastConnectedAt ?? .distantPast) }
-                .prefix(5)
-            return commands.prefix(8).map(Row.command) + recentHosts.map(Row.host)
+                .prefix(4)
+            return commands.prefix(7).map(Row.command)
+                + snippets.prefix(4).map(Row.snippet)
+                + recentHosts.map(Row.host)
         }
-        // 命令模糊匹配
         let scoredCmds: [(PaletteCommand, Int)] = commands.compactMap { c in
             guard let s = FuzzyMatcher.bestScore(query: trimmed, fields: [c.title, c.subtitle]) else { return nil }
             return (c, s)
         }
-        // 主机模糊匹配
+        let scoredSnips: [(Snippet, Int)] = snippets.compactMap { sn in
+            guard let s = FuzzyMatcher.bestScore(query: trimmed, fields: [sn.title, sn.command]) else { return nil }
+            return (sn, s)
+        }
         let scoredHosts: [(Host, Int)] = hosts.compactMap { h in
             guard let s = FuzzyMatcher.bestScore(query: trimmed, fields: [h.label, h.hostname, h.username, h.group?.name]) else { return nil }
             return (h, s)
         }
-        let cmdRows = scoredCmds.sorted { $0.1 > $1.1 }.prefix(6).map { Row.command($0.0) }
-        let hostRows = scoredHosts.sorted { $0.1 > $1.1 }.prefix(6).map { Row.host($0.0) }
-        return Array(cmdRows) + Array(hostRows)
+        let cmdRows = scoredCmds.sorted { $0.1 > $1.1 }.prefix(5).map { Row.command($0.0) }
+        let snipRows = scoredSnips.sorted { $0.1 > $1.1 }.prefix(5).map { Row.snippet($0.0) }
+        let hostRows = scoredHosts.sorted { $0.1 > $1.1 }.prefix(5).map { Row.host($0.0) }
+        return Array(cmdRows) + Array(snipRows) + Array(hostRows)
     }
 
     var body: some View {
@@ -179,6 +190,14 @@ struct CommandPaletteView: View {
                 }
                 Spacer()
                 Text("连接").font(.caption2).foregroundStyle(.tertiary)
+            case .snippet(let snip):
+                Image(systemName: "text.badge.plus").frame(width: 18).foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(snip.title)
+                    Text(snip.command).font(.caption.monospaced()).foregroundStyle(.secondary).lineLimit(1)
+                }
+                Spacer()
+                Text(sessionManager.selected == nil ? "无终端" : "发送").font(.caption2).foregroundStyle(.tertiary)
             }
         }
         .padding(.horizontal, 10)
@@ -199,6 +218,10 @@ struct CommandPaletteView: View {
             host.lastConnectedAt = Date()
             try? modelContext.save()
             sessionManager.open(spec: HostSpec.resolve(host, in: hosts))
+        case .snippet(let snip):
+            guard sessionManager.selected != nil else { return }
+            controller.dismiss()
+            SnippetRunController.shared.run(snip, in: sessionManager)
         }
     }
 }

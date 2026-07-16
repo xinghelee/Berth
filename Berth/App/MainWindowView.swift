@@ -6,11 +6,13 @@ import SwiftUI
 struct MainWindowView: View {
     @State private var quickConnect = QuickConnectController.shared
     @State private var commandPalette = CommandPaletteController.shared
+    @State private var snippetRun = SnippetRunController.shared
     @State private var theme = ThemeStore.shared
     @Environment(\.modelContext) private var modelContext
 
     var body: some View {
         @Bindable var quickConnect = quickConnect
+        @Bindable var snippetRun = snippetRun
         ZStack {
             NavigationSplitView {
                 SidebarView()
@@ -52,6 +54,9 @@ struct MainWindowView: View {
         ))
         .sheet(item: $quickConnect.directConnectRequest) { request in
             DirectConnectSheet(request: request)
+        }
+        .sheet(item: $snippetRun.pending) { snippet in
+            SnippetRunSheet(snippet: snippet)
         }
         .frame(minWidth: 760, minHeight: 520)
         .task {

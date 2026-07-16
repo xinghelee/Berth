@@ -54,6 +54,19 @@ struct BerthApp: App {
         .windowResizability(.contentSize)
         .modelContainer(container)
 
+        // 命令片段管理
+        Window("命令片段", id: "snippets") {
+            SnippetsListView()
+                .environment(sessionManager)
+                .frame(minWidth: 460, idealWidth: 520, minHeight: 380, idealHeight: 520)
+                .background(WindowConfigurator(
+                    appearanceName: ThemeStore.shared.current.appearanceName,
+                    backgroundColor: ThemeStore.shared.current.backgroundNSColor,
+                    keepsTitle: true
+                ))
+        }
+        .modelContainer(container)
+
         Settings {
             SettingsView()
         }

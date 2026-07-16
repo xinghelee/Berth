@@ -4,7 +4,7 @@ import SwiftData
 enum Persistence {
     /// BERTH_TRANSIENT_STORE=1 时使用内存库(自动化验收/测试),不污染用户数据
     static func makeContainer() -> ModelContainer {
-        let schema = Schema([Host.self, HostGroup.self, SSHKeyRecord.self, PortForward.self])
+        let schema = Schema([Host.self, HostGroup.self, SSHKeyRecord.self, PortForward.self, Snippet.self])
         let transient = ProcessInfo.processInfo.environment["BERTH_TRANSIENT_STORE"] == "1"
         let configuration: ModelConfiguration
         if transient {
