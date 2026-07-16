@@ -10,7 +10,6 @@ struct TerminalTabsView: View {
             if sessionManager.sessions.isEmpty {
                 emptyState
             } else {
-                tabStrip
                 if let session = sessionManager.selected {
                     HStack(spacing: 0) {
                         Group {
@@ -46,8 +45,13 @@ struct TerminalTabsView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(ThemeStore.shared.current.chromeBackground)
-        // 顶部标题栏中央:Safari 地址栏式胶囊,展示当前会话的服务器信息,点按开合信息面板
+        // 顶部统一一行:标签 chips 靠左 | 会话胶囊居中 | 面板按钮组靠右(原独立标签条撤掉)
         .toolbar {
+            ToolbarItem(placement: .navigation) {
+                if !sessionManager.sessions.isEmpty {
+                    tabChips
+                }
+            }
             ToolbarItem(placement: .principal) {
                 if let session = sessionManager.selected {
                     SessionTitleCapsule(session: session) {
@@ -55,6 +59,11 @@ struct TerminalTabsView: View {
                             sessionManager.isInspectorVisible.toggle()
                         }
                     }
+                }
+            }
+            ToolbarItem(placement: .primaryAction) {
+                if !sessionManager.sessions.isEmpty {
+                    panelButtons
                 }
             }
         }
@@ -79,59 +88,52 @@ struct TerminalTabsView: View {
         }
     }
 
-    private var tabStrip: some View {
-        HStack(spacing: 4) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 2) {
-                    ForEach(sessionManager.sessions) { session in
-                        TerminalTabChip(
-                            session: session,
-                            isSelected: session.id == sessionManager.selectedID,
-                            select: { sessionManager.select(id: session.id) },
-                            close: { sessionManager.requestClose(session) }
-                        )
-                    }
-                }
-                .padding(.leading, 6)
-            }
-            // Safari 式按钮组:一个大胶囊容器,内含各个圆形悬停按钮
+    /// 标签 chips(标题栏左侧,横向滚动)
+    private var tabChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 2) {
-                PanelIconButton(
-                    symbol: "folder",
-                    help: "SFTP 文件(⌘⇧F)",
-                    tint: sessionManager.isSFTPVisible ? ThemeStore.shared.current.accentColor : nil
-                ) {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
-                        sessionManager.isSFTPVisible.toggle()
-                    }
-                }
-                PanelIconButton(
-                    symbol: "sidebar.right",
-                    help: "服务器信息(⌘I)",
-                    tint: sessionManager.isInspectorVisible ? ThemeStore.shared.current.accentColor : nil
-                ) {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
-                        sessionManager.isInspectorVisible.toggle()
-                    }
+                ForEach(sessionManager.sessions) { session in
+                    TerminalTabChip(
+                        session: session,
+                        isSelected: session.id == sessionManager.selectedID,
+                        select: { sessionManager.select(id: session.id) },
+                        close: { sessionManager.requestClose(session) }
+                    )
                 }
             }
-            .padding(.horizontal, 4)
-            .padding(.vertical, 2)
-            .background(
-                Capsule()
-                    .fill(ThemeStore.shared.current.elevatedBackground)
-                    .overlay(Capsule().stroke(ThemeStore.shared.current.borderColor, lineWidth: 1))
-            )
-            .padding(.trailing, 10)
         }
-        .frame(height: AppLayout.topBarHeight)
-        .padding(.top, AppLayout.columnTopPadding)
-        .padding(.bottom, 10)
-        .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(ThemeStore.shared.current.borderColor)
-                .frame(height: 1)
+        .frame(maxWidth: 560, alignment: .leading)
+    }
+
+    /// Safari 式按钮组(标题栏右侧):一个大胶囊容器,内含各个圆形悬停按钮
+    private var panelButtons: some View {
+        HStack(spacing: 2) {
+            PanelIconButton(
+                symbol: "folder",
+                help: "SFTP 文件(⌘⇧F)",
+                tint: sessionManager.isSFTPVisible ? ThemeStore.shared.current.accentColor : nil
+            ) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                    sessionManager.isSFTPVisible.toggle()
+                }
+            }
+            PanelIconButton(
+                symbol: "sidebar.right",
+                help: "服务器信息(⌘I)",
+                tint: sessionManager.isInspectorVisible ? ThemeStore.shared.current.accentColor : nil
+            ) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                    sessionManager.isInspectorVisible.toggle()
+                }
+            }
         }
+        .padding(.horizontal, 4)
+        .padding(.vertical, 2)
+        .background(
+            Capsule()
+                .fill(ThemeStore.shared.current.elevatedBackground)
+                .overlay(Capsule().stroke(ThemeStore.shared.current.borderColor, lineWidth: 1))
+        )
     }
 
     @ViewBuilder
@@ -197,19 +199,11 @@ private struct SessionTitleCapsule: View {
                     .foregroundStyle(.secondary)
             }
             .lineLimit(1)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 5)
-            .background(
-                Capsule()
-                    .fill(hovering ? theme.elevatedBackground.opacity(1) : theme.elevatedBackground)
-                    .overlay(
-                        Capsule().stroke(
-                            hovering ? theme.accentColor.opacity(0.4) : theme.borderColor,
-                            lineWidth: 1
-                        )
-                    )
-            )
+            // 系统工具栏 principal 项自带一层胶囊底,不再自绘背景避免「双层」
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
             .contentShape(Capsule())
+            .opacity(hovering ? 1 : 0.88)
         }
         .buttonStyle(.plain)
         .animation(.easeOut(duration: 0.12), value: hovering)
