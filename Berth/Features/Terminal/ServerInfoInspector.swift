@@ -267,6 +267,7 @@ struct ServerInfoInspector: View {
                             switch result {
                             case .installed: highlightState = .done("已启用,重开 shell 或执行 source ~/.zshrc 生效")
                             case .alreadyEnabled: highlightState = .done("此主机已启用命令高亮")
+                            case .notZsh(let shell): highlightState = .done("当前登录 shell 是 \(shell),命令高亮仅支持 zsh。可先把默认 shell 改为 zsh(chsh -s $(which zsh))再试。")
                             case .failed(let msg): highlightState = .done("失败:\(msg)")
                             }
                         }

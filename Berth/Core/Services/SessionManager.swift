@@ -152,11 +152,17 @@ final class SessionManager {
     /// 选中分屏副会话本身时先解除分屏(副会话晋升为普通标签),避免同一会话渲染两份
     func select(id: TerminalSession.ID) {
         guard sessions.contains(where: { $0.id == id }) else { return }
+        let switchedHost = selectedID != id
         if id == splitSecondaryID {
             splitPrimaryID = nil
             splitSecondaryID = nil
         }
         selectedID = id
+        // 切换到别的主机时收起右侧面板,避免残留上一台主机的 SFTP/信息数据
+        if switchedHost {
+            isSFTPVisible = false
+            isInspectorVisible = false
+        }
     }
 
     /// ⌘1-9
