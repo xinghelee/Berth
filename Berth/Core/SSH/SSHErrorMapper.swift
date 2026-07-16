@@ -14,6 +14,11 @@ enum SSHErrorMapper {
         if raw.localizedCaseInsensitiveContains("timed out") || raw.localizedCaseInsensitiveContains("timeout") {
             return "连不上 \(hostname):\(port):连接超时,检查地址、防火墙或网络。"
         }
+        if raw.localizedCaseInsensitiveContains("already closed")
+            || raw.localizedCaseInsensitiveContains("connection reset")
+            || raw.localizedCaseInsensitiveContains("eof") {
+            return "连接已中断:与 \(hostname) 的会话被关闭。"
+        }
         if let localized = error as? LocalizedError, let description = localized.errorDescription {
             return description
         }

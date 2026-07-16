@@ -3,6 +3,8 @@ import SwiftUI
 
 enum SidebarSelection: Hashable {
     case allHosts
+    case sshConfig
+    case keys
     case group(UUID)
 }
 
@@ -10,6 +12,7 @@ struct SidebarView: View {
     @Binding var selection: SidebarSelection?
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \HostGroup.sortOrder) private var groups: [HostGroup]
+    @Query(filter: #Predicate<Host> { $0.sourceRaw == "sshConfig" }) private var configHosts: [Host]
 
     @State private var isAddingGroup = false
     @State private var newGroupName = ""
@@ -19,6 +22,12 @@ struct SidebarView: View {
             Section {
                 Label("全部主机", systemImage: "server.rack")
                     .tag(SidebarSelection.allHosts)
+                if !configHosts.isEmpty {
+                    Label("SSH Config", systemImage: "doc.text")
+                        .tag(SidebarSelection.sshConfig)
+                }
+                Label("密钥", systemImage: "key")
+                    .tag(SidebarSelection.keys)
             }
             Section("分组") {
                 ForEach(groups) { group in

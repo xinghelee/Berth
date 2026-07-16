@@ -13,8 +13,12 @@ struct TerminalTabsView: View {
                 tabStrip
                 Divider()
                 if let session = sessionManager.selected {
-                    TerminalPaneView(session: session)
-                        .id(session.id)
+                    if let secondary = sessionManager.splitSecondary {
+                        splitContainer(primary: session, secondary: secondary)
+                    } else {
+                        TerminalPaneView(session: session)
+                            .id(session.id)
+                    }
                 }
             }
         }
@@ -55,6 +59,20 @@ struct TerminalTabsView: View {
             .padding(.vertical, 4)
         }
         .background(.ultraThinMaterial)
+    }
+
+    @ViewBuilder
+    private func splitContainer(primary: TerminalSession, secondary: TerminalSession) -> some View {
+        let layout = sessionManager.splitAxis == .horizontal
+            ? AnyLayout(HStackLayout(spacing: 1))
+            : AnyLayout(VStackLayout(spacing: 1))
+        layout {
+            TerminalPaneView(session: primary)
+                .id(primary.id)
+            Divider()
+            TerminalPaneView(session: secondary)
+                .id(secondary.id)
+        }
     }
 
     private var emptyState: some View {
@@ -114,17 +132,45 @@ private struct TerminalTabChip: View {
     }
 }
 
-/// 单个会话面板:终端 + 顶部状态/断线横幅
+/// 单个会话面板:终端 + 顶部状态/断线横幅 + ⌘F 搜索 + 主机密钥确认
 struct TerminalPaneView: View {
-    let session: TerminalSession
+    @Bindable var session: TerminalSession
+    @Environment(SessionManager.self) private var sessionManager
+
+    @State private var searchModel = TerminalSearchModel()
+    @State private var isSearchActive = false
 
     var body: some View {
         ZStack(alignment: .top) {
             TerminalHostView(terminalView: session.terminalView)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(nsColor: NSColor(srgbRed: 0.106, green: 0.118, blue: 0.145, alpha: 1)))
+                .background(Color(nsColor: ThemeStore.shared.current.backgroundNSColor))
 
             banner
+
+            if isSearchActive {
+                HStack {
+                    Spacer()
+                    TerminalSearchBar(model: searchModel) {
+                        isSearchActive = false
+                        searchModel.update(query: "")
+                        session.focusTerminal()
+                    }
+                    .padding(.trailing, 12)
+                }
+            }
+        }
+        .onChange(of: sessionManager.searchRequestToken) { _, _ in
+            // 只有当前选中会话响应 ⌘F
+            guard session.id == sessionManager.selectedID else { return }
+            searchModel.terminalView = session.terminalView
+            isSearchActive = true
+        }
+        .sheet(
+            item: $session.hostKeyPrompt,
+            onDismiss: { session.resolveHostKeyPrompt(accepted: false) }
+        ) { prompt in
+            HostKeyPromptSheet(prompt: prompt, session: session)
         }
     }
 
@@ -142,7 +188,13 @@ struct TerminalPaneView: View {
                 Image(systemName: "bolt.slash")
                 Text(reason.message ?? "连接已断开")
                     .lineLimit(2)
-                Button("重连") { session.connect() }
+                if session.isAutoReconnectScheduled {
+                    Text("自动重连中(第 \(session.reconnectAttempt) 次)")
+                        .foregroundStyle(.secondary)
+                    Button("停止") { session.cancelAutoReconnect() }
+                        .controlSize(.small)
+                }
+                Button("立即重连") { session.connect() }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.small)
             }

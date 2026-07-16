@@ -6,10 +6,12 @@ enum TagColor: String, Codable, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
-/// M1 支持密码与私钥文件;M2 引入 SSHKey 实体后增加 privateKey(keyID),M3 增加 agent
+/// M3 增加 agent
 enum AuthMethodKind: String, Codable, CaseIterable, Identifiable {
     case password
     case privateKeyFile
+    /// 密钥库中的密钥(SSHKeyRecord,私钥在 Keychain)
+    case storedKey
     var id: String { rawValue }
 }
 
@@ -28,6 +30,8 @@ final class Host {
     var authMethodRaw: String
     /// authMethod == .privateKeyFile 时的私钥文件路径(支持 ~ 展开)
     var privateKeyPath: String?
+    /// authMethod == .storedKey 时引用的 SSHKeyRecord.id
+    var keyID: UUID?
     var group: HostGroup?
     var tagColorRaw: String
     var note: String
@@ -44,6 +48,7 @@ final class Host {
         username: String,
         authMethod: AuthMethodKind = .password,
         privateKeyPath: String? = nil,
+        keyID: UUID? = nil,
         group: HostGroup? = nil,
         tagColor: TagColor = .none,
         note: String = "",
@@ -57,6 +62,7 @@ final class Host {
         self.username = username
         self.authMethodRaw = authMethod.rawValue
         self.privateKeyPath = privateKeyPath
+        self.keyID = keyID
         self.group = group
         self.tagColorRaw = tagColor.rawValue
         self.note = note

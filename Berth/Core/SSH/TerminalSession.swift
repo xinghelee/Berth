@@ -2,6 +2,7 @@ import AppKit
 import Citadel
 import Crypto
 import Foundation
+import LocalAuthentication
 import NIOCore
 import NIOSSH
 import Observation
@@ -40,9 +41,18 @@ final class TerminalSession: Identifiable {
 
     enum SessionError: LocalizedError {
         case unsupportedKey
+        case missingStoredKey
+        case authenticationGateFailed
 
         var errorDescription: String? {
-            "无法解析私钥文件:目前支持 OpenSSH 格式的 ed25519 / RSA 私钥。若密钥带 passphrase,请确认已正确填写。"
+            switch self {
+            case .unsupportedKey:
+                return "无法解析私钥文件:目前支持 OpenSSH 格式的 ed25519 / RSA 私钥。若密钥带 passphrase,请确认已正确填写。"
+            case .missingStoredKey:
+                return "找不到该主机引用的密钥,请在「密钥」页检查或重新选择。"
+            case .authenticationGateFailed:
+                return "身份验证未通过,已取消连接。可在设置中关闭「使用密钥前要求 Touch ID」。"
+            }
         }
     }
 
@@ -51,13 +61,23 @@ final class TerminalSession: Identifiable {
     let terminalView: TerminalView
 
     private(set) var state: State = .idle
+    /// 等待用户决策的主机密钥确认(首次连接指纹 / 密钥变更警告)
+    var hostKeyPrompt: HostKeyPrompt?
+    /// 自动重连:当前第几次尝试、是否已排定下一次
+    private(set) var reconnectAttempt = 0
+    private(set) var isAutoReconnectScheduled = false
 
     @ObservationIgnored private var client: SSHClient?
     @ObservationIgnored private var sessionTask: Task<Void, Never>?
     @ObservationIgnored private var stdinWriter: AsyncStream<StdinEvent>.Continuation?
     @ObservationIgnored private var userInitiatedDisconnect = false
-    /// 自动化验收用:绕过 Keychain 的临时密码(不落任何持久化)
+    @ObservationIgnored private var hostKeyContinuation: CheckedContinuation<Bool, Never>?
+    @ObservationIgnored private var reconnectTask: Task<Void, Never>?
+    /// 只有成功连上过的会话才自动重连(认证失败/密钥被拒不重试)
+    @ObservationIgnored private var everConnected = false
+    /// 临时直连/自动化验收用:绕过 Keychain 的一次性凭据(不落任何持久化)
     @ObservationIgnored var transientPassword: String?
+    @ObservationIgnored var transientPassphrase: String?
 
     private enum StdinEvent {
         case bytes([UInt8])
@@ -69,9 +89,7 @@ final class TerminalSession: Identifiable {
         let fontSize = CGFloat(UserDefaults.standard.object(forKey: SettingsKeys.terminalFontSize) as? Double ?? 13)
         self.terminalView = TerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
         terminalView.font = .monospacedSystemFont(ofSize: fontSize, weight: .regular)
-        terminalView.nativeBackgroundColor = NSColor(srgbRed: 0.106, green: 0.118, blue: 0.145, alpha: 1)
-        terminalView.nativeForegroundColor = NSColor(srgbRed: 0.922, green: 0.933, blue: 0.941, alpha: 1)
-        terminalView.caretColor = .systemTeal
+        ThemeStore.shared.apply(to: terminalView)
         terminalView.terminalDelegate = self
     }
 
@@ -81,33 +99,86 @@ final class TerminalSession: Identifiable {
     func connect() {
         guard sessionTask == nil else { return }
         userInitiatedDisconnect = false
+        reconnectTask?.cancel()
+        isAutoReconnectScheduled = false
         state = .connecting(detail: "正在连接 \(spec.hostname):\(spec.port)…")
 
         sessionTask = Task {
+            var disconnectReason: DisconnectReason
             do {
                 try await runSession()
-                state = .disconnected(userInitiatedDisconnect ? .userInitiated : .remoteClosed)
+                disconnectReason = userInitiatedDisconnect ? .userInitiated : .remoteClosed
             } catch is CancellationError {
-                state = .disconnected(.userInitiated)
+                disconnectReason = .userInitiated
             } catch {
-                state = .disconnected(userInitiatedDisconnect
+                disconnectReason = userInitiatedDisconnect
                     ? .userInitiated
-                    : .error(SSHErrorMapper.friendlyMessage(for: error, hostname: spec.hostname, port: spec.port)))
+                    : .error(SSHErrorMapper.friendlyMessage(for: error, hostname: spec.hostname, port: spec.port))
             }
+            state = .disconnected(disconnectReason)
             stdinWriter?.finish()
             stdinWriter = nil
             let client = self.client
             self.client = nil
             sessionTask = nil
             Task.detached { try? await client?.close() }
+            maybeScheduleReconnect(after: disconnectReason)
         }
     }
 
     func disconnect() {
         userInitiatedDisconnect = true
+        reconnectTask?.cancel()
+        isAutoReconnectScheduled = false
         sessionTask?.cancel()
         let client = self.client
         Task.detached { try? await client?.close() }
+    }
+
+    // MARK: - 自动重连(指数退避,保留 scrollback)
+
+    func cancelAutoReconnect() {
+        reconnectTask?.cancel()
+        isAutoReconnectScheduled = false
+    }
+
+    private func maybeScheduleReconnect(after reason: DisconnectReason) {
+        guard reason != .userInitiated, everConnected else { return }
+        let enabled = UserDefaults.standard.object(forKey: SettingsKeys.autoReconnect) as? Bool ?? true
+        guard enabled, reconnectAttempt < 8 else { return }
+
+        reconnectAttempt += 1
+        isAutoReconnectScheduled = true
+        let delay = min(pow(2.0, Double(reconnectAttempt - 1)), 30)
+
+        reconnectTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(delay))
+            guard let self, !Task.isCancelled else { return }
+            guard case .disconnected = self.state, self.isAutoReconnectScheduled else { return }
+            self.isAutoReconnectScheduled = false
+            self.connect()
+        }
+    }
+
+    // MARK: - 主机密钥决策(known_hosts)
+
+    /// UI 回填用户决定;未决时关闭弹窗按拒绝处理(幂等)
+    func resolveHostKeyPrompt(accepted: Bool) {
+        hostKeyPrompt = nil
+        hostKeyContinuation?.resume(returning: accepted)
+        hostKeyContinuation = nil
+    }
+
+    private func requestHostKeyDecision(_ prompt: HostKeyPrompt) async -> Bool {
+        await withCheckedContinuation { continuation in
+            Task { @MainActor in
+                // 理论上不会并发出现两个决策请求;保守起见拒绝旧的
+                self.hostKeyContinuation?.resume(returning: false)
+                self.hostKeyContinuation = continuation
+                self.hostKeyPrompt = prompt
+                self.state = .connecting(detail: "等待主机密钥确认…")
+            }
+        }
     }
 
     /// 关闭标签页时调用:断开并放弃会话
@@ -126,12 +197,19 @@ final class TerminalSession: Identifiable {
     // MARK: - 连接实现
 
     private func runSession() async throws {
-        let method = try makeAuthenticationMethod()
+        let method = try await makeAuthenticationMethod()
+        let validator = InteractiveHostKeyValidator(
+            hostname: spec.hostname,
+            port: spec.port
+        ) { [weak self] prompt in
+            guard let self else { return false }
+            return await self.requestHostKeyDecision(prompt)
+        }
         let client = try await SSHClient.connect(
             host: spec.hostname,
             port: spec.port,
             authenticationMethod: method,
-            hostKeyValidator: .acceptAnything(), // TODO(M2): known_hosts 校验 + 指纹确认,当前不校验 host key
+            hostKeyValidator: .custom(validator),
             reconnect: .never
         )
         self.client = client
@@ -153,6 +231,8 @@ final class TerminalSession: Identifiable {
             await MainActor.run {
                 self.stdinWriter = continuation
                 self.state = .connected
+                self.everConnected = true
+                self.reconnectAttempt = 0
                 self.focusTerminal()
             }
 
@@ -183,7 +263,7 @@ final class TerminalSession: Identifiable {
         }
     }
 
-    private func makeAuthenticationMethod() throws -> SSHAuthenticationMethod {
+    private func makeAuthenticationMethod() async throws -> SSHAuthenticationMethod {
         switch spec.authMethod {
         case .password:
             let password = try transientPassword
@@ -193,18 +273,51 @@ final class TerminalSession: Identifiable {
 
         case .privateKeyFile:
             guard let path = spec.privateKeyPath, !path.isEmpty else { throw SessionError.unsupportedKey }
+            try await requireTouchIDIfEnabled()
             let expanded = NSString(string: path).expandingTildeInPath
             let keyText = try String(contentsOfFile: expanded, encoding: .utf8)
-            let passphrase = try KeychainStore.read(account: KeychainStore.passphraseAccount(for: spec.hostID))
-            let decryptionKey = passphrase.flatMap { $0.isEmpty ? nil : Data($0.utf8) }
+            let passphrase = try transientPassphrase
+                ?? KeychainStore.read(account: KeychainStore.passphraseAccount(for: spec.hostID))
+            return try Self.keyAuthentication(username: spec.username, keyText: keyText, passphrase: passphrase)
 
-            if let key = try? Curve25519.Signing.PrivateKey(sshEd25519: keyText, decryptionKey: decryptionKey) {
+        case .storedKey:
+            guard let keyID = spec.keyID,
+                  let material = try KeychainStore.read(account: KeychainStore.privateKeyAccount(for: keyID)) else {
+                throw SessionError.missingStoredKey
+            }
+            try await requireTouchIDIfEnabled()
+            // 生成的密钥存 raw ed25519(base64 32 字节);导入的存 OpenSSH PEM
+            if let raw = Data(base64Encoded: material), raw.count == 32,
+               let key = try? Curve25519.Signing.PrivateKey(rawRepresentation: raw) {
                 return .ed25519(username: spec.username, privateKey: key)
             }
-            if let key = try? Insecure.RSA.PrivateKey(sshRsa: keyText, decryptionKey: decryptionKey) {
-                return .rsa(username: spec.username, privateKey: key)
-            }
-            throw SessionError.unsupportedKey
+            let passphrase = try KeychainStore.read(account: KeychainStore.keyPassphraseAccount(for: keyID))
+            return try Self.keyAuthentication(username: spec.username, keyText: material, passphrase: passphrase)
+        }
+    }
+
+    private static func keyAuthentication(username: String, keyText: String, passphrase: String?) throws -> SSHAuthenticationMethod {
+        let decryptionKey = passphrase.flatMap { $0.isEmpty ? nil : Data($0.utf8) }
+        if let key = try? Curve25519.Signing.PrivateKey(sshEd25519: keyText, decryptionKey: decryptionKey) {
+            return .ed25519(username: username, privateKey: key)
+        }
+        if let key = try? Insecure.RSA.PrivateKey(sshRsa: keyText, decryptionKey: decryptionKey) {
+            return .rsa(username: username, privateKey: key)
+        }
+        throw SessionError.unsupportedKey
+    }
+
+    /// 规格 5.4:读取私钥用于连接前可要求 Touch ID(设置项,默认开)
+    private func requireTouchIDIfEnabled() async throws {
+        let enabled = UserDefaults.standard.object(forKey: SettingsKeys.requireTouchIDForKeys) as? Bool ?? true
+        guard enabled else { return }
+        state = .connecting(detail: "等待身份验证(Touch ID)…")
+        let context = LAContext()
+        do {
+            // deviceOwnerAuthentication:优先生物识别,失败回退登录密码
+            try await context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: "使用私钥连接 \(spec.label)")
+        } catch {
+            throw SessionError.authenticationGateFailed
         }
     }
 }

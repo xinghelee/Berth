@@ -94,6 +94,10 @@ enum M1AcceptanceTest {
     private static func waitForConnected(_ session: TerminalSession, timeout: TimeInterval) async -> Bool {
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
+            // 自动化环境无人操作:自动信任首次连接的主机密钥
+            if session.hostKeyPrompt != nil {
+                session.resolveHostKeyPrompt(accepted: true)
+            }
             if case .connected = session.state { return true }
             if case .disconnected = session.state { return false }
             try? await Task.sleep(for: .milliseconds(200))

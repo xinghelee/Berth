@@ -4,6 +4,15 @@ options:
   deploymentTarget:
     macOS: "15.0"
   createIntermediateGroups: true
+  developmentLanguage: zh-Hans
+
+settings:
+  base:
+    SWIFT_EMIT_LOC_STRINGS: true
+
+fileGroups:
+  - project.yml
+  - CLAUDE.md
 
 packages:
   Citadel:
@@ -29,6 +38,8 @@ targets:
       - package: SwiftTerm
     scheme:
       configVariants: []
+      testTargets:
+        - BerthTests
     info:
       path: Berth/Info.plist
       properties:
@@ -43,3 +54,19 @@ targets:
         CODE_SIGN_IDENTITY: "-"
         ENABLE_HARDENED_RUNTIME: false
         DEAD_CODE_STRIPPING: true
+
+  BerthTests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "15.0"
+    sources:
+      - path: BerthTests
+    dependencies:
+      - target: Berth
+    settings:
+      base:
+        SWIFT_VERSION: "5.0"
+        GENERATE_INFOPLIST_FILE: true
+        BUNDLE_LOADER: $(TEST_HOST)
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/Berth.app/Contents/MacOS/Berth
+        CODE_SIGN_IDENTITY: "-"

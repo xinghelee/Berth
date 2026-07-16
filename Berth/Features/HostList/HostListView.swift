@@ -16,8 +16,13 @@ struct HostListView: View {
 
     private var visibleHosts: [Host] {
         var hosts = allHosts
-        if case .group(let groupID) = sidebarSelection {
+        switch sidebarSelection {
+        case .group(let groupID):
             hosts = hosts.filter { $0.group?.id == groupID }
+        case .sshConfig:
+            hosts = hosts.filter { $0.source == .sshConfig }
+        case .allHosts, .keys, nil:
+            break
         }
         let query = searchText.trimmingCharacters(in: .whitespaces)
         guard !query.isEmpty else { return hosts }
@@ -89,10 +94,15 @@ struct HostListView: View {
                     }
                     .contextMenu {
                         Button("连接") { connect(to: host) }
-                        Button("编辑…") { editingHost = host }
                         Button("复制 ssh 命令") { copySSHCommand(for: host) }
-                        Divider()
-                        Button("删除…", role: .destructive) { hostPendingDeletion = host }
+                        if host.source == .sshConfig {
+                            Divider()
+                            Button("转为托管主机…") { convertToManaged(host) }
+                        } else {
+                            Button("编辑…") { editingHost = host }
+                            Divider()
+                            Button("删除…", role: .destructive) { hostPendingDeletion = host }
+                        }
                     }
             }
         }
@@ -147,6 +157,21 @@ struct HostListView: View {
         KeychainStore.deleteSecrets(for: host.id)
         modelContext.delete(host)
     }
+
+    /// ssh_config 镜像主机 → 可编辑的托管副本
+    private func convertToManaged(_ host: Host) {
+        let copy = Host(
+            label: host.label,
+            hostname: host.hostname,
+            port: host.port,
+            username: host.username,
+            authMethod: host.authMethod,
+            privateKeyPath: host.privateKeyPath,
+            note: host.note
+        )
+        modelContext.insert(copy)
+        editingHost = copy
+    }
 }
 
 struct HostRowView: View {
@@ -166,6 +191,12 @@ struct HostRowView: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
+            if host.source == .sshConfig {
+                Image(systemName: "doc.text")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                    .help("来自 ~/.ssh/config(只读)")
+            }
             if let lastConnected = host.lastConnectedAt {
                 Text(lastConnected.formatted(.relative(presentation: .named)))
                     .font(.caption2)

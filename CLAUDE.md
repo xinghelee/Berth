@@ -23,12 +23,21 @@ xcodebuildmcp macos build-and-run --project-path Berth.xcodeproj --scheme Berth
 
 ## 测试
 
+单元测试(解析器、Keychain、known_hosts):
+
+```bash
+xcodebuildmcp macos test --project-path Berth.xcodeproj --scheme Berth
+```
+
 本地测试 sshd(密码 dev/berth-spike + 密钥认证,监听 127.0.0.1:2222):
 
 ```bash
 ./docker/test-sshd/up.sh
 docker rm -f berth-test-sshd   # 停止
 ```
+
+⚠️ 自动化验收必须用 `open -n <app> --env KEY=VAL …` 启动(直接跑二进制不会触发 SwiftUI `.task`)。
+known_hosts 弹窗在自动化下由测试代码自动信任。
 
 M1 自动化验收(凭据走环境变量,不进 argv;`BERTH_TRANSIENT_STORE=1` 用内存库):
 
@@ -52,6 +61,6 @@ BERTH_M1_AUTOTEST=1 BERTH_TRANSIENT_STORE=1 \
 
 - [x] M0 — 技术验证 spike:Citadel 连接 + 密码/密钥认证 + PTY + SwiftTerm 渲染 + resize(spike 代码已被 M1 正式架构替代)
 - [x] M1 — 骨架与连接:SwiftData 模型、Keychain、三栏布局、主机管理、终端标签页(⌘T/⌘W/⌘1-9)、断线横幅重连、基础设置。自动化验收通过(建主机→连接→vim 编辑→关闭重连)
-- [ ] M2 — 体验完善:⌘K、ssh_config 导入、密钥管理、known_hosts、断线重连、主题、本地化
+- [x] M2 — 体验完善:⌘K 快速连接、ssh_config 导入+FSEvents 监听、粘贴 ssh 命令解析、密钥管理(生成/导入/Touch ID/storedKey 认证)、known_hosts 校验+指纹确认+变更警告、断线指数退避自动重连、⌘F 搜索、⌘D/⌘⇧D 分屏、4 套主题、中英本地化(zh-Hans 为基准)。单测 35 项 + M2/reconnect 自动化验收全绿
 - [ ] M3 — 高级连接:端口转发、跳板机、代理、ssh-agent、备份
 - [ ] M4 — 二期:SFTP、CloudKit 同步、本地回显、iTerm2 主题导入
