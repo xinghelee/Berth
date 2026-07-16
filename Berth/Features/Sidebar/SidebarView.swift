@@ -367,7 +367,7 @@ private struct HostRow: View {
         .padding(.vertical, 5)
         .padding(.horizontal, 10)
         .background(
-            RoundedRectangle(cornerRadius: 7)
+            Capsule()
                 .fill(isSelected ? theme.accentSoft : (hovering ? Color.primary.opacity(0.05) : .clear))
         )
         .contentShape(Rectangle())
@@ -408,7 +408,7 @@ private struct RowHover: ViewModifier {
     func body(content: Content) -> some View {
         content
             .background(
-                RoundedRectangle(cornerRadius: 6)
+                Capsule()
                     .fill(hovering ? Color.primary.opacity(0.05) : .clear)
             )
             .animation(.easeOut(duration: 0.12), value: hovering)
