@@ -28,6 +28,19 @@ final class SessionManager {
         sessions.first { $0.id == selectedID }
     }
 
+    /// 某台主机当前的连接态(供主机列表状态点用):任一会话已连=connected,
+    /// 有会话在连=connecting,否则 none。
+    enum HostLiveState { case connected, connecting, none }
+
+    func liveState(for hostID: UUID) -> HostLiveState {
+        var connecting = false
+        for session in sessions where session.spec.hostID == hostID {
+            if case .connected = session.state { return .connected }
+            if case .connecting = session.state { connecting = true }
+        }
+        return connecting ? .connecting : .none
+    }
+
     @discardableResult
     func open(spec: HostSpec, transientPassword: String? = nil, transientPassphrase: String? = nil) -> TerminalSession {
         let session = TerminalSession(spec: spec)

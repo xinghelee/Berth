@@ -19,6 +19,12 @@ struct SidebarView: View {
 
     var body: some View {
         List(selection: $selection) {
+            // fullSizeContentView 下内容到顶,给红绿灯让位
+            Color.clear
+                .frame(height: 22)
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+                .selectionDisabled()
             Section {
                 Label("全部主机", systemImage: "server.rack")
                     .tag(SidebarSelection.allHosts)
@@ -29,7 +35,7 @@ struct SidebarView: View {
                 Label("密钥", systemImage: "key")
                     .tag(SidebarSelection.keys)
             }
-            Section("分组") {
+            Section {
                 ForEach(groups) { group in
                     Label(group.name, systemImage: "folder")
                         .tag(SidebarSelection.group(group.id))
@@ -39,22 +45,25 @@ struct SidebarView: View {
                             }
                         }
                 }
+            } header: {
+                HStack(spacing: 4) {
+                    Text("分组")
+                    Button {
+                        isAddingGroup = true
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.system(size: 10, weight: .bold))
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.secondary)
+                    .help("新建分组")
+                    Spacer()
+                }
             }
         }
         .listStyle(.sidebar)
-        .safeAreaInset(edge: .bottom) {
-            HStack {
-                Button {
-                    isAddingGroup = true
-                } label: {
-                    Label("新建分组", systemImage: "plus")
-                        .font(.callout)
-                }
-                .buttonStyle(.plain)
-                .padding(8)
-                Spacer()
-            }
-        }
+        .scrollContentBackground(.hidden)
+        .background(ThemeStore.shared.current.sidebarBackground)
         .alert("新建分组", isPresented: $isAddingGroup) {
             TextField("分组名称", text: $newGroupName)
             Button("创建") {

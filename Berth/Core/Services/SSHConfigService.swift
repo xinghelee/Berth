@@ -24,6 +24,63 @@ final class SSHConfigService {
         startWatching()
     }
 
+    /// 从 ~/.ssh/config 移除某个别名对应的 Host 块(删除前自动备份),随后重新同步。
+    /// 若一个 Host 行含多个别名,只移除该别名;它是块内唯一别名时移除整块。
+    @discardableResult
+    func removeHostFromConfig(alias: String) -> Bool {
+        guard let text = try? String(contentsOfFile: configPath, encoding: .utf8) else { return false }
+        backupConfig()
+
+        var output: [String] = []
+        var skippingBlock = false
+        var changed = false
+
+        for line in text.components(separatedBy: .newlines) {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            let lower = trimmed.lowercased()
+
+            if lower == "host" || lower.hasPrefix("host ") || lower.hasPrefix("host\t") {
+                // 新的 Host 行:结束上一个块的跳过状态
+                let patterns = trimmed
+                    .dropFirst(4)
+                    .split(whereSeparator: { $0 == " " || $0 == "\t" })
+                    .map(String.init)
+                if patterns.contains(alias) {
+                    changed = true
+                    if patterns.count > 1 {
+                        // 多别名:保留其它别名,去掉本别名
+                        let kept = patterns.filter { $0 != alias }
+                        let indent = String(line.prefix { $0 == " " || $0 == "\t" })
+                        output.append("\(indent)Host \(kept.joined(separator: " "))")
+                        skippingBlock = false
+                    } else {
+                        skippingBlock = true // 整块丢弃到下一个 Host/Match
+                    }
+                    continue
+                } else {
+                    skippingBlock = false
+                }
+            } else if lower == "match" || lower.hasPrefix("match ") {
+                skippingBlock = false
+            }
+
+            if !skippingBlock {
+                output.append(line)
+            }
+        }
+
+        guard changed else { return false }
+        try? output.joined(separator: "\n").write(toFile: configPath, atomically: true, encoding: .utf8)
+        sync()
+        return true
+    }
+
+    private func backupConfig() {
+        let backup = configPath + ".berth-backup"
+        try? FileManager.default.removeItem(atPath: backup)
+        try? FileManager.default.copyItem(atPath: configPath, toPath: backup)
+    }
+
     /// 解析 config 并与库中 sshConfig 镜像对齐
     func sync() {
         guard let container else { return }

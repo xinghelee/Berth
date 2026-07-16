@@ -6,6 +6,11 @@ struct BerthApp: App {
     private let container = Persistence.makeContainer()
     private let sessionManager = SessionManager.shared
 
+    init() {
+        // 启动即强制整个 app 跟随主题深浅,避免打开时先闪一下系统浅色
+        ThemeStore.shared.applyWindowChrome()
+    }
+
     var body: some Scene {
         WindowGroup("Berth") {
             MainWindowView()

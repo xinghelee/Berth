@@ -11,7 +11,6 @@ struct TerminalTabsView: View {
                 emptyState
             } else {
                 tabStrip
-                Divider()
                 if let session = sessionManager.selected {
                     if let secondary = sessionManager.splitSecondary {
                         splitContainer(primary: session, secondary: secondary)
@@ -22,6 +21,8 @@ struct TerminalTabsView: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(ThemeStore.shared.current.chromeBackground)
         .alert(
             "关闭标签页「\(sessionManager.pendingCloseSession?.spec.label ?? "")」?",
             isPresented: Binding(
@@ -56,9 +57,16 @@ struct TerminalTabsView: View {
                 }
             }
             .padding(.horizontal, 6)
-            .padding(.vertical, 4)
+            .frame(height: AppLayout.topBarHeight)
         }
-        .background(.ultraThinMaterial)
+        .frame(height: AppLayout.topBarHeight)
+        .padding(.top, AppLayout.columnTopPadding)
+        .padding(.bottom, 10)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(ThemeStore.shared.current.borderColor)
+                .frame(height: 1)
+        }
     }
 
     @ViewBuilder
@@ -114,8 +122,13 @@ private struct TerminalTabChip: View {
         .padding(.vertical, 5)
         .background(
             RoundedRectangle(cornerRadius: 6)
-                .fill(isSelected ? Color.primary.opacity(0.12) : .clear)
+                .fill(isSelected ? ThemeStore.shared.current.accentSoft : (isHovering ? Color.primary.opacity(0.06) : .clear))
         )
+        .overlay(
+            RoundedRectangle(cornerRadius: 6)
+                .stroke(isSelected ? ThemeStore.shared.current.accentColor.opacity(0.35) : .clear, lineWidth: 1)
+        )
+        .foregroundStyle(isSelected ? .primary : .secondary)
         .contentShape(Rectangle())
         .onTapGesture(perform: select)
         .onHover { isHovering = $0 }

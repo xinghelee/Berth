@@ -13,6 +13,7 @@ struct HostListView: View {
     @State private var editingHost: Host?
     @State private var isCreatingHost = false
     @State private var hostPendingDeletion: Host?
+    @State private var configHostPendingDeletion: Host?
 
     private var visibleHosts: [Host] {
         var hosts = allHosts
@@ -34,25 +35,17 @@ struct HostListView: View {
     }
 
     var body: some View {
-        Group {
+        VStack(spacing: 0) {
+            columnHeader
             if allHosts.isEmpty {
                 emptyState
             } else {
                 hostList
             }
         }
-        .navigationTitle("主机")
-        .searchable(text: $searchText, placement: .toolbar, prompt: "搜索主机")
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    isCreatingHost = true
-                } label: {
-                    Label("新建主机", systemImage: "plus")
-                }
-                .help("新建主机")
-            }
-        }
+        .background(ThemeStore.shared.current.panelBackground)
+        .toolbar(removing: .title)
+        .toolbarBackground(.hidden, for: .windowToolbar)
         .sheet(isPresented: $isCreatingHost) {
             HostEditorView(host: nil, defaultGroupID: currentGroupID)
         }
@@ -76,6 +69,23 @@ struct HostListView: View {
         } message: {
             Text("Keychain 中保存的凭据会一并删除,此操作不可撤销。")
         }
+        .confirmationDialog(
+            "从 ~/.ssh/config 删除「\(configHostPendingDeletion?.label ?? "")」?",
+            isPresented: Binding(
+                get: { configHostPendingDeletion != nil },
+                set: { if !$0 { configHostPendingDeletion = nil } }
+            )
+        ) {
+            Button("删除", role: .destructive) {
+                if let host = configHostPendingDeletion {
+                    SSHConfigService.shared.removeHostFromConfig(alias: host.label)
+                }
+                configHostPendingDeletion = nil
+            }
+            Button("取消", role: .cancel) { configHostPendingDeletion = nil }
+        } message: {
+            Text("会修改你的 ~/.ssh/config 文件(自动备份为 config.berth-backup),系统 ssh 也会随之生效。")
+        }
     }
 
     private var currentGroupID: UUID? {
@@ -83,10 +93,87 @@ struct HostListView: View {
         return nil
     }
 
+    private var columnTitle: String {
+        switch sidebarSelection {
+        case .sshConfig: return "SSH Config"
+        case .group(let id):
+            return groupName(id) ?? "分组"
+        default: return "全部主机"
+        }
+    }
+
+    private func groupName(_ id: UUID) -> String? {
+        allHosts.first { $0.group?.id == id }?.group?.name
+    }
+
+    private var columnHeader: some View {
+        let theme = ThemeStore.shared.current
+        return VStack(spacing: 8) {
+            HStack(spacing: 8) {
+                Text(columnTitle)
+                    .font(.headline)
+                Text("\(visibleHosts.count)")
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 1)
+                    .background(Capsule().fill(Color.primary.opacity(0.08)))
+                Spacer()
+                Button {
+                    isCreatingHost = true
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 13, weight: .semibold))
+                        .frame(width: 24, height: 24)
+                        .background(Circle().fill(theme.accentSoft))
+                        .foregroundStyle(theme.accentColor)
+                }
+                .buttonStyle(.plain)
+                .help("新建主机")
+            }
+            .frame(height: AppLayout.topBarHeight)
+
+            HStack(spacing: 6) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                TextField("搜索主机", text: $searchText)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 13))
+                if !searchText.isEmpty {
+                    Button {
+                        searchText = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.tertiary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 9)
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(theme.elevatedBackground)
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(theme.borderColor, lineWidth: 1))
+            )
+        }
+        .padding(.horizontal, 12)
+        .padding(.top, AppLayout.columnTopPadding)
+        .padding(.bottom, 10)
+    }
+
     private var hostList: some View {
         List(selection: $selectedHostID) {
             ForEach(visibleHosts) { host in
                 HostRowView(host: host)
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(
+                        RoundedRectangle(cornerRadius: 7)
+                            .fill(selectedHostID == host.id ? ThemeStore.shared.current.accentSoft : .clear)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 1)
+                    )
                     .tag(host.id)
                     .contentShape(Rectangle())
                     .onTapGesture(count: 2) {
@@ -94,10 +181,12 @@ struct HostListView: View {
                     }
                     .contextMenu {
                         Button("连接") { connect(to: host) }
+                        Button("复制 IP") { copyIP(for: host) }
                         Button("复制 ssh 命令") { copySSHCommand(for: host) }
                         if host.source == .sshConfig {
                             Divider()
                             Button("转为托管主机…") { convertToManaged(host) }
+                            Button("从 config 删除…", role: .destructive) { configHostPendingDeletion = host }
                         } else {
                             Button("编辑…") { editingHost = host }
                             Divider()
@@ -106,6 +195,8 @@ struct HostListView: View {
                     }
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(ThemeStore.shared.current.panelBackground)
         .onKeyPress(.return) {
             if let id = selectedHostID, let host = visibleHosts.first(where: { $0.id == id }) {
                 connect(to: host)
@@ -153,6 +244,12 @@ struct HostListView: View {
         pasteboard.setString(command, forType: .string)
     }
 
+    private func copyIP(for host: Host) {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(host.hostname, forType: .string)
+    }
+
     private func deleteHost(_ host: Host) {
         KeychainStore.deleteSecrets(for: host.id)
         modelContext.delete(host)
@@ -176,13 +273,39 @@ struct HostListView: View {
 
 struct HostRowView: View {
     let host: Host
+    @Environment(SessionManager.self) private var sessionManager
+
+    private var liveState: SessionManager.HostLiveState {
+        sessionManager.liveState(for: host.id)
+    }
+
+    private var dotColor: Color {
+        switch liveState {
+        case .connected: return .green
+        case .connecting: return .yellow
+        case .none: return host.tagColor.color
+        }
+    }
+
+    private var dotOpacity: Double {
+        switch liveState {
+        case .connected, .connecting: return 1
+        case .none: return host.tagColor == .none ? 0.15 : 1
+        }
+    }
 
     var body: some View {
         HStack(spacing: 8) {
             Circle()
-                .fill(host.tagColor.color)
+                .fill(dotColor)
                 .frame(width: 8, height: 8)
-                .opacity(host.tagColor == .none ? 0.15 : 1)
+                .opacity(dotOpacity)
+                .overlay {
+                    // 已连主机加一圈柔光,更醒目
+                    if liveState == .connected {
+                        Circle().stroke(Color.green.opacity(0.35), lineWidth: 3)
+                    }
+                }
             VStack(alignment: .leading, spacing: 2) {
                 Text(host.label)
                     .font(.body)
@@ -191,16 +314,16 @@ struct HostRowView: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
+            if let lastConnected = host.lastConnectedAt {
+                Text(lastConnected.formatted(.relative(presentation: .named)))
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
             if host.source == .sshConfig {
                 Image(systemName: "doc.text")
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
                     .help("来自 ~/.ssh/config(只读)")
-            }
-            if let lastConnected = host.lastConnectedAt {
-                Text(lastConnected.formatted(.relative(presentation: .named)))
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
             }
         }
         .padding(.vertical, 3)
