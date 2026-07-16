@@ -4,18 +4,26 @@ options:
   deploymentTarget:
     macOS: "15.0"
   createIntermediateGroups: true
+  developmentLanguage: zh-Hans
+
+settings:
+  base:
+    SWIFT_EMIT_LOC_STRINGS: true
+
+fileGroups:
+  - project.yml
+  - CLAUDE.md
 
 packages:
   Citadel:
-    url: https://github.com/orlandos-nl/Citadel.git
-    # 0.12.1 将 swift-nio-ssh 依赖切到了第三方个人 fork(Wellz26),供应链风险未评估;
-    # 0.12.0 使用维护者(Joannis)fork,PTY API 相同,故锁定 0.12.0。
-    exactVersion: 0.12.0
+    # 已 vendor 到本地并打补丁:让 RSA 用 rsa-sha2-512 签名(OpenSSH 8.8+ 拒收 Citadel
+    # 原生的 SHA-1 ssh-rsa 签名)。基线为 Citadel 0.12.0 + Joannis/swift-nio-ssh 0.3.4。
+    # 见 vendor/PATCHES.md。
+    path: vendor/Citadel
   SwiftTerm:
     url: https://github.com/migueldeicaza/SwiftTerm.git
-    # 1.12.0 起引入 Metal GPU 渲染后端,构建需要 Xcode Metal Toolchain
-    # (本机下载该组件被网络阻断)。spike 阶段锁 1.11.2,后续解决网络后再升级。
-    exactVersion: 1.11.2
+    # 1.12+ 引入 Metal GPU 渲染后端(需 Xcode Metal Toolchain,已安装)。
+    from: 1.14.0
 
 targets:
   Berth:
@@ -29,6 +37,8 @@ targets:
       - package: SwiftTerm
     scheme:
       configVariants: []
+      testTargets:
+        - BerthTests
     info:
       path: Berth/Info.plist
       properties:
@@ -43,3 +53,19 @@ targets:
         CODE_SIGN_IDENTITY: "-"
         ENABLE_HARDENED_RUNTIME: false
         DEAD_CODE_STRIPPING: true
+
+  BerthTests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "15.0"
+    sources:
+      - path: BerthTests
+    dependencies:
+      - target: Berth
+    settings:
+      base:
+        SWIFT_VERSION: "5.0"
+        GENERATE_INFOPLIST_FILE: true
+        BUNDLE_LOADER: $(TEST_HOST)
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/Berth.app/Contents/MacOS/Berth
+        CODE_SIGN_IDENTITY: "-"

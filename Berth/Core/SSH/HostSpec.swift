@@ -10,6 +10,27 @@ struct HostSpec: Equatable, Sendable {
     let username: String
     let authMethod: AuthMethodKind
     let privateKeyPath: String?
+    let keyID: UUID?
+
+    init(
+        hostID: UUID,
+        label: String,
+        hostname: String,
+        port: Int,
+        username: String,
+        authMethod: AuthMethodKind,
+        privateKeyPath: String?,
+        keyID: UUID? = nil
+    ) {
+        self.hostID = hostID
+        self.label = label
+        self.hostname = hostname
+        self.port = port
+        self.username = username
+        self.authMethod = authMethod
+        self.privateKeyPath = privateKeyPath
+        self.keyID = keyID
+    }
 
     init(host: Host) {
         self.hostID = host.id
@@ -19,5 +40,6 @@ struct HostSpec: Equatable, Sendable {
         self.username = host.username
         self.authMethod = host.authMethod
         self.privateKeyPath = host.privateKeyPath
+        self.keyID = host.keyID
     }
 }

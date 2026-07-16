@@ -11,6 +11,7 @@ struct HostEditorView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \HostGroup.sortOrder) private var groups: [HostGroup]
+    @Query(sort: \SSHKeyRecord.createdAt, order: .reverse) private var storedKeys: [SSHKeyRecord]
 
     @State private var label = ""
     @State private var hostname = ""
@@ -20,16 +21,30 @@ struct HostEditorView: View {
     @State private var password = ""
     @State private var privateKeyPath = ""
     @State private var passphrase = ""
+    @State private var selectedKeyID: UUID?
     @State private var groupID: UUID?
     @State private var tagColor: TagColor = .none
     @State private var note = ""
     @State private var validationMessage: String?
+    @State private var quickFill = ""
 
     private var isEditing: Bool { host != nil }
 
     var body: some View {
         VStack(spacing: 0) {
             Form {
+                if !isEditing {
+                    Section {
+                        TextField(
+                            "快速新建",
+                            text: $quickFill,
+                            prompt: Text("粘贴 user@host:port 或 ssh 命令,自动填充下方字段")
+                        )
+                        .onChange(of: quickFill) { _, newValue in
+                            applyQuickFill(newValue)
+                        }
+                    }
+                }
                 Section("连接") {
                     TextField("显示名", text: $label, prompt: Text(hostname.isEmpty ? "例如:生产环境 API" : hostname))
                     TextField("主机地址", text: $hostname, prompt: Text("example.com 或 IP"))
@@ -41,16 +56,18 @@ struct HostEditorView: View {
                     Picker("认证方式", selection: $authMethod) {
                         Text("密码").tag(AuthMethodKind.password)
                         Text("私钥文件").tag(AuthMethodKind.privateKeyFile)
+                        Text("密钥库").tag(AuthMethodKind.storedKey)
                     }
                     .pickerStyle(.segmented)
 
-                    if authMethod == .password {
+                    switch authMethod {
+                    case .password:
                         SecureField(
                             "密码",
                             text: $password,
                             prompt: Text(isEditing ? "留空保持不变" : "密码")
                         )
-                    } else {
+                    case .privateKeyFile:
                         HStack {
                             TextField("私钥路径", text: $privateKeyPath, prompt: Text("~/.ssh/id_ed25519"))
                             Button("选择…") { pickPrivateKey() }
@@ -60,6 +77,19 @@ struct HostEditorView: View {
                             text: $passphrase,
                             prompt: Text(isEditing ? "留空保持不变" : "没有则不填")
                         )
+                    case .storedKey:
+                        if storedKeys.isEmpty {
+                            Text("密钥库是空的,先到侧栏「密钥」页生成或导入。")
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                        } else {
+                            Picker("密钥", selection: $selectedKeyID) {
+                                Text("未选择").tag(UUID?.none)
+                                ForEach(storedKeys) { key in
+                                    Text("\(key.name)(\(key.keyType))").tag(UUID?.some(key.id))
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -102,6 +132,17 @@ struct HostEditorView: View {
         .onAppear(perform: populate)
     }
 
+    private func applyQuickFill(_ input: String) {
+        guard let parsed = SSHCommandParser.parse(input) else { return }
+        hostname = parsed.hostname
+        if let user = parsed.username { username = user }
+        if let parsedPort = parsed.port { port = String(parsedPort) }
+        if let identityFile = parsed.identityFile {
+            authMethod = .privateKeyFile
+            privateKeyPath = identityFile
+        }
+    }
+
     private func populate() {
         guard let host else {
             groupID = defaultGroupID
@@ -113,6 +154,7 @@ struct HostEditorView: View {
         username = host.username
         authMethod = host.authMethod
         privateKeyPath = host.privateKeyPath ?? ""
+        selectedKeyID = host.keyID
         groupID = host.group?.id
         tagColor = host.tagColor
         note = host.note
@@ -131,6 +173,10 @@ struct HostEditorView: View {
         }
         if authMethod == .privateKeyFile && privateKeyPath.trimmingCharacters(in: .whitespaces).isEmpty {
             validationMessage = "请选择私钥文件。"
+            return
+        }
+        if authMethod == .storedKey && selectedKeyID == nil {
+            validationMessage = "请选择密钥库中的密钥。"
             return
         }
 
@@ -153,6 +199,7 @@ struct HostEditorView: View {
         target.privateKeyPath = authMethod == .privateKeyFile
             ? privateKeyPath.trimmingCharacters(in: .whitespaces)
             : nil
+        target.keyID = authMethod == .storedKey ? selectedKeyID : nil
         target.group = group
         target.tagColor = tagColor
         target.note = note
