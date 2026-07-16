@@ -30,8 +30,8 @@ struct TerminalTheme: Identifiable, Equatable, Codable {
     var accentColor: SwiftUI.Color { SwiftUI.Color(nsColor: NSColor(hex: accent)) }
     /// 窗口/终端区底色
     var chromeBackground: SwiftUI.Color { SwiftUI.Color(nsColor: backgroundNSColor) }
-    /// 侧栏底色:比背景更深一档,拉开层次
-    var sidebarBackground: SwiftUI.Color { SwiftUI.Color(nsColor: backgroundNSColor.mixed(with: .black, ratio: isDark ? 0.35 : 0.0)) }
+    /// 侧栏底色:深色比背景更深一档、浅色略压灰,拉开与终端区的层次
+    var sidebarBackground: SwiftUI.Color { SwiftUI.Color(nsColor: backgroundNSColor.mixed(with: .black, ratio: isDark ? 0.35 : 0.05)) }
     /// 主机列表/面板底色:比背景略亮
     var panelBackground: SwiftUI.Color { SwiftUI.Color(nsColor: backgroundNSColor.mixed(with: isDark ? .white : .black, ratio: 0.03)) }
     /// 悬浮/标签条材质底色

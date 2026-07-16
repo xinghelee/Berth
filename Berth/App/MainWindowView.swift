@@ -1,8 +1,9 @@
 import SwiftData
 import SwiftUI
 
+/// 主窗口:双栏 —— 统一树侧栏(搜索 + 主机树 + 密钥入口)| 终端区。
+/// 中列已按「统一树侧栏」方案移除,主机永远只在侧栏树出现一份,终端拿到余下全宽。
 struct MainWindowView: View {
-    @State private var sidebarSelection: SidebarSelection? = .allHosts
     @State private var quickConnect = QuickConnectController.shared
     @State private var theme = ThemeStore.shared
     @Environment(\.modelContext) private var modelContext
@@ -11,16 +12,8 @@ struct MainWindowView: View {
         @Bindable var quickConnect = quickConnect
         ZStack {
             NavigationSplitView {
-                SidebarView(selection: $sidebarSelection)
-                    .navigationSplitViewColumnWidth(min: 168, ideal: 196, max: 260)
-            } content: {
-                if sidebarSelection == .keys {
-                    KeysListView()
-                        .navigationSplitViewColumnWidth(min: 240, ideal: 280, max: 400)
-                } else {
-                    HostListView(sidebarSelection: sidebarSelection)
-                        .navigationSplitViewColumnWidth(min: 240, ideal: 280, max: 400)
-                }
+                SidebarView()
+                    .navigationSplitViewColumnWidth(min: 200, ideal: 240, max: 320)
             } detail: {
                 TerminalTabsView()
             }
@@ -46,36 +39,10 @@ struct MainWindowView: View {
         .sheet(item: $quickConnect.directConnectRequest) { request in
             DirectConnectSheet(request: request)
         }
-        .frame(minWidth: 900, minHeight: 560)
+        .frame(minWidth: 760, minHeight: 520)
         .task {
             SSHConfigService.shared.start(container: modelContext.container)
             theme.applyWindowChrome()
         }
-    }
-}
-
-/// 抓到承载视图的 NSWindow,套用主题外观并把标题栏并入内容区,得到统一的深色边到边观感。
-/// backgroundColor 钉死为主题底色:macOS 深色模式默认会把壁纸颜色渗进窗口材质(desktop tinting),
-/// 与主题冷色底冲突,表现为顶部/空白区一条不搭的暖灰。
-private struct WindowConfigurator: NSViewRepresentable {
-    let appearanceName: NSAppearance.Name
-    let backgroundColor: NSColor
-
-    func makeNSView(context: Context) -> NSView {
-        let view = NSView()
-        DispatchQueue.main.async { configure(view.window) }
-        return view
-    }
-
-    func updateNSView(_ nsView: NSView, context: Context) {
-        DispatchQueue.main.async { configure(nsView.window) }
-    }
-
-    private func configure(_ window: NSWindow?) {
-        guard let window else { return }
-        window.appearance = NSAppearance(named: appearanceName)
-        window.titlebarAppearsTransparent = true
-        window.titleVisibility = .hidden
-        window.backgroundColor = backgroundColor
     }
 }

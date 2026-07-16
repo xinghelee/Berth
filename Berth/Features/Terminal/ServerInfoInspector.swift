@@ -252,8 +252,13 @@ struct ServerInfoInspector: View {
             info = nil
             return
         }
+        // 切标签时先清空,避免网络往返期间展示上一台主机的数据
+        info = nil
         isLoading = true
-        info = await session.fetchServerInfo()
+        let fetched = await session.fetchServerInfo()
+        // .task(id:) 切换会取消旧任务;若 fetch 不响应取消而迟到返回,不能把旧主机数据写到新标签上
+        guard !Task.isCancelled else { return }
+        info = fetched
         isLoading = false
     }
 }

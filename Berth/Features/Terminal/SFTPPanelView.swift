@@ -17,6 +17,11 @@ struct SFTPPanelView: View {
 
     private var theme: TerminalTheme { ThemeStore.shared.current }
 
+    private var isSessionConnected: Bool {
+        if case .connected = session.state { return true }
+        return false
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             header
@@ -44,6 +49,12 @@ struct SFTPPanelView: View {
             let browser = SFTPBrowser { try await session.openSFTP() }
             self.browser = browser
             await browser.start()
+        }
+        .onChange(of: isSessionConnected) { _, connected in
+            // 面板先于连接打开(或断线重连后):连上即自动重试打开 SFTP,不再永久停在失败态
+            if connected {
+                Task { await browser?.refresh() }
+            }
         }
         .onDisappear { browser?.close() }
     }

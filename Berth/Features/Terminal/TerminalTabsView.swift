@@ -14,7 +14,10 @@ struct TerminalTabsView: View {
                 if let session = sessionManager.selected {
                     HStack(spacing: 0) {
                         Group {
-                            if let secondary = sessionManager.splitSecondary {
+                            // 分屏只在其主面板标签下渲染;副会话被单独选中时走普通单面板
+                            if let secondary = sessionManager.splitSecondary,
+                               sessionManager.selectedID == sessionManager.splitPrimaryID,
+                               secondary.id != session.id {
                                 splitContainer(primary: session, secondary: secondary)
                             } else {
                                 TerminalPaneView(session: session)
@@ -71,7 +74,7 @@ struct TerminalTabsView: View {
                         TerminalTabChip(
                             session: session,
                             isSelected: session.id == sessionManager.selectedID,
-                            select: { sessionManager.selectedID = session.id },
+                            select: { sessionManager.select(id: session.id) },
                             close: { sessionManager.requestClose(session) }
                         )
                     }

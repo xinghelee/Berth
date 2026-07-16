@@ -20,7 +20,11 @@ final class SessionManager {
     var isInspectorVisible = false
     /// 右侧 SFTP 文件面板是否可见
     var isSFTPVisible = false
-    /// 分屏:与当前选中会话并排显示的第二个会话
+    /// 分屏归属:创建分屏时的选中会话(主面板)。仅当再次选中主面板时渲染分屏,
+    /// 切到其他标签不再把分屏 pane 拼到别的主机旁边。
+    var splitPrimaryID: TerminalSession.ID?
+    /// 分屏副会话。不变量:splitSecondaryID != selectedID(否则同一会话渲染两份,
+    /// 共享的 TerminalView NSView 会被后挂载方抢走父视图,一侧黑屏)
     var splitSecondaryID: TerminalSession.ID?
     var splitAxis: SplitAxis = .horizontal
 
@@ -92,17 +96,42 @@ final class SessionManager {
         session.shutdown()
         guard let index = sessions.firstIndex(where: { $0.id == session.id }) else { return }
         sessions.remove(at: index)
-        if splitSecondaryID == session.id { splitSecondaryID = nil }
+        // 分屏任一端被关 → 解除分屏(另一端保留为普通标签)
+        if splitSecondaryID == session.id || splitPrimaryID == session.id {
+            splitPrimaryID = nil
+            splitSecondaryID = nil
+        }
         if selectedID == session.id {
             let fallback = min(index, sessions.count - 1)
             selectedID = fallback >= 0 ? sessions[fallback].id : nil
+            // fallback 可能落在分屏副会话上,维持互斥不变量
+            if selectedID == splitSecondaryID {
+                splitPrimaryID = nil
+                splitSecondaryID = nil
+            }
         }
+        // 最后一个标签关掉后,面板开关复位,避免下次新建连接时面板凭空弹出
+        if sessions.isEmpty {
+            isSFTPVisible = false
+            isInspectorVisible = false
+        }
+    }
+
+    /// 统一选中入口(标签 chip / ⌘1-9 都走这里):
+    /// 选中分屏副会话本身时先解除分屏(副会话晋升为普通标签),避免同一会话渲染两份
+    func select(id: TerminalSession.ID) {
+        guard sessions.contains(where: { $0.id == id }) else { return }
+        if id == splitSecondaryID {
+            splitPrimaryID = nil
+            splitSecondaryID = nil
+        }
+        selectedID = id
     }
 
     /// ⌘1-9
     func select(index: Int) {
         guard sessions.indices.contains(index) else { return }
-        selectedID = sessions[index].id
+        select(id: sessions[index].id)
     }
 
     func requestSearch() {
@@ -112,14 +141,16 @@ final class SessionManager {
 
     // MARK: - 分屏(⌘D / ⌘⇧D)
 
-    /// 已分屏则取消;否则用当前主机再开一个会话并排显示
+    /// 当前标签已有分屏则关闭(连副会话一起关);否则用当前主机再开一个会话并排显示。
+    /// 其他标签开着的分屏会先解除(其副会话保留为普通标签,不误杀)。
     func toggleSplit(axis: SplitAxis) {
         guard let current = selected else { return }
-        if splitSecondaryID != nil {
-            if let secondary = splitSecondary { close(secondary) }
-            splitSecondaryID = nil
+        if splitPrimaryID == current.id, let secondary = splitSecondary {
+            close(secondary) // close 内部会清 split 标记
             return
         }
+        splitPrimaryID = nil
+        splitSecondaryID = nil
         splitAxis = axis
         let secondary = TerminalSession(spec: current.spec)
         secondary.transientPassword = current.transientPassword
@@ -127,6 +158,7 @@ final class SessionManager {
         // 分屏复用当前连接:在同一 SSH 连接上开第二个 PTY,不新建 TCP(避免触发频率惩罚)
         if let connection = current.liveConnection { secondary.prepareToBorrow(connection) }
         sessions.append(secondary)
+        splitPrimaryID = current.id
         splitSecondaryID = secondary.id
         secondary.connect()
     }

@@ -31,6 +31,8 @@ final class SFTPBrowser {
 
     private var sftp: SFTPClient?
     private let opener: () async throws -> SFTPClient
+    /// 面板已关闭:打开中(await opener)被关时,迟到的 client 要立即关掉,不能泄漏子通道
+    private var isClosed = false
 
     init(opener: @escaping () async throws -> SFTPClient) {
         self.opener = opener
@@ -38,10 +40,14 @@ final class SFTPBrowser {
 
     /// 打开 SFTP 并列出 home 目录
     func start() async {
-        guard sftp == nil else { return }
+        guard sftp == nil, state != .loading else { return }
         state = .loading
         do {
             let client = try await opener()
+            if isClosed {
+                Task.detached { try? await client.close() }
+                return
+            }
             sftp = client
             let home = (try? await client.getRealPath(atPath: ".")) ?? "/"
             await list(path: home)
@@ -50,7 +56,14 @@ final class SFTPBrowser {
         }
     }
 
-    func refresh() async { await list(path: path) }
+    /// 已连上则重新列目录;打开失败/未打开(如面板先于连接打开)则重试整个打开流程
+    func refresh() async {
+        if sftp == nil {
+            await start()
+        } else {
+            await list(path: path)
+        }
+    }
 
     func enter(_ entry: Entry) async {
         guard entry.isDirectory || entry.isSymlink else { return }
@@ -170,6 +183,7 @@ final class SFTPBrowser {
     }
 
     func close() {
+        isClosed = true
         let client = sftp
         sftp = nil
         Task.detached { try? await client?.close() }

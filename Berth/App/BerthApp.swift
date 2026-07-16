@@ -35,6 +35,19 @@ struct BerthApp: App {
             TerminalCommands()
         }
 
+        // 密钥管理:独立小窗,不与终端争主窗口空间
+        Window("密钥", id: "keys") {
+            KeysListView()
+                .frame(minWidth: 460, idealWidth: 520, minHeight: 420, idealHeight: 560)
+                .background(WindowConfigurator(
+                    appearanceName: ThemeStore.shared.current.appearanceName,
+                    backgroundColor: ThemeStore.shared.current.backgroundNSColor,
+                    keepsTitle: true
+                ))
+        }
+        .windowResizability(.contentSize)
+        .modelContainer(container)
+
         Settings {
             SettingsView()
         }
