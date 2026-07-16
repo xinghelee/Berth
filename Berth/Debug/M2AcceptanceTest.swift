@@ -119,7 +119,7 @@ enum M2AcceptanceTest {
             if session.hostKeyPrompt != nil { session.resolveHostKeyPrompt(accepted: true) }
             if case .connected = session.state {
                 // 顺带验证 inspector 的 executeCommand 能与 PTY 并存
-                if let info = await session.fetchServerInfo(), !info.rows.isEmpty {
+                if let info = await session.fetchServerInfo(), !info.textRows.isEmpty {
                     log("KEY_CONNECT_OK SERVERINFO_OK kernel=\(info.kernel)")
                 } else {
                     log("KEY_CONNECT_OK SERVERINFO_FAIL")

@@ -117,13 +117,28 @@ struct ServerInfoInspector: View {
 
     @ViewBuilder
     private var serverSection: some View {
-        if let info, !info.rows.isEmpty {
+        if let info, !info.textRows.isEmpty {
             section("服务器") {
                 if !info.hostname.isEmpty {
                     infoRow("主机名", info.hostname)
                 }
-                ForEach(info.rows, id: \.0) { row in
+                ForEach(info.textRows, id: \.0) { row in
                     infoRow(row.0, row.1)
+                }
+            }
+            section("资源") {
+                if let memory = info.memoryUsage {
+                    meter(
+                        label: "内存",
+                        fraction: memory.used / memory.total,
+                        value: "\(Int(memory.used)) / \(Int(memory.total)) MB"
+                    )
+                }
+                if let diskPercent = info.diskPercent {
+                    meter(label: "磁盘 /", fraction: diskPercent, value: info.diskUsage)
+                }
+                if !info.loadValues.isEmpty {
+                    loadMeter(info)
                 }
             }
         } else if isLoading {
@@ -139,6 +154,66 @@ struct ServerInfoInspector: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+        }
+    }
+
+    /// 通用仪表:标签 + 进度条 + 数值,按占用比变色
+    private func meter(label: String, fraction: Double, value: String) -> some View {
+        let clamped = min(max(fraction, 0), 1)
+        return VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(label).font(.caption).foregroundStyle(.secondary)
+                Spacer()
+                Text(value).font(.caption.monospacedDigit())
+                Text("\(Int(clamped * 100))%")
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(meterColor(clamped))
+                    .frame(width: 36, alignment: .trailing)
+            }
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Color.primary.opacity(0.1))
+                    Capsule()
+                        .fill(meterColor(clamped))
+                        .frame(width: max(4, geo.size.width * clamped))
+                }
+            }
+            .frame(height: 6)
+        }
+    }
+
+    /// 负载:1 分钟负载相对 CPU 核数;下方标注三段负载
+    private func loadMeter(_ info: ServerInfo) -> some View {
+        let load1 = info.loadValues.first ?? 0
+        let cores = max(info.cpuCount, 1)
+        return VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text("负载").font(.caption).foregroundStyle(.secondary)
+                Spacer()
+                Text(info.loadValues.map { String(format: "%.2f", $0) }.joined(separator: "  "))
+                    .font(.caption.monospacedDigit())
+                Text("\(cores) 核")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(width: 36, alignment: .trailing)
+            }
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Color.primary.opacity(0.1))
+                    Capsule()
+                        .fill(meterColor(load1 / Double(cores)))
+                        .frame(width: max(4, geo.size.width * min(load1 / Double(cores), 1)))
+                }
+            }
+            .frame(height: 6)
+        }
+    }
+
+    private func meterColor(_ fraction: Double) -> Color {
+        switch fraction {
+        case ..<0.7: return .green
+        case ..<0.9: return .yellow
+        default: return .red
         }
     }
 
