@@ -25,6 +25,11 @@ struct HostEditorView: View {
     @State private var selectedKeyID: UUID?
     @State private var groupID: UUID?
     @State private var jumpHostID: UUID?
+    @State private var proxyKind: ProxyKind = .none
+    @State private var proxyHost = ""
+    @State private var proxyPort = "1080"
+    @State private var proxyUsername = ""
+    @State private var proxyPassword = ""
     @State private var tagColor: TagColor = .none
     @State private var note = ""
     @State private var validationMessage: String?
@@ -106,6 +111,18 @@ struct HostEditorView: View {
                         Text("连接时先经跳板机(等效 ProxyJump),支持链式。")
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                    }
+
+                    Picker("代理", selection: $proxyKind) {
+                        ForEach(ProxyKind.allCases) { kind in
+                            Text(kind.label).tag(kind)
+                        }
+                    }
+                    if proxyKind != .none {
+                        TextField("代理主机", text: $proxyHost)
+                        TextField("代理端口", text: $proxyPort)
+                        TextField("用户名(可选)", text: $proxyUsername)
+                        SecureField("密码(可选,留空保持不变)", text: $proxyPassword)
                     }
                 }
 
@@ -195,6 +212,10 @@ struct HostEditorView: View {
         selectedKeyID = host.keyID
         groupID = host.group?.id
         jumpHostID = host.jumpHostID
+        proxyKind = host.proxy.kind
+        proxyHost = host.proxy.host
+        proxyPort = String(host.proxy.port)
+        proxyUsername = host.proxy.username
         tagColor = host.tagColor
         note = host.note
     }
@@ -286,6 +307,16 @@ struct HostEditorView: View {
         target.keyID = authMethod == .storedKey ? selectedKeyID : nil
         target.group = group
         target.jumpHostID = jumpHostID
+        target.proxy = ProxyConfig(
+            kind: proxyKind,
+            host: proxyHost.trimmingCharacters(in: .whitespaces),
+            port: Int(proxyPort) ?? 1080,
+            username: proxyUsername.trimmingCharacters(in: .whitespaces),
+            requiresAuth: !proxyUsername.trimmingCharacters(in: .whitespaces).isEmpty
+        )
+        if proxyKind != .none, !proxyPassword.isEmpty {
+            try? KeychainStore.save(proxyPassword, account: KeychainStore.proxyPasswordAccount(for: target.id))
+        }
         target.tagColor = tagColor
         target.note = note
 

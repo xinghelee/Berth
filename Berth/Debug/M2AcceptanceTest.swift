@@ -233,6 +233,49 @@ enum M2AcceptanceTest {
         log("FORWARD_TIMEOUT state=\(session.state)")
     }
 
+    /// 代理验收:BERTH_PROXY_AUTOTEST=1,经 HTTP/SOCKS5 代理连目标,建立 PTY + 取服务器信息即成功。
+    /// 环境:BERTH_PROXY_KIND(http/socks5)+ BERTH_PROXY_HOST/BERTH_PROXY_PORT
+    ///       + BERTH_TEST_HOST/USER/KEYFILE + BERTH_TEST_DUMP
+    static func runProxyIfRequested(container: ModelContainer) async {
+        let env = ProcessInfo.processInfo.environment
+        guard env["BERTH_PROXY_AUTOTEST"] == "1",
+              let proxyHost = env["BERTH_PROXY_HOST"],
+              let host = env["BERTH_TEST_HOST"],
+              let user = env["BERTH_TEST_USER"],
+              let keyFile = env["BERTH_TEST_KEYFILE"],
+              let dumpBase = env["BERTH_TEST_DUMP"] else { return }
+        let proxyKind: ProxyKind = (env["BERTH_PROXY_KIND"] == "http") ? .http : .socks5
+        let proxyPort = Int(env["BERTH_PROXY_PORT"] ?? "1080") ?? 1080
+
+        func log(_ line: String) {
+            try? line.write(toFile: dumpBase + ".proxy.log", atomically: true, encoding: .utf8)
+        }
+        UserDefaults.standard.set(false, forKey: SettingsKeys.requireTouchIDForKeys)
+
+        let proxy = ProxyConfig(kind: proxyKind, host: proxyHost, port: proxyPort)
+        let spec = HostSpec(
+            hostID: UUID(), label: "proxy-test", hostname: host, port: 22,
+            username: user, authMethod: .privateKeyFile, privateKeyPath: keyFile, proxy: proxy
+        )
+        let session = SessionManager.shared.open(spec: spec)
+
+        let deadline = Date().addingTimeInterval(30)
+        while Date() < deadline {
+            if session.hostKeyPrompt != nil { session.resolveHostKeyPrompt(accepted: true) }
+            if case .connected = session.state {
+                let info = await session.fetchServerInfo()
+                log("PROXY_CONNECT_OK kind=\(proxyKind.rawValue) kernel=\(info?.kernel ?? "?")")
+                return
+            }
+            if case .disconnected(let reason) = session.state {
+                log("PROXY_CONNECT_FAIL \(reason)")
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(200))
+        }
+        log("PROXY_CONNECT_TIMEOUT state=\(session.state)")
+    }
+
     /// 断线自动重连验收:BERTH_RECONNECT_AUTOTEST=1。
     /// 打开真实 UI 会话 → 连上后由外部 `docker restart` 掐断 → 观察进入
     /// disconnected 且排定自动重连 → 最终重新 connected。全程状态写入 <dump>.reconnect.log。

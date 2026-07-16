@@ -259,13 +259,13 @@ final class TerminalSession: Identifiable {
     /// 中间跳板的 client 必须保活(隧道依赖它),存入 jumpClients。
     private func establishClient() async throws -> SSHClient {
         guard !spec.jump.isEmpty else {
-            return try await SSHClient.connect(to: try settings(for: spec, useTransient: true))
+            return try await connectEntry(to: spec, useTransient: true)
         }
 
         // 连最外层跳板
         let first = spec.jump[0]
         state = .connecting(detail: "正在连接跳板机 \(first.hostname):\(first.port)…")
-        var current = try await SSHClient.connect(to: try settings(for: first, useTransient: false))
+        var current = try await connectEntry(to: first, useTransient: false)
         jumpClients.append(current)
 
         // 逐跳 jump 到后续跳板
@@ -278,6 +278,25 @@ final class TerminalSession: Identifiable {
         // 最后 jump 到目标本机
         state = .connecting(detail: "经跳板机 → \(spec.hostname):\(spec.port)…")
         return try await current.jump(to: try settings(for: spec, useTransient: true))
+    }
+
+    /// 最外层 TCP 连接:若配了代理,先经代理再交给 Citadel;否则直连。
+    private func connectEntry(to hop: HostSpec, useTransient: Bool) async throws -> SSHClient {
+        let clientSettings = try settings(for: hop, useTransient: useTransient)
+        guard spec.proxy.isEnabled else {
+            return try await SSHClient.connect(to: clientSettings)
+        }
+        state = .connecting(detail: "经代理 \(spec.proxy.host):\(spec.proxy.port) 连接 \(hop.hostname):\(hop.port)…")
+        let proxyPassword = spec.proxy.requiresAuth
+            ? try KeychainStore.read(account: KeychainStore.proxyPasswordAccount(for: spec.hostID))
+            : nil
+        let channel = try await ProxyConnector.connect(
+            through: spec.proxy,
+            proxyPassword: proxyPassword,
+            to: hop.hostname,
+            port: hop.port
+        )
+        return try await SSHClient.connect(on: channel, settings: clientSettings)
     }
 
     private func runSession() async throws {

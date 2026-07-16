@@ -182,7 +182,10 @@ final class SSHClientSession: Sendable {
             option.apply(to: &clientConfiguration)
         }
         
-        do {
+        // [Berth patch] syncOperations 要求在 channel 的 event loop 上执行;
+        // connect(on:settings:) 可能从任意异步上下文调用(如经代理自建的 channel),
+        // 故用 submit 跳到 event loop,避免 assertInEventLoop 崩溃。
+        return channel.eventLoop.submit {
             try channel.pipeline.syncOperations.addHandlers(
                 NIOSSHHandler(
                     role: .client(clientConfiguration),
@@ -193,9 +196,6 @@ final class SSHClientSession: Sendable {
                 ),
                 handshakeHandler
             )
-            return channel.eventLoop.makeSucceededVoidFuture()
-        } catch {
-            return channel.eventLoop.makeFailedFuture(error)
         }
     }
 
