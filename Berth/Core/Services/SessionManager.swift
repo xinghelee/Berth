@@ -66,6 +66,10 @@ final class SessionManager {
         session.transientPassword = transientPassword
         session.transientPassphrase = transientPassphrase
         if let connection { session.prepareToBorrow(connection) }
+        session.onShellExit = { [weak self, weak session] in
+            guard let self, let session else { return }
+            self.closePane(session)
+        }
         sessions.append(session)
         let tab = PaneTab(sessionID: session.id)
         tabs.append(tab)
@@ -95,6 +99,10 @@ final class SessionManager {
         secondary.transientPassword = current.transientPassword
         secondary.transientPassphrase = current.transientPassphrase
         if let connection = current.liveConnection { secondary.prepareToBorrow(connection) }
+        secondary.onShellExit = { [weak self, weak secondary] in
+            guard let self, let secondary else { return }
+            self.closePane(secondary)
+        }
         sessions.append(secondary)
         tab.root = tab.root.splitting(leaf: current.id, into: secondary.id, axis: axis, branchID: UUID())
         tab.focusedID = secondary.id

@@ -94,6 +94,8 @@ final class TerminalSession: Identifiable {
     /// 临时直连/自动化验收用:绕过 Keychain 的一次性凭据(不落任何持久化)
     @ObservationIgnored var transientPassword: String?
     @ObservationIgnored var transientPassphrase: String?
+    /// 远端 shell 正常退出(exit)时回调,由 SessionManager 设为关闭该 pane
+    @ObservationIgnored var onShellExit: (() -> Void)?
     /// 后台长任务通知:上次输出/上次通知时间
     @ObservationIgnored private var lastOutputAt: Date?
     @ObservationIgnored private var lastNotifiedAt: Date?
@@ -167,7 +169,13 @@ final class TerminalSession: Identifiable {
             }
             // 引用归零才真正关闭底层连接/跳板;借用会话的 release 不会误关共享连接
             releasing?.release()
-            maybeScheduleReconnect(after: disconnectReason)
+            // 远端 shell 正常退出(exit/logout → PTY EOF,干净关闭)→ 关掉该 pane,不重连;
+            // 网络异常(.error)才保留断线横幅 + 自动重连
+            if case .remoteClosed = disconnectReason, everConnected {
+                onShellExit?()
+            } else {
+                maybeScheduleReconnect(after: disconnectReason)
+            }
         }
     }
 
