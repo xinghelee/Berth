@@ -68,6 +68,11 @@ final class TerminalSession: Identifiable {
     private(set) var connectedAt: Date?
     /// 端口转发运行态(inspector 展示,可单独开关)
     private(set) var forwardStates: [UUID: PortForwardService.ForwardState] = [:]
+    /// 最近一条命令的退出码(需远端启用 OSC 133 shell 集成才有值)
+    private(set) var lastExitCode: Int?
+    /// 当前是否正在执行命令(OSC 133 C..D 之间)
+    private(set) var runningCommand = false
+    @ObservationIgnored private var osc133 = OSC133Scanner()
     /// 等待用户决策的主机密钥确认(首次连接指纹 / 密钥变更警告)
     var hostKeyPrompt: HostKeyPrompt?
     /// 自动重连:当前第几次尝试、是否已排定下一次
@@ -299,6 +304,49 @@ final class TerminalSession: Identifiable {
     }
 
     enum ShellHighlightResult { case installed, alreadyEnabled, notZsh(String), failed(String) }
+    enum CommandIntegrationResult { case installed, alreadyEnabled, failed(String) }
+
+    /// 启用命令集成(OSC 133):给 bash 和 zsh 的 rc 各追加一段钩子,在每次执行命令前后
+    /// 发出 OSC 133 A/B/C/D 标记,客户端据此感知命令边界与退出码。幂等,重连后生效。
+    func enableCommandIntegration() async -> CommandIntegrationResult {
+        guard let client else { return .failed("未连接") }
+        let script = #"""
+        exec 2>&1
+        MARK='# >>> berth command-integration >>>'
+        END='# <<< berth command-integration <<<'
+        BASH_HOOK='__berth_preexec() { printf "\033]133;C\007"; }
+        __berth_precmd() { local e=$?; printf "\033]133;D;%s\007\033]133;A\007" "$e"; }
+        if [ -n "$BASH_VERSION" ]; then
+          case "$PROMPT_COMMAND" in *__berth_precmd*) : ;; *) PROMPT_COMMAND="__berth_precmd;${PROMPT_COMMAND}";; esac
+          trap "__berth_preexec" DEBUG
+        fi'
+        ZSH_HOOK='autoload -Uz add-zsh-hook 2>/dev/null
+        __berth_preexec() { printf "\033]133;C\007"; }
+        __berth_precmd() { printf "\033]133;D;%s\007\033]133;A\007" "$?"; }
+        add-zsh-hook preexec __berth_preexec 2>/dev/null
+        add-zsh-hook precmd __berth_precmd 2>/dev/null'
+        added=0
+        for RC in "$HOME/.bashrc" "$HOME/.zshrc"; do
+          touch "$RC" 2>/dev/null || continue
+          if grep -q "$MARK" "$RC" 2>/dev/null; then continue; fi
+          case "$RC" in
+            *.bashrc) printf '\n%s\n%s\n%s\n' "$MARK" "$BASH_HOOK" "$END" >> "$RC" && added=1 ;;
+            *.zshrc)  printf '\n%s\n%s\n%s\n' "$MARK" "$ZSH_HOOK" "$END" >> "$RC" && added=1 ;;
+          esac
+        done
+        [ "$added" = 1 ] && echo BERTH_DONE || echo BERTH_ALREADY
+        """#
+        do {
+            let buffer = try await client.executeCommand("sh -c \(shellQuote(script))")
+            let out = String(buffer: buffer)
+            if out.contains("BERTH_DONE") { return .installed }
+            if out.contains("BERTH_ALREADY") { return .alreadyEnabled }
+            return .failed(String(out.trimmingCharacters(in: .whitespacesAndNewlines).suffix(200)))
+        } catch {
+            return .failed(SSHErrorMapper.friendlyMessage(for: error, hostname: spec.hostname, port: spec.port))
+        }
+    }
+
     enum SwitchZshResult { case done, needsRelogin, failed(String) }
 
     /// 一键把默认登录 shell 切到 zsh(装 zsh + chsh),再启用命令高亮。
@@ -587,6 +635,14 @@ final class TerminalSession: Identifiable {
                 let bytes = Array(buffer.readableBytesView)
                 await MainActor.run {
                     self.noteOutputForNotification()
+                    // 先解析 OSC 133 命令边界/退出码(SwiftTerm 不识别,会自行忽略这些序列)
+                    for event in self.osc133.scan(bytes[...]) {
+                        switch event {
+                        case .commandStart, .outputStart: self.runningCommand = true
+                        case .commandEnd(let code): self.runningCommand = false; self.lastExitCode = code
+                        case .promptStart: break
+                        }
+                    }
                     self.terminalView.feed(byteArray: bytes[...])
                 }
             }

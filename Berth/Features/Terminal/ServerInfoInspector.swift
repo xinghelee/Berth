@@ -281,6 +281,21 @@ struct ServerInfoInspector: View {
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
+                    Button {
+                        Task {
+                            highlightState = .working
+                            switch await session.enableCommandIntegration() {
+                            case .installed: highlightState = .done("已启用命令集成(退出码/命令边界),重连后生效。")
+                            case .alreadyEnabled: highlightState = .done("命令集成已启用。")
+                            case .failed(let msg): highlightState = .done("失败:\(msg)")
+                            }
+                        }
+                    } label: {
+                        Label("启用命令集成(退出码可见)", systemImage: "checkmark.seal")
+                            .font(.system(size: 12))
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
                     if let shell = notZshShell {
                         Text("当前登录 shell 是 \(shell),命令高亮仅支持 zsh。")
                             .font(.caption2)

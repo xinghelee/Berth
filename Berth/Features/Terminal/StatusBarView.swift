@@ -26,6 +26,15 @@ struct StatusBarView: View {
                         .foregroundStyle(forwardAllActive ? .secondary : Color.yellow)
                         .help("端口转发状态(详见 ⌘I 信息面板)")
                 }
+                if let code = session.lastExitCode {
+                    separatorDot
+                    HStack(spacing: 3) {
+                        Image(systemName: code == 0 ? "checkmark" : "xmark")
+                        if code != 0 { Text("\(code)") }
+                    }
+                    .foregroundStyle(code == 0 ? Color.green : Color.red)
+                    .help(code == 0 ? "上条命令成功" : "上条命令退出码 \(code)")
+                }
 
                 Spacer()
 
