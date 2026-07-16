@@ -299,10 +299,80 @@ extension TerminalTheme {
         ]
     )
 
+    // MARK: 精选系(设计代理出品,全套过 WCAG 对比度实算:fg/bg ≥7、彩色 ≥3、色相间隔 ≥25°)
+
+    /// 松烟墨:暖炭墨底 + 矿物颜料六色(朱砂/藤黄/竹绿/花青/胭脂/石绿),朱砂钤印作唯一高光。
+    /// 与「玉版宣」共用色相体系,组成明暗成对的「墨与纸」双联。
+    static let sumi = TerminalTheme(
+        id: "berth-sumi",
+        name: "松烟墨 Sumi PRO",
+        isDark: true,
+        background: "#1B1817",
+        foreground: "#E8E1D2",
+        cursor: "#D96A54",
+        selection: "#3B342C",
+        accent: "#D96A54",
+        ansi: [
+            "#262220", "#C75C4E", "#85A25A", "#C7A23C", "#6E9BC8", "#C4799F", "#5FAFA3", "#D3CBBB",
+            "#746C60", "#E08573", "#A3BE7C", "#DCBB60", "#90B7DE", "#D99CBB", "#82CCC0", "#F4EEE1",
+        ]
+    )
+
+    /// 玉版宣:暖白宣纸底 + 松烟墨色小楷,矿物印色与「松烟墨」同源(浅色)
+    static let xuan = TerminalTheme(
+        id: "berth-xuan",
+        name: "玉版宣 Xuan PRO(浅色)",
+        isDark: false,
+        background: "#F8F3E6",
+        foreground: "#3B342C",
+        cursor: "#B4463A",
+        selection: "#E2D5B7",
+        accent: "#B4463A",
+        ansi: [
+            "#2F2A24", "#A63D33", "#5E7233", "#9A7514", "#2F5F94", "#9C3F72", "#23766C", "#E8E0CE",
+            "#6B6153", "#BC4F41", "#6D8A3A", "#A8831A", "#3D74AE", "#B0538A", "#2F8B80", "#FBF8EF",
+        ]
+    )
+
+    /// 夜泊琥珀:Vesper 式单强调色 —— 整屏只留一盏琥珀灯,其余六色雾面退后。
+    /// 「深夜靠港」与 Berth(泊位)品牌同构。
+    static let amberMooring = TerminalTheme(
+        id: "amber-mooring",
+        name: "夜泊琥珀 Amber Mooring",
+        isDark: true,
+        background: "#1E1A17",
+        foreground: "#E9E2D7",
+        cursor: "#FFC383",
+        selection: "#3B332B",
+        accent: "#FFC383",
+        ansi: [
+            "#322B25", "#D9837A", "#9DB489", "#E2B778", "#8CA7C4", "#C393B4", "#8CBBAF", "#CFC6B9",
+            "#695F55", "#EA9C93", "#B4C99F", "#F0CC93", "#A8BFD9", "#D8ACC9", "#A5D2C5", "#F3EDE3",
+        ]
+    )
+
+    /// 祖母绿圣殿:近墨深翠黑底,宝石定调的六色(红宝石/祖母绿/金绿柱石/蓝宝石/紫水晶/绿松石),
+    /// 内置阵容中唯一的绿色系,对比度工程全场最强(fg/bg 16:1)
+    static let emeraldSanctum = TerminalTheme(
+        id: "emerald-sanctum",
+        name: "祖母绿圣殿 Emerald",
+        isDark: true,
+        background: "#0D1712",
+        foreground: "#E4F4EA",
+        cursor: "#4FE3A7",
+        selection: "#1F3D2E",
+        accent: "#3DE3A0",
+        ansi: [
+            "#16281E", "#F16581", "#52DE74", "#E5C158", "#64A8F7", "#C687F0", "#38D9C8", "#CEE7D9",
+            "#5F7A6B", "#FF8CA1", "#74EE9A", "#F7D97E", "#8FC2FF", "#DCA9FF", "#64EEDD", "#F2FBF6",
+        ]
+    )
+
     static let builtIn: [TerminalTheme] = [
-        .midnight, .berthDark, .tokyoNight, .catppuccinMacchiato, .dracula,
-        .nord, .gruvboxDark, .solarizedDark, .snazzy, .catppuccinMocha, .synthwave,
-        .oneLight, .githubLight, .catppuccinLatte, .rosePineDawn, .ayuLight,
+        .midnight, .berthDark, .sumi, .amberMooring, .emeraldSanctum,
+        .tokyoNight, .catppuccinMacchiato, .dracula, .nord, .gruvboxDark,
+        .solarizedDark, .snazzy, .catppuccinMocha, .synthwave,
+        .xuan, .oneLight, .githubLight, .catppuccinLatte, .rosePineDawn, .ayuLight,
     ]
 }
 

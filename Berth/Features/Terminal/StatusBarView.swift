@@ -53,7 +53,8 @@ struct StatusBarView: View {
             .font(.system(size: 11, design: .monospaced))
             .lineLimit(1)
             .padding(.horizontal, 12)
-            .frame(height: 24)
+            // 与侧栏底部工具行(密钥/主题/设置)同高贴底,分隔线连成一条
+            .frame(height: 30)
             .background(theme.elevatedBackground)
             .overlay(alignment: .top) {
                 Rectangle()
@@ -61,7 +62,6 @@ struct StatusBarView: View {
                     .frame(height: 1)
             }
         }
-        .padding(.bottom, 6)
         .task(id: session.id) {
             // 资源轮询:连接中每 5s 拉一次;断开时清空,避免残留旧数据
             while !Task.isCancelled {
