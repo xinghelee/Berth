@@ -390,6 +390,13 @@ final class TerminalSession: Identifiable {
             }
             let passphrase = try KeychainStore.read(account: KeychainStore.keyPassphraseAccount(for: keyID))
             return try Self.keyAuthentication(username: hop.username, keyText: material, passphrase: passphrase)
+
+        case .agent:
+            guard let agent = SSHAgentClient.fromEnvironment() else { throw AgentAuthError.noAgent }
+            let identities = (try? agent.listIdentities()) ?? []
+            let delegate = AgentAuthDelegate(username: hop.username, agent: agent, identities: identities)
+            guard delegate.hasUsableKeys else { throw AgentAuthError.noIdentities }
+            return .custom(delegate)
         }
     }
 

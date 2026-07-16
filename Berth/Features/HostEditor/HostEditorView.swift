@@ -64,6 +64,7 @@ struct HostEditorView: View {
                         Text("密码").tag(AuthMethodKind.password)
                         Text("私钥文件").tag(AuthMethodKind.privateKeyFile)
                         Text("密钥库").tag(AuthMethodKind.storedKey)
+                        Text("Agent").tag(AuthMethodKind.agent)
                     }
                     .pickerStyle(.segmented)
 
@@ -97,6 +98,10 @@ struct HostEditorView: View {
                                 }
                             }
                         }
+                    case .agent:
+                        Text("使用系统 ssh-agent 里已加载的密钥(ed25519 / RSA)。用 ssh-add 加载密钥后即可。")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
                     }
                 }
 

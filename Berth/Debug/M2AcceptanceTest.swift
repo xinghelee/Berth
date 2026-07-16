@@ -233,6 +233,38 @@ enum M2AcceptanceTest {
         log("FORWARD_TIMEOUT state=\(session.state)")
     }
 
+    /// ssh-agent 验收:BERTH_AGENT_AUTOTEST=1,用 agent 认证连目标(agent 里须已 ssh-add 目标可用密钥)。
+    static func runAgentIfRequested(container: ModelContainer) async {
+        let env = ProcessInfo.processInfo.environment
+        guard env["BERTH_AGENT_AUTOTEST"] == "1",
+              let host = env["BERTH_TEST_HOST"],
+              let user = env["BERTH_TEST_USER"],
+              let dumpBase = env["BERTH_TEST_DUMP"] else { return }
+        func log(_ line: String) {
+            try? line.write(toFile: dumpBase + ".agent.log", atomically: true, encoding: .utf8)
+        }
+        let spec = HostSpec(
+            hostID: UUID(), label: "agent-test", hostname: host, port: 22,
+            username: user, authMethod: .agent, privateKeyPath: nil
+        )
+        let session = SessionManager.shared.open(spec: spec)
+        let deadline = Date().addingTimeInterval(20)
+        while Date() < deadline {
+            if session.hostKeyPrompt != nil { session.resolveHostKeyPrompt(accepted: true) }
+            if case .connected = session.state {
+                let info = await session.fetchServerInfo()
+                log("AGENT_CONNECT_OK kernel=\(info?.kernel ?? "?")")
+                return
+            }
+            if case .disconnected(let reason) = session.state {
+                log("AGENT_CONNECT_FAIL \(reason)")
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(200))
+        }
+        log("AGENT_CONNECT_TIMEOUT state=\(session.state)")
+    }
+
     /// JSON 备份验收:BERTH_BACKUP_AUTOTEST=1,建主机→导出→清空→导入→比对。
     static func runBackupIfRequested(container: ModelContainer) async {
         let env = ProcessInfo.processInfo.environment

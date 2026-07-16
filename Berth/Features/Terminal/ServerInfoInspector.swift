@@ -245,6 +245,7 @@ struct ServerInfoInspector: View {
         case .password: return "密码"
         case .privateKeyFile: return "私钥文件"
         case .storedKey: return "密钥库"
+        case .agent: return "ssh-agent"
         }
     }
 

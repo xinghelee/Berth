@@ -6,12 +6,13 @@ enum TagColor: String, Codable, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
-/// M3 增加 agent
 enum AuthMethodKind: String, Codable, CaseIterable, Identifiable {
     case password
     case privateKeyFile
     /// 密钥库中的密钥(SSHKeyRecord,私钥在 Keychain)
     case storedKey
+    /// 系统 ssh-agent(读 SSH_AUTH_SOCK)
+    case agent
     var id: String { rawValue }
 }
 
