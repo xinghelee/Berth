@@ -233,6 +233,46 @@ enum M2AcceptanceTest {
         log("FORWARD_TIMEOUT state=\(session.state)")
     }
 
+    /// JSON 备份验收:BERTH_BACKUP_AUTOTEST=1,建主机→导出→清空→导入→比对。
+    static func runBackupIfRequested(container: ModelContainer) async {
+        let env = ProcessInfo.processInfo.environment
+        guard env["BERTH_BACKUP_AUTOTEST"] == "1", let dumpBase = env["BERTH_TEST_DUMP"] else { return }
+        func log(_ line: String) {
+            try? line.write(toFile: dumpBase + ".backup.log", atomically: true, encoding: .utf8)
+        }
+        let context = ModelContext(container)
+        do {
+            let group = HostGroup(name: "备份组")
+            context.insert(group)
+            let host = Host(label: "备份主机", hostname: "1.2.3.4", port: 2200, username: "u", group: group, jumpHostID: nil)
+            host.proxy = ProxyConfig(kind: .socks5, host: "127.0.0.1", port: 1080)
+            context.insert(host)
+            let forward = PortForward(kind: .local, bindHost: "127.0.0.1", bindPort: 9000, targetHost: "db", targetPort: 5432)
+            forward.host = host
+            context.insert(forward)
+            try context.save()
+
+            let data = try BackupService.export(context: context)
+
+            // 清空后导入
+            context.delete(host)
+            context.delete(group)
+            try context.save()
+
+            let result = try BackupService.import(data, context: context)
+            let hosts = (try? context.fetch(FetchDescriptor<Host>())) ?? []
+            let restored = hosts.first { $0.hostname == "1.2.3.4" }
+            let ok = result.hosts == 1
+                && restored?.port == 2200
+                && restored?.proxy.kind == .socks5
+                && restored?.portForwards.count == 1
+                && restored?.jumpHostID == nil
+            log(ok ? "BACKUP_ROUNDTRIP_OK json=\(data.count)B" : "BACKUP_ROUNDTRIP_FAIL restored=\(String(describing: restored?.port)) fwds=\(restored?.portForwards.count ?? -1)")
+        } catch {
+            log("BACKUP_FAIL \(error)")
+        }
+    }
+
     /// 代理验收:BERTH_PROXY_AUTOTEST=1,经 HTTP/SOCKS5 代理连目标,建立 PTY + 取服务器信息即成功。
     /// 环境:BERTH_PROXY_KIND(http/socks5)+ BERTH_PROXY_HOST/BERTH_PROXY_PORT
     ///       + BERTH_TEST_HOST/USER/KEYFILE + BERTH_TEST_DUMP

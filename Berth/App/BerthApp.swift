@@ -23,6 +23,7 @@ struct BerthApp: App {
                     await M2AcceptanceTest.runJumpIfRequested(container: container)
                     await M2AcceptanceTest.runForwardIfRequested(container: container)
                     await M2AcceptanceTest.runProxyIfRequested(container: container)
+                    await M2AcceptanceTest.runBackupIfRequested(container: container)
                 }
         }
         .modelContainer(container)
