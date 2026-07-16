@@ -56,6 +56,7 @@ targets:
         DEVELOPMENT_TEAM: 99LYH6FNPS
         ENABLE_HARDENED_RUNTIME: false
         DEAD_CODE_STRIPPING: true
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
 
   BerthTests:
     type: bundle.unit-test
