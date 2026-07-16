@@ -73,6 +73,10 @@ final class TerminalSession: Identifiable {
     /// 当前是否正在执行命令(OSC 133 C..D 之间)
     private(set) var runningCommand = false
     @ObservationIgnored private var osc133 = OSC133Scanner()
+    /// 远端当前工作目录(OSC 7 上报),重连后用于自动 cd 回去
+    @ObservationIgnored private var lastRemoteDirectory: String?
+    /// 本次连接需要恢复到的目录(重连时置)
+    @ObservationIgnored private var restoreDirOnConnect: String?
     /// 等待用户决策的主机密钥确认(首次连接指纹 / 密钥变更警告)
     var hostKeyPrompt: HostKeyPrompt?
     /// 自动重连:当前第几次尝试、是否已排定下一次
@@ -143,6 +147,9 @@ final class TerminalSession: Identifiable {
         userInitiatedDisconnect = false
         reconnectTask?.cancel()
         isAutoReconnectScheduled = false
+        // 重连(此前连过)且开启了恢复工作目录 → 连上后自动 cd 回上次目录
+        let restoreEnabled = UserDefaults.standard.object(forKey: SettingsKeys.restoreWorkingDir) as? Bool ?? true
+        restoreDirOnConnect = (everConnected && restoreEnabled) ? lastRemoteDirectory : nil
         state = .connecting(detail: "正在连接 \(spec.hostname):\(spec.port)…")
 
         sessionTask = Task {
@@ -315,14 +322,14 @@ final class TerminalSession: Identifiable {
         MARK='# >>> berth command-integration >>>'
         END='# <<< berth command-integration <<<'
         BASH_HOOK='__berth_preexec() { printf "\033]133;C\007"; }
-        __berth_precmd() { local e=$?; printf "\033]133;D;%s\007\033]133;A\007" "$e"; }
+        __berth_precmd() { local e=$?; printf "\033]133;D;%s\007\033]133;A\007\033]7;file://%s%s\007" "$e" "${HOSTNAME:-}" "$PWD"; }
         if [ -n "$BASH_VERSION" ]; then
           case "$PROMPT_COMMAND" in *__berth_precmd*) : ;; *) PROMPT_COMMAND="__berth_precmd;${PROMPT_COMMAND}";; esac
           trap "__berth_preexec" DEBUG
         fi'
         ZSH_HOOK='autoload -Uz add-zsh-hook 2>/dev/null
         __berth_preexec() { printf "\033]133;C\007"; }
-        __berth_precmd() { printf "\033]133;D;%s\007\033]133;A\007" "$?"; }
+        __berth_precmd() { printf "\033]133;D;%s\007\033]133;A\007\033]7;file://%s%s\007" "$?" "${HOST:-}" "$PWD"; }
         add-zsh-hook preexec __berth_preexec 2>/dev/null
         add-zsh-hook precmd __berth_precmd 2>/dev/null'
         added=0
@@ -600,6 +607,14 @@ final class TerminalSession: Identifiable {
                 if !self.isBorrower { self.startPortForwards() }
             }
 
+            // 重连恢复工作目录:先 cd 回上次目录
+            if let dir = restoreDirOnConnect, !dir.isEmpty {
+                restoreDirOnConnect = nil
+                try? await Task.sleep(for: .milliseconds(300))
+                let quoted = "'" + dir.replacingOccurrences(of: "'", with: "'\\''") + "'"
+                try? await outbound.write(ByteBuffer(bytes: Array((" cd " + quoted + "\n").utf8)))
+            }
+
             // 连接后自动执行命令(逐行发送,自动补回车)。分屏借用会话不重复执行。
             let startup = spec.startupCommands.trimmingCharacters(in: .whitespacesAndNewlines)
             if !isBorrower, !startup.isEmpty {
@@ -761,7 +776,17 @@ extension TerminalSession: TerminalViewDelegate {
 
     nonisolated func setTerminalTitle(source: TerminalView, title: String) {}
 
-    nonisolated func hostCurrentDirectoryUpdate(source: TerminalView, directory: String?) {}
+    nonisolated func hostCurrentDirectoryUpdate(source: TerminalView, directory: String?) {
+        MainActor.assumeIsolated {
+            // 形如 file://host/path 或直接路径;取路径部分
+            guard let dir = directory else { return }
+            if let url = URL(string: dir), url.scheme == "file" {
+                lastRemoteDirectory = url.path.removingPercentEncoding ?? url.path
+            } else if dir.hasPrefix("/") {
+                lastRemoteDirectory = dir
+            }
+        }
+    }
 
     nonisolated func scrolled(source: TerminalView, position: Double) {}
 

@@ -14,4 +14,5 @@ enum SettingsKeys {
     static let restoreSessions = "session.restoreOnLaunch"
     static let copyOnSelect = "terminal.copyOnSelect"
     static let middleClickPaste = "terminal.middleClickPaste"
+    static let restoreWorkingDir = "session.restoreWorkingDir"
 }

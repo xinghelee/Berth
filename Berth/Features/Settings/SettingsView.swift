@@ -15,6 +15,7 @@ struct SettingsView: View {
     @AppStorage(SettingsKeys.pasteProtection) private var pasteProtection = true
     @AppStorage(SettingsKeys.notifyLongCommand) private var notifyLongCommand = true
     @AppStorage(SettingsKeys.restoreSessions) private var restoreSessions = true
+    @AppStorage(SettingsKeys.restoreWorkingDir) private var restoreWorkingDir = true
     @State private var themeStore = ThemeStore.shared
     @State private var dataMessage: String?
     @Environment(\.modelContext) private var modelContext
@@ -61,6 +62,7 @@ struct SettingsView: View {
             Section("会话") {
                 Toggle("非主动断开时自动重连(指数退避)", isOn: $autoReconnect)
                 Toggle("启动时恢复上次的标签页", isOn: $restoreSessions)
+                Toggle("重连后自动 cd 回上次工作目录(需命令集成)", isOn: $restoreWorkingDir)
                 Toggle("后台时长任务完成/响铃通知", isOn: $notifyLongCommand)
             }
             Section("安全") {
