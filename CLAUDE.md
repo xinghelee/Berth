@@ -69,5 +69,5 @@ BERTH_M1_AUTOTEST=1 BERTH_TRANSIENT_STORE=1 \
 - [x] M0 — 技术验证 spike:Citadel 连接 + 密码/密钥认证 + PTY + SwiftTerm 渲染 + resize(spike 代码已被 M1 正式架构替代)
 - [x] M1 — 骨架与连接:SwiftData 模型、Keychain、三栏布局、主机管理、终端标签页(⌘T/⌘W/⌘1-9)、断线横幅重连、基础设置。自动化验收通过(建主机→连接→vim 编辑→关闭重连)
 - [x] M2 — 体验完善:⌘K 快速连接、ssh_config 导入+FSEvents 监听、粘贴 ssh 命令解析、密钥管理(生成/导入/Touch ID/storedKey 认证)、known_hosts 校验+指纹确认+变更警告、断线指数退避自动重连、⌘F 搜索、⌘D/⌘⇧D 分屏、4 套主题、中英本地化(zh-Hans 为基准)。单测 35 项 + M2/reconnect 自动化验收全绿
-- [ ] M3 — 高级连接:端口转发、跳板机、代理、ssh-agent、备份
+- [x] M3 — 高级连接(分支 `feat/m3-advanced`,待合并):跳板机链式、端口转发(本地/动态 SOCKS5/远程 全部真机验证)、HTTP/SOCKS5 代理、ssh-agent(ed25519+RSA)、服务器信息 inspector(⌘I,含资源图形化)、JSON 备份。均真机验证,35 单测绿
 - [ ] M4 — 二期:SFTP、CloudKit 同步、本地回显、iTerm2 主题导入

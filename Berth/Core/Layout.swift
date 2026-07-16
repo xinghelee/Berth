@@ -4,6 +4,6 @@ import Foundation
 enum AppLayout {
     /// 首行(标题行 / 标签条)的高度
     static let topBarHeight: CGFloat = 30
-    /// 首行距窗口顶端的留白(fullSizeContentView 下内容到顶,这里给红绿灯下方留一点)
-    static let columnTopPadding: CGFloat = 10
+    /// 首行距标题栏下方的留白
+    static let columnTopPadding: CGFloat = 4
 }

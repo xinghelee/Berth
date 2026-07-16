@@ -6,12 +6,13 @@ enum TagColor: String, Codable, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
-/// M3 增加 agent
 enum AuthMethodKind: String, Codable, CaseIterable, Identifiable {
     case password
     case privateKeyFile
     /// 密钥库中的密钥(SSHKeyRecord,私钥在 Keychain)
     case storedKey
+    /// 系统 ssh-agent(读 SSH_AUTH_SOCK)
+    case agent
     var id: String { rawValue }
 }
 
@@ -39,6 +40,15 @@ final class Host {
     var sourceRaw: String
     var lastConnectedAt: Date?
     var createdAt: Date
+    /// 跳板机:另一台 Host 的 id(等效 ProxyJump),支持链式
+    var jumpHostID: UUID?
+    /// 代理:拍平成基础字段存储(SwiftData 对嵌套枚举的复合 Codable 属性支持不稳,故不直接存 struct)
+    var proxyKindRaw: String = ProxyKind.none.rawValue
+    var proxyHost: String = ""
+    var proxyPort: Int = 1080
+    var proxyUsername: String = ""
+    var proxyRequiresAuth: Bool = false
+    @Relationship(deleteRule: .cascade, inverse: \PortForward.host) var portForwards: [PortForward] = []
 
     init(
         id: UUID = UUID(),
@@ -53,7 +63,9 @@ final class Host {
         tagColor: TagColor = .none,
         note: String = "",
         sortOrder: Int = 0,
-        source: HostSource = .manual
+        source: HostSource = .manual,
+        jumpHostID: UUID? = nil,
+        proxy: ProxyConfig = ProxyConfig()
     ) {
         self.id = id
         self.label = label
@@ -68,7 +80,33 @@ final class Host {
         self.note = note
         self.sortOrder = sortOrder
         self.sourceRaw = source.rawValue
+        self.jumpHostID = jumpHostID
+        self.proxyKindRaw = proxy.kind.rawValue
+        self.proxyHost = proxy.host
+        self.proxyPort = proxy.port
+        self.proxyUsername = proxy.username
+        self.proxyRequiresAuth = proxy.requiresAuth
         self.createdAt = Date()
+    }
+
+    /// 代理值的读写(桥接拍平字段 ↔ ProxyConfig)
+    var proxy: ProxyConfig {
+        get {
+            ProxyConfig(
+                kind: ProxyKind(rawValue: proxyKindRaw) ?? .none,
+                host: proxyHost,
+                port: proxyPort,
+                username: proxyUsername,
+                requiresAuth: proxyRequiresAuth
+            )
+        }
+        set {
+            proxyKindRaw = newValue.kind.rawValue
+            proxyHost = newValue.host
+            proxyPort = newValue.port
+            proxyUsername = newValue.username
+            proxyRequiresAuth = newValue.requiresAuth
+        }
     }
 
     var authMethod: AuthMethodKind {

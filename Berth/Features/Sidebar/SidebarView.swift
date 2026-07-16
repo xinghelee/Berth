@@ -19,12 +19,6 @@ struct SidebarView: View {
 
     var body: some View {
         List(selection: $selection) {
-            // fullSizeContentView 下内容到顶,给红绿灯让位
-            Color.clear
-                .frame(height: 22)
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
-                .selectionDisabled()
             Section {
                 Label("全部主机", systemImage: "server.rack")
                     .tag(SidebarSelection.allHosts)

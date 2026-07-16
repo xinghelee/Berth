@@ -1,4 +1,6 @@
+import SwiftData
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// 基础设置(M1)。M2 扩展:主题、字体族、scrollback、快捷键、安全策略等。
 struct SettingsView: View {
@@ -7,6 +9,8 @@ struct SettingsView: View {
     @AppStorage(SettingsKeys.autoReconnect) private var autoReconnect = true
     @AppStorage(SettingsKeys.requireTouchIDForKeys) private var requireTouchID = true
     @State private var themeStore = ThemeStore.shared
+    @State private var dataMessage: String?
+    @Environment(\.modelContext) private var modelContext
 
     var body: some View {
         Form {
@@ -41,9 +45,52 @@ struct SettingsView: View {
             Section("安全") {
                 Toggle("使用私钥连接前要求 Touch ID / 密码验证", isOn: $requireTouchID)
             }
+            Section("数据") {
+                HStack {
+                    Button("导出备份…") { exportBackup() }
+                    Button("导入备份…") { importBackup() }
+                }
+                Text("备份为 JSON,只含主机/分组/转发/代理结构;密码、passphrase、私钥在 Keychain,不会导出。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                if let dataMessage {
+                    Text(dataMessage)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
         }
         .formStyle(.grouped)
-        .frame(width: 420)
+        .frame(width: 460)
         .navigationTitle("设置")
+    }
+
+    private func exportBackup() {
+        do {
+            let data = try BackupService.export(context: modelContext)
+            let panel = NSSavePanel()
+            panel.allowedContentTypes = [.json]
+            panel.nameFieldStringValue = "Berth-备份.json"
+            if panel.runModal() == .OK, let url = panel.url {
+                try data.write(to: url)
+                dataMessage = "已导出到 \(url.lastPathComponent)"
+            }
+        } catch {
+            dataMessage = "导出失败:\(error.localizedDescription)"
+        }
+    }
+
+    private func importBackup() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.json]
+        panel.allowsMultipleSelection = false
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            let data = try Data(contentsOf: url)
+            let result = try BackupService.import(data, context: modelContext)
+            dataMessage = "已导入:新增 \(result.hosts) 台主机、\(result.groups) 个分组(重复项已跳过)"
+        } catch {
+            dataMessage = "导入失败:\(error.localizedDescription)"
+        }
     }
 }

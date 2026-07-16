@@ -230,7 +230,7 @@ struct HostListView: View {
 
     private func connect(to host: Host) {
         host.lastConnectedAt = Date()
-        sessionManager.open(spec: HostSpec(host: host))
+        sessionManager.open(spec: HostSpec.resolve(host, in: allHosts))
     }
 
     private func copySSHCommand(for host: Host) {

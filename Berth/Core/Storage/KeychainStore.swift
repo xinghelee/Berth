@@ -22,6 +22,7 @@ enum KeychainStore {
 
     static func passwordAccount(for hostID: UUID) -> String { "host.\(hostID.uuidString).password" }
     static func passphraseAccount(for hostID: UUID) -> String { "host.\(hostID.uuidString).passphrase" }
+    static func proxyPasswordAccount(for hostID: UUID) -> String { "host.\(hostID.uuidString).proxyPassword" }
 
     // MARK: 基本操作
 

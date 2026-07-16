@@ -117,7 +117,15 @@ enum M2AcceptanceTest {
         let deadline = Date().addingTimeInterval(20)
         while Date() < deadline {
             if session.hostKeyPrompt != nil { session.resolveHostKeyPrompt(accepted: true) }
-            if case .connected = session.state { log("KEY_CONNECT_OK"); return }
+            if case .connected = session.state {
+                // 顺带验证 inspector 的 executeCommand 能与 PTY 并存
+                if let info = await session.fetchServerInfo(), !info.textRows.isEmpty {
+                    log("KEY_CONNECT_OK SERVERINFO_OK kernel=\(info.kernel)")
+                } else {
+                    log("KEY_CONNECT_OK SERVERINFO_FAIL")
+                }
+                return
+            }
             if case .disconnected(let reason) = session.state {
                 log("KEY_CONNECT_FAIL \(reason)")
                 return
@@ -125,6 +133,219 @@ enum M2AcceptanceTest {
             try? await Task.sleep(for: .milliseconds(200))
         }
         log("KEY_CONNECT_TIMEOUT state=\(session.state)")
+    }
+
+    /// 跳板机验收:BERTH_JUMP_AUTOTEST=1,经 JUMP 主机跳到 TARGET 主机,建立 PTY + 取到目标服务器信息即成功。
+    /// 环境:BERTH_JUMP_HOST/BERTH_JUMP_USER + BERTH_TEST_HOST(目标)/BERTH_TEST_USER + BERTH_TEST_KEYFILE + BERTH_TEST_DUMP
+    static func runJumpIfRequested(container: ModelContainer) async {
+        let env = ProcessInfo.processInfo.environment
+        guard env["BERTH_JUMP_AUTOTEST"] == "1",
+              let jumpHost = env["BERTH_JUMP_HOST"],
+              let jumpUser = env["BERTH_JUMP_USER"],
+              let target = env["BERTH_TEST_HOST"],
+              let user = env["BERTH_TEST_USER"],
+              let keyFile = env["BERTH_TEST_KEYFILE"],
+              let dumpBase = env["BERTH_TEST_DUMP"] else { return }
+
+        func log(_ line: String) {
+            try? line.write(toFile: dumpBase + ".jump.log", atomically: true, encoding: .utf8)
+        }
+
+        UserDefaults.standard.set(false, forKey: SettingsKeys.requireTouchIDForKeys)
+
+        let jumpSpec = HostSpec(
+            hostID: UUID(), label: "jump", hostname: jumpHost, port: 22,
+            username: jumpUser, authMethod: .privateKeyFile, privateKeyPath: keyFile
+        )
+        let targetSpec = HostSpec(
+            hostID: UUID(), label: "target", hostname: target, port: 22,
+            username: user, authMethod: .privateKeyFile, privateKeyPath: keyFile,
+            jump: [jumpSpec]
+        )
+        let session = SessionManager.shared.open(spec: targetSpec)
+
+        let deadline = Date().addingTimeInterval(30)
+        while Date() < deadline {
+            if session.hostKeyPrompt != nil { session.resolveHostKeyPrompt(accepted: true) }
+            if case .connected = session.state {
+                let info = await session.fetchServerInfo()
+                log("JUMP_CONNECT_OK via=\(jumpHost) target=\(target) kernel=\(info?.kernel ?? "?")")
+                return
+            }
+            if case .disconnected(let reason) = session.state {
+                log("JUMP_CONNECT_FAIL \(reason)")
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(200))
+        }
+        log("JUMP_CONNECT_TIMEOUT state=\(session.state)")
+    }
+
+    /// 端口转发验收:BERTH_FORWARD_AUTOTEST=1。连目标后建一条 local/dynamic 转发,
+    /// 打印实际绑定端口,保持会话存活让外部脚本验证。
+    /// 环境:BERTH_TEST_HOST/USER/KEYFILE + BERTH_FWD_KIND(local/dynamic)
+    ///       + BERTH_FWD_TARGET_HOST/BERTH_FWD_TARGET_PORT(local 用)+ BERTH_TEST_DUMP
+    static func runForwardIfRequested(container: ModelContainer) async {
+        let env = ProcessInfo.processInfo.environment
+        guard env["BERTH_FORWARD_AUTOTEST"] == "1",
+              let host = env["BERTH_TEST_HOST"],
+              let user = env["BERTH_TEST_USER"],
+              let keyFile = env["BERTH_TEST_KEYFILE"],
+              let dumpBase = env["BERTH_TEST_DUMP"] else { return }
+        let kind = PortForwardKind(rawValue: env["BERTH_FWD_KIND"] ?? "local") ?? .local
+        let targetHost = env["BERTH_FWD_TARGET_HOST"] ?? "127.0.0.1"
+        let targetPort = Int(env["BERTH_FWD_TARGET_PORT"] ?? "22") ?? 22
+
+        func log(_ line: String) {
+            try? line.write(toFile: dumpBase + ".forward.log", atomically: true, encoding: .utf8)
+        }
+
+        log("FORWARD_TEST_STARTED host=\(host) kind=\(kind.rawValue)")
+        UserDefaults.standard.set(false, forKey: SettingsKeys.requireTouchIDForKeys)
+        let bindPort = Int(env["BERTH_FWD_BIND_PORT"] ?? "0") ?? 0
+        let forward = PortForwardSpec(kind: kind, bindHost: "127.0.0.1", bindPort: bindPort, targetHost: targetHost, targetPort: targetPort)
+        let spec = HostSpec(
+            hostID: UUID(), label: "fwd", hostname: host, port: 22,
+            username: user, authMethod: .privateKeyFile, privateKeyPath: keyFile,
+            forwards: [forward]
+        )
+        let session = SessionManager.shared.open(spec: spec)
+
+        let deadline = Date().addingTimeInterval(30)
+        while Date() < deadline {
+            if session.hostKeyPrompt != nil { session.resolveHostKeyPrompt(accepted: true) }
+            if case .disconnected(let reason) = session.state {
+                log("FORWARD_SESSION_DISCONNECTED \(reason)")
+                return
+            }
+            if case .failed(let reason)? = session.forwardStates[forward.id] {
+                log("FORWARD_FAILED \(reason)")
+                return
+            }
+            if case .active(let boundPort)? = session.forwardStates[forward.id] {
+                log("FORWARD_ACTIVE port=\(boundPort) kind=\(kind.rawValue)")
+                // 保持存活让外部脚本连本地端口验证
+                try? await Task.sleep(for: .seconds(30))
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(200))
+        }
+        log("FORWARD_TIMEOUT state=\(session.state)")
+    }
+
+    /// ssh-agent 验收:BERTH_AGENT_AUTOTEST=1,用 agent 认证连目标(agent 里须已 ssh-add 目标可用密钥)。
+    static func runAgentIfRequested(container: ModelContainer) async {
+        let env = ProcessInfo.processInfo.environment
+        guard env["BERTH_AGENT_AUTOTEST"] == "1",
+              let host = env["BERTH_TEST_HOST"],
+              let user = env["BERTH_TEST_USER"],
+              let dumpBase = env["BERTH_TEST_DUMP"] else { return }
+        func log(_ line: String) {
+            try? line.write(toFile: dumpBase + ".agent.log", atomically: true, encoding: .utf8)
+        }
+        let spec = HostSpec(
+            hostID: UUID(), label: "agent-test", hostname: host, port: 22,
+            username: user, authMethod: .agent, privateKeyPath: nil
+        )
+        let session = SessionManager.shared.open(spec: spec)
+        let deadline = Date().addingTimeInterval(20)
+        while Date() < deadline {
+            if session.hostKeyPrompt != nil { session.resolveHostKeyPrompt(accepted: true) }
+            if case .connected = session.state {
+                let info = await session.fetchServerInfo()
+                log("AGENT_CONNECT_OK kernel=\(info?.kernel ?? "?")")
+                return
+            }
+            if case .disconnected(let reason) = session.state {
+                log("AGENT_CONNECT_FAIL \(reason)")
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(200))
+        }
+        log("AGENT_CONNECT_TIMEOUT state=\(session.state)")
+    }
+
+    /// JSON 备份验收:BERTH_BACKUP_AUTOTEST=1,建主机→导出→清空→导入→比对。
+    static func runBackupIfRequested(container: ModelContainer) async {
+        let env = ProcessInfo.processInfo.environment
+        guard env["BERTH_BACKUP_AUTOTEST"] == "1", let dumpBase = env["BERTH_TEST_DUMP"] else { return }
+        func log(_ line: String) {
+            try? line.write(toFile: dumpBase + ".backup.log", atomically: true, encoding: .utf8)
+        }
+        let context = ModelContext(container)
+        do {
+            let group = HostGroup(name: "备份组")
+            context.insert(group)
+            let host = Host(label: "备份主机", hostname: "1.2.3.4", port: 2200, username: "u", group: group, jumpHostID: nil)
+            host.proxy = ProxyConfig(kind: .socks5, host: "127.0.0.1", port: 1080)
+            context.insert(host)
+            let forward = PortForward(kind: .local, bindHost: "127.0.0.1", bindPort: 9000, targetHost: "db", targetPort: 5432)
+            forward.host = host
+            context.insert(forward)
+            try context.save()
+
+            let data = try BackupService.export(context: context)
+
+            // 清空后导入
+            context.delete(host)
+            context.delete(group)
+            try context.save()
+
+            let result = try BackupService.import(data, context: context)
+            let hosts = (try? context.fetch(FetchDescriptor<Host>())) ?? []
+            let restored = hosts.first { $0.hostname == "1.2.3.4" }
+            let ok = result.hosts == 1
+                && restored?.port == 2200
+                && restored?.proxy.kind == .socks5
+                && restored?.portForwards.count == 1
+                && restored?.jumpHostID == nil
+            log(ok ? "BACKUP_ROUNDTRIP_OK json=\(data.count)B" : "BACKUP_ROUNDTRIP_FAIL restored=\(String(describing: restored?.port)) fwds=\(restored?.portForwards.count ?? -1)")
+        } catch {
+            log("BACKUP_FAIL \(error)")
+        }
+    }
+
+    /// 代理验收:BERTH_PROXY_AUTOTEST=1,经 HTTP/SOCKS5 代理连目标,建立 PTY + 取服务器信息即成功。
+    /// 环境:BERTH_PROXY_KIND(http/socks5)+ BERTH_PROXY_HOST/BERTH_PROXY_PORT
+    ///       + BERTH_TEST_HOST/USER/KEYFILE + BERTH_TEST_DUMP
+    static func runProxyIfRequested(container: ModelContainer) async {
+        let env = ProcessInfo.processInfo.environment
+        guard env["BERTH_PROXY_AUTOTEST"] == "1",
+              let proxyHost = env["BERTH_PROXY_HOST"],
+              let host = env["BERTH_TEST_HOST"],
+              let user = env["BERTH_TEST_USER"],
+              let keyFile = env["BERTH_TEST_KEYFILE"],
+              let dumpBase = env["BERTH_TEST_DUMP"] else { return }
+        let proxyKind: ProxyKind = (env["BERTH_PROXY_KIND"] == "http") ? .http : .socks5
+        let proxyPort = Int(env["BERTH_PROXY_PORT"] ?? "1080") ?? 1080
+
+        func log(_ line: String) {
+            try? line.write(toFile: dumpBase + ".proxy.log", atomically: true, encoding: .utf8)
+        }
+        UserDefaults.standard.set(false, forKey: SettingsKeys.requireTouchIDForKeys)
+
+        let proxy = ProxyConfig(kind: proxyKind, host: proxyHost, port: proxyPort)
+        let spec = HostSpec(
+            hostID: UUID(), label: "proxy-test", hostname: host, port: 22,
+            username: user, authMethod: .privateKeyFile, privateKeyPath: keyFile, proxy: proxy
+        )
+        let session = SessionManager.shared.open(spec: spec)
+
+        let deadline = Date().addingTimeInterval(30)
+        while Date() < deadline {
+            if session.hostKeyPrompt != nil { session.resolveHostKeyPrompt(accepted: true) }
+            if case .connected = session.state {
+                let info = await session.fetchServerInfo()
+                log("PROXY_CONNECT_OK kind=\(proxyKind.rawValue) kernel=\(info?.kernel ?? "?")")
+                return
+            }
+            if case .disconnected(let reason) = session.state {
+                log("PROXY_CONNECT_FAIL \(reason)")
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(200))
+        }
+        log("PROXY_CONNECT_TIMEOUT state=\(session.state)")
     }
 
     /// 断线自动重连验收:BERTH_RECONNECT_AUTOTEST=1。

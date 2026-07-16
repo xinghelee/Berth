@@ -161,7 +161,7 @@ struct QuickConnectPanel: View {
         case .host(let host, _):
             host.lastConnectedAt = Date()
             try? modelContext.save()
-            sessionManager.open(spec: HostSpec(host: host))
+            sessionManager.open(spec: HostSpec.resolve(host, in: hosts))
             controller.dismiss()
         case .direct(let target):
             controller.directConnectRequest = DirectConnectRequest(target: target)

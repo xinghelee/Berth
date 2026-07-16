@@ -15,10 +15,17 @@ struct BerthApp: App {
         WindowGroup("Berth") {
             MainWindowView()
                 .environment(sessionManager)
-                .task { await M1AcceptanceTest.runIfRequested(container: container) }
-                .task { await M2AcceptanceTest.runIfRequested(container: container) }
-                .task { await M2AcceptanceTest.runReconnectIfRequested(container: container) }
-                .task { await M2AcceptanceTest.runKeyConnectIfRequested(container: container) }
+                .task {
+                    await M1AcceptanceTest.runIfRequested(container: container)
+                    await M2AcceptanceTest.runIfRequested(container: container)
+                    await M2AcceptanceTest.runReconnectIfRequested(container: container)
+                    await M2AcceptanceTest.runKeyConnectIfRequested(container: container)
+                    await M2AcceptanceTest.runJumpIfRequested(container: container)
+                    await M2AcceptanceTest.runForwardIfRequested(container: container)
+                    await M2AcceptanceTest.runProxyIfRequested(container: container)
+                    await M2AcceptanceTest.runBackupIfRequested(container: container)
+                    await M2AcceptanceTest.runAgentIfRequested(container: container)
+                }
         }
         .modelContainer(container)
         .commands {
@@ -74,6 +81,11 @@ struct TerminalCommands: Commands {
         }
 
         CommandMenu("终端") {
+            Button("服务器信息面板") {
+                SessionManager.shared.isInspectorVisible.toggle()
+            }
+            .keyboardShortcut("i", modifiers: .command)
+
             Button("左右分屏") {
                 SessionManager.shared.toggleSplit(axis: .horizontal)
             }

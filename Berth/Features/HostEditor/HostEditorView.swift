@@ -12,6 +12,7 @@ struct HostEditorView: View {
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \HostGroup.sortOrder) private var groups: [HostGroup]
     @Query(sort: \SSHKeyRecord.createdAt, order: .reverse) private var storedKeys: [SSHKeyRecord]
+    @Query(sort: \Host.label) private var allHosts: [Host]
 
     @State private var label = ""
     @State private var hostname = ""
@@ -23,6 +24,12 @@ struct HostEditorView: View {
     @State private var passphrase = ""
     @State private var selectedKeyID: UUID?
     @State private var groupID: UUID?
+    @State private var jumpHostID: UUID?
+    @State private var proxyKind: ProxyKind = .none
+    @State private var proxyHost = ""
+    @State private var proxyPort = "1080"
+    @State private var proxyUsername = ""
+    @State private var proxyPassword = ""
     @State private var tagColor: TagColor = .none
     @State private var note = ""
     @State private var validationMessage: String?
@@ -57,6 +64,7 @@ struct HostEditorView: View {
                         Text("密码").tag(AuthMethodKind.password)
                         Text("私钥文件").tag(AuthMethodKind.privateKeyFile)
                         Text("密钥库").tag(AuthMethodKind.storedKey)
+                        Text("Agent").tag(AuthMethodKind.agent)
                     }
                     .pickerStyle(.segmented)
 
@@ -90,6 +98,58 @@ struct HostEditorView: View {
                                 }
                             }
                         }
+                    case .agent:
+                        Text("使用系统 ssh-agent 里已加载的密钥(ed25519 / RSA)。用 ssh-add 加载密钥后即可。")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Section("高级") {
+                    Picker("跳板机", selection: $jumpHostID) {
+                        Text("不使用").tag(UUID?.none)
+                        ForEach(availableJumpHosts) { candidate in
+                            Text(candidate.label).tag(UUID?.some(candidate.id))
+                        }
+                    }
+                    if jumpHostID != nil {
+                        Text("连接时先经跳板机(等效 ProxyJump),支持链式。")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Picker("代理", selection: $proxyKind) {
+                        ForEach(ProxyKind.allCases) { kind in
+                            Text(kind.label).tag(kind)
+                        }
+                    }
+                    if proxyKind != .none {
+                        TextField("代理主机", text: $proxyHost)
+                        TextField("代理端口", text: $proxyPort)
+                        TextField("用户名(可选)", text: $proxyUsername)
+                        SecureField("密码(可选,留空保持不变)", text: $proxyPassword)
+                    }
+                }
+
+                if isEditing {
+                    Section("端口转发") {
+                        ForEach(forwards) { forward in
+                            forwardRow(forward)
+                        }
+                        Button {
+                            addForward()
+                        } label: {
+                            Label("添加转发", systemImage: "plus")
+                        }
+                        Text("连接时自动建立;可在会话信息面板单独查看状态。")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                } else {
+                    Section("端口转发") {
+                        Text("保存主机后可添加端口转发。")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
 
@@ -156,8 +216,58 @@ struct HostEditorView: View {
         privateKeyPath = host.privateKeyPath ?? ""
         selectedKeyID = host.keyID
         groupID = host.group?.id
+        jumpHostID = host.jumpHostID
+        proxyKind = host.proxy.kind
+        proxyHost = host.proxy.host
+        proxyPort = String(host.proxy.port)
+        proxyUsername = host.proxy.username
         tagColor = host.tagColor
         note = host.note
+    }
+
+    private var forwards: [PortForward] {
+        (host?.portForwards ?? []).sorted { $0.sortOrder < $1.sortOrder }
+    }
+
+    private func addForward() {
+        guard let host else { return }
+        let forward = PortForward(
+            kind: .local,
+            bindHost: "127.0.0.1",
+            bindPort: 8080,
+            targetHost: "127.0.0.1",
+            targetPort: 80,
+            sortOrder: (forwards.last?.sortOrder ?? 0) + 1
+        )
+        forward.host = host
+        modelContext.insert(forward)
+    }
+
+    @ViewBuilder
+    private func forwardRow(_ forward: PortForward) -> some View {
+        ForwardRowView(forward: forward) {
+            modelContext.delete(forward)
+        }
+    }
+
+    /// 可选跳板机:排除自己,避免形成环(不允许选择会指回自己的主机)
+    private var availableJumpHosts: [Host] {
+        allHosts.filter { candidate in
+            guard candidate.id != host?.id else { return false }
+            return !reachesSelf(from: candidate)
+        }
+    }
+
+    private func reachesSelf(from candidate: Host) -> Bool {
+        guard let selfID = host?.id else { return false }
+        var seen: Set<UUID> = []
+        var current: UUID? = candidate.jumpHostID
+        while let id = current, !seen.contains(id) {
+            if id == selfID { return true }
+            seen.insert(id)
+            current = allHosts.first { $0.id == id }?.jumpHostID
+        }
+        return false
     }
 
     private func save() {
@@ -201,6 +311,17 @@ struct HostEditorView: View {
             : nil
         target.keyID = authMethod == .storedKey ? selectedKeyID : nil
         target.group = group
+        target.jumpHostID = jumpHostID
+        target.proxy = ProxyConfig(
+            kind: proxyKind,
+            host: proxyHost.trimmingCharacters(in: .whitespaces),
+            port: Int(proxyPort) ?? 1080,
+            username: proxyUsername.trimmingCharacters(in: .whitespaces),
+            requiresAuth: !proxyUsername.trimmingCharacters(in: .whitespaces).isEmpty
+        )
+        if proxyKind != .none, !proxyPassword.isEmpty {
+            try? KeychainStore.save(proxyPassword, account: KeychainStore.proxyPasswordAccount(for: target.id))
+        }
         target.tagColor = tagColor
         target.note = note
 
@@ -245,5 +366,50 @@ struct HostEditorView: View {
         case .blue: return "蓝"
         case .purple: return "紫"
         }
+    }
+}
+
+/// 单条端口转发的编辑行
+private struct ForwardRowView: View {
+    @Bindable var forward: PortForward
+    let onDelete: () -> Void
+
+    var body: some View {
+        VStack(spacing: 6) {
+            HStack {
+                Picker("", selection: $forward.kindRaw) {
+                    ForEach(PortForwardKind.allCases) { kind in
+                        Text(kind.label).tag(kind.rawValue)
+                    }
+                }
+                .labelsHidden()
+                .frame(width: 150)
+                Spacer()
+                Toggle("启用", isOn: $forward.enabled)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.mini)
+                Button(role: .destructive, action: onDelete) {
+                    Image(systemName: "trash")
+                }
+                .buttonStyle(.borderless)
+            }
+            HStack(spacing: 6) {
+                portField(forward.kind == .remote ? "远端端口" : "本地端口", value: $forward.bindPort)
+                if forward.kind != .dynamic {
+                    Image(systemName: "arrow.right").font(.caption2).foregroundStyle(.tertiary)
+                    TextField("目标主机", text: $forward.targetHost)
+                        .textFieldStyle(.roundedBorder)
+                    portField("端口", value: $forward.targetPort)
+                }
+            }
+        }
+        .padding(.vertical, 2)
+    }
+
+    private func portField(_ prompt: String, value: Binding<Int>) -> some View {
+        TextField(prompt, value: value, format: .number.grouping(.never))
+            .textFieldStyle(.roundedBorder)
+            .frame(width: 78)
     }
 }
