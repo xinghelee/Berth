@@ -9,6 +9,8 @@ struct ServerInfoInspector: View {
     @State private var isLoading = false
     @State private var now = Date()
     @State private var highlightState: HighlightUIState = .idle
+    /// 非 zsh 主机:记录检测到的 shell,展示「安装并切换到 zsh」按钮
+    @State private var notZshShell: String?
 
     private enum HighlightUIState: Equatable { case idle, working, done(String) }
 
@@ -267,7 +269,7 @@ struct ServerInfoInspector: View {
                             switch result {
                             case .installed: highlightState = .done("已启用,重开 shell 或执行 source ~/.zshrc 生效")
                             case .alreadyEnabled: highlightState = .done("此主机已启用命令高亮")
-                            case .notZsh(let shell): highlightState = .done("当前登录 shell 是 \(shell),命令高亮仅支持 zsh。可先把默认 shell 改为 zsh(chsh -s $(which zsh))再试。")
+                            case .notZsh(let shell): notZshShell = shell; highlightState = .idle
                             case .failed(let msg): highlightState = .done("失败:\(msg)")
                             }
                         }
@@ -277,9 +279,33 @@ struct ServerInfoInspector: View {
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
-                    Text("在此服务器安装 zsh-syntax-highlighting,输入命令实时染色")
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
+                    if let shell = notZshShell {
+                        Text("当前登录 shell 是 \(shell),命令高亮仅支持 zsh。")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Button {
+                            Task {
+                                highlightState = .working
+                                notZshShell = nil
+                                switch await session.installAndSwitchToZsh() {
+                                case .done, .needsRelogin:
+                                    highlightState = .done("已装 zsh 并设为默认 shell + 启用高亮。断开重连(或重开 shell)后生效。")
+                                case .failed(let msg):
+                                    highlightState = .done("切换失败:\(msg)")
+                                }
+                            }
+                        } label: {
+                            Label("安装并切换到 zsh", systemImage: "arrow.triangle.2.circlepath")
+                                .font(.system(size: 12))
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.small)
+                    } else {
+                        Text("在此服务器安装 zsh-syntax-highlighting,输入命令实时染色")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    }
                 case .working:
                     HStack(spacing: 6) {
                         ProgressView().controlSize(.mini)

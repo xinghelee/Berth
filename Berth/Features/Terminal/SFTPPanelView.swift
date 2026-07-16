@@ -227,10 +227,24 @@ struct SFTPPanelView: View {
     }
 
     private func transferBar(_ text: String) -> some View {
-        HStack(spacing: 6) {
-            ProgressView().controlSize(.mini)
-            Text(text).font(.caption).foregroundStyle(.secondary)
-            Spacer()
+        VStack(spacing: 4) {
+            HStack(spacing: 6) {
+                if browser?.transferProgress == nil {
+                    ProgressView().controlSize(.mini)
+                }
+                Text(text).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                Spacer()
+                if let p = browser?.transferProgress {
+                    Text("\(Int(p * 100))%")
+                        .font(.system(size: 10, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            if let p = browser?.transferProgress {
+                ProgressView(value: p)
+                    .progressViewStyle(.linear)
+                    .tint(theme.accentColor)
+            }
         }
         .padding(.horizontal, 12).padding(.vertical, 6)
         .background(theme.elevatedBackground)

@@ -29,6 +29,8 @@ final class SFTPBrowser {
     private(set) var entries: [Entry] = []
     /// 正在传输的说明(上传/下载),nil 表示空闲
     private(set) var transfer: String?
+    /// 传输进度 0...1;nil 表示不确定(体积未知/小文件)
+    private(set) var transferProgress: Double?
 
     private var sftp: SFTPClient?
     private let opener: () async throws -> SFTPClient
@@ -112,16 +114,30 @@ final class SFTPBrowser {
 
     // MARK: - 传输
 
+    /// 分块传输的块大小(256KB):够大以摊薄往返开销,又够小以更新进度
+    private static let chunkSize = 256 * 1024
+
     func download(_ entry: Entry, to localURL: URL) async {
         guard let sftp, !entry.isDirectory else { return }
         transfer = "下载 \(entry.name)…"
-        defer { transfer = nil }
+        transferProgress = entry.size > 0 ? 0 : nil
+        defer { transfer = nil; transferProgress = nil }
         do {
             let file = try await sftp.openFile(filePath: join(path, entry.name), flags: .read)
-            let buffer = try await file.readAll()
-            try? await file.close()
-            let data = Data(buffer.readableBytesView)
-            try data.write(to: localURL)
+            defer { Task { try? await file.close() } }
+            FileManager.default.createFile(atPath: localURL.path, contents: nil)
+            let handle = try FileHandle(forWritingTo: localURL)
+            defer { try? handle.close() }
+            var offset: UInt64 = 0
+            while true {
+                let buffer = try await file.read(from: offset, length: UInt32(Self.chunkSize))
+                let count = buffer.readableBytes
+                if count == 0 { break }
+                try handle.write(contentsOf: Data(buffer.readableBytesView))
+                offset += UInt64(count)
+                if entry.size > 0 { transferProgress = min(1, Double(offset) / Double(entry.size)) }
+                if count < Self.chunkSize { break }
+            }
         } catch {
             state = .failed(friendly(error))
         }
@@ -131,17 +147,29 @@ final class SFTPBrowser {
         guard let sftp else { return }
         let name = localURL.lastPathComponent
         transfer = "上传 \(name)…"
-        defer { transfer = nil }
+        defer { transfer = nil; transferProgress = nil }
         do {
             let data = try Data(contentsOf: localURL)
+            let total = data.count
+            transferProgress = total > 0 ? 0 : nil
             let file = try await sftp.openFile(
                 filePath: join(path, name),
                 flags: [.write, .create, .truncate]
             )
-            var buffer = ByteBufferAllocator().buffer(capacity: data.count)
-            buffer.writeBytes(data)
-            try await file.write(buffer, at: 0)
-            try? await file.close()
+            defer { Task { try? await file.close() } }
+            var offset = 0
+            while offset < total {
+                let end = min(offset + Self.chunkSize, total)
+                var buffer = ByteBufferAllocator().buffer(capacity: end - offset)
+                buffer.writeBytes(data[offset..<end])
+                try await file.write(buffer, at: UInt64(offset))
+                offset = end
+                transferProgress = Double(offset) / Double(total)
+            }
+            if total == 0 {
+                // 空文件也要建出来
+                try await file.write(ByteBufferAllocator().buffer(capacity: 0), at: 0)
+            }
             await refresh()
         } catch {
             state = .failed(friendly(error))

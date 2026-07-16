@@ -267,6 +267,60 @@ final class TerminalSession: Identifiable {
     }
 
     enum ShellHighlightResult { case installed, alreadyEnabled, notZsh(String), failed(String) }
+    enum SwitchZshResult { case done, needsRelogin, failed(String) }
+
+    /// 一键把默认登录 shell 切到 zsh(装 zsh + chsh),再启用命令高亮。
+    /// root 直接 chsh;非 root 走 sudo -n(装了免密 sudo 才行,否则提示手动)。
+    func installAndSwitchToZsh() async -> SwitchZshResult {
+        guard let client else { return .failed("未连接") }
+        let script = #"""
+        exec 2>&1
+        SUDO=""; [ "$(id -u)" != "0" ] && command -v sudo >/dev/null 2>&1 && SUDO="sudo -n"
+        install() {
+          if command -v apt-get >/dev/null 2>&1; then $SUDO apt-get update -qq && $SUDO DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "$@"
+          elif command -v dnf >/dev/null 2>&1; then $SUDO dnf install -y -q "$@"
+          elif command -v yum >/dev/null 2>&1; then $SUDO yum install -y -q "$@"
+          elif command -v apk >/dev/null 2>&1; then $SUDO apk add --no-progress "$@"
+          elif command -v pacman >/dev/null 2>&1; then $SUDO pacman -S --noconfirm "$@"
+          elif command -v brew >/dev/null 2>&1; then brew install "$@"
+          else return 1; fi
+        }
+        ZSH=$(command -v zsh || true)
+        if [ -z "$ZSH" ]; then install zsh || { echo BERTH_NOPKG; exit 0; }; ZSH=$(command -v zsh || true); fi
+        [ -z "$ZSH" ] && { echo BERTH_NOZSH; exit 0; }
+        # 高亮包
+        install zsh-syntax-highlighting >/dev/null 2>&1 || true
+        # 切换默认 shell
+        USER_NAME=$(id -un)
+        if [ "$(id -u)" = "0" ]; then
+          chsh -s "$ZSH" "$USER_NAME" 2>/dev/null || usermod -s "$ZSH" "$USER_NAME" 2>/dev/null || { echo BERTH_CHSH_FAIL; exit 0; }
+        else
+          $SUDO chsh -s "$ZSH" "$USER_NAME" 2>/dev/null || $SUDO usermod -s "$ZSH" "$USER_NAME" 2>/dev/null || { echo BERTH_CHSH_FAIL; exit 0; }
+        fi
+        # 写高亮 source 到 .zshrc(幂等)
+        MARK='# >>> berth syntax-highlight >>>'
+        RC="$HOME/.zshrc"; touch "$RC" 2>/dev/null || true
+        HL=""
+        for p in /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh; do
+          [ -f "$p" ] && { HL="$p"; break; }
+        done
+        if [ -n "$HL" ] && ! grep -q "$MARK" "$RC" 2>/dev/null; then
+          printf '\n%s\n[ -f %s ] && source %s\n# <<< berth syntax-highlight <<<\n' "$MARK" "$HL" "$HL" >> "$RC"
+        fi
+        echo BERTH_SWITCHED
+        """#
+        do {
+            let buffer = try await client.executeCommand("sh -c \(shellQuote(script))")
+            let out = String(buffer: buffer)
+            if out.contains("BERTH_SWITCHED") { return .needsRelogin }
+            if out.contains("BERTH_CHSH_FAIL") { return .failed("切换默认 shell 失败(可能需要密码或权限)") }
+            if out.contains("BERTH_NOPKG") { return .failed("未识别的包管理器,无法自动安装 zsh") }
+            if out.contains("BERTH_NOZSH") { return .failed("安装后仍未找到 zsh") }
+            return .failed(String(out.trimmingCharacters(in: .whitespacesAndNewlines).suffix(200)))
+        } catch {
+            return .failed(SSHErrorMapper.friendlyMessage(for: error, hostname: spec.hostname, port: spec.port))
+        }
+    }
 
     /// 方案1:在远端启用命令高亮(zsh-syntax-highlighting)。仅对登录 shell 为 zsh 的用户生效
     /// —— 高亮脚本是 zsh 专有语法,写进 bash 的配置会报错。检测包管理器 → 安装 →
