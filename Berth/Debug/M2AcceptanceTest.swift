@@ -409,14 +409,14 @@ enum M2AcceptanceTest {
         let borrowerWorks = (await borrower.fetchServerInfo())?.textRows.isEmpty == false
 
         // 5. 关掉借用会话,拥有者应仍然在线(release 不误关共享连接)
-        manager.close(borrower)
+        manager.closePane(borrower)
         try? await Task.sleep(for: .milliseconds(500))
         let ownerStillUp: Bool = { if case .connected = owner.state { return true } else { return false } }()
         // 拥有者仍能用共享连接(证明底层 client 没被借用会话关掉)
         let ownerStillWorks = (await owner.fetchServerInfo())?.textRows.isEmpty == false
 
         log("REUSE_OK sameConnection=\(sameConnection) borrowerWorks=\(borrowerWorks) ownerStillUp=\(ownerStillUp) ownerStillWorks=\(ownerStillWorks)")
-        manager.close(owner)
+        manager.closePane(owner)
     }
 
     /// Keychain 跨构建持久化探针:BERTH_KEYCHAIN_PROBE=save|read|cleanup。

@@ -75,7 +75,7 @@ struct TerminalCommands: Commands {
             }
             .keyboardShortcut("t", modifiers: .command)
 
-            Button("关闭标签页") {
+            Button("关闭 pane / 标签页") {
                 let manager = SessionManager.shared
                 if manager.selected != nil {
                     manager.requestCloseCurrent()
@@ -114,12 +114,12 @@ struct TerminalCommands: Commands {
             .keyboardShortcut("f", modifiers: [.command, .shift])
 
             Button("左右分屏") {
-                SessionManager.shared.toggleSplit(axis: .horizontal)
+                SessionManager.shared.splitFocused(axis: .horizontal)
             }
             .keyboardShortcut("d", modifiers: .command)
 
             Button("上下分屏") {
-                SessionManager.shared.toggleSplit(axis: .vertical)
+                SessionManager.shared.splitFocused(axis: .vertical)
             }
             .keyboardShortcut("d", modifiers: [.command, .shift])
         }

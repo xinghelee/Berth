@@ -24,12 +24,19 @@ final class BerthTerminalView: SwiftTerm.TerminalView {
 
         let hItem = NSMenuItem(title: "左右分屏", action: #selector(berthSplitHorizontal), keyEquivalent: "d")
         hItem.target = self
+        hItem.image = NSImage(systemSymbolName: "rectangle.split.2x1", accessibilityDescription: nil)
         menu.addItem(hItem)
 
         let vItem = NSMenuItem(title: "上下分屏", action: #selector(berthSplitVertical), keyEquivalent: "d")
         vItem.keyEquivalentModifierMask = [.command, .shift]
         vItem.target = self
+        vItem.image = NSImage(systemSymbolName: "rectangle.split.1x2", accessibilityDescription: nil)
         menu.addItem(vItem)
+
+        let closePaneItem = NSMenuItem(title: "关闭此分屏", action: #selector(berthClosePane), keyEquivalent: "")
+        closePaneItem.target = self
+        closePaneItem.image = NSImage(systemSymbolName: "xmark.rectangle", accessibilityDescription: nil)
+        menu.addItem(closePaneItem)
 
         menu.addItem(.separator())
 
@@ -42,11 +49,15 @@ final class BerthTerminalView: SwiftTerm.TerminalView {
     }
 
     @objc private func berthSplitHorizontal() {
-        MainActor.assumeIsolated { SessionManager.shared.toggleSplit(axis: .horizontal) }
+        MainActor.assumeIsolated { SessionManager.shared.splitFocused(axis: .horizontal) }
     }
 
     @objc private func berthSplitVertical() {
-        MainActor.assumeIsolated { SessionManager.shared.toggleSplit(axis: .vertical) }
+        MainActor.assumeIsolated { SessionManager.shared.splitFocused(axis: .vertical) }
+    }
+
+    @objc private func berthClosePane() {
+        MainActor.assumeIsolated { SessionManager.shared.requestCloseCurrent() }
     }
 
     @objc private func berthFind() {

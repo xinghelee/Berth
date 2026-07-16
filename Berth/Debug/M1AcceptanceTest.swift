@@ -74,7 +74,7 @@ enum M1AcceptanceTest {
         mark("FIRST_SESSION_DUMPED")
 
         // 5. 关闭标签页
-        manager.close(session)
+        manager.closePane(session)
         try? await Task.sleep(for: .seconds(1))
         mark(manager.sessions.isEmpty ? "CLOSED" : "CLOSE_FAILED sessions=\(manager.sessions.count)")
 

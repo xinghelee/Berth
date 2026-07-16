@@ -7,22 +7,14 @@ struct TerminalTabsView: View {
     var body: some View {
         @Bindable var manager = sessionManager
         VStack(spacing: 0) {
-            if sessionManager.sessions.isEmpty {
+            if sessionManager.tabs.isEmpty {
                 emptyState
-            } else {
-                if let session = sessionManager.selected {
-                    HStack(spacing: 0) {
-                        Group {
-                            // 分屏只在其主面板标签下渲染;副会话被单独选中时走普通单面板
-                            if let secondary = sessionManager.splitSecondary,
-                               sessionManager.selectedID == sessionManager.splitPrimaryID,
-                               secondary.id != session.id {
-                                splitContainer(primary: session, secondary: secondary)
-                            } else {
-                                TerminalPaneView(session: session)
-                                    .id(session.id)
-                            }
-                        }
+            } else if let tab = sessionManager.selectedTab {
+                HStack(spacing: 0) {
+                    PaneTreeView(node: tab.root, focusedID: tab.focusedID) { id in
+                        sessionManager.focusPane(id)
+                    }
+                    if let session = sessionManager.selected {
                         if sessionManager.isSFTPVisible {
                             Divider().overlay(ThemeStore.shared.current.borderColor)
                             SFTPPanelView(session: session) {
@@ -39,6 +31,8 @@ struct TerminalTabsView: View {
                             .transition(.move(edge: .trailing).combined(with: .opacity))
                         }
                     }
+                }
+                if let session = sessionManager.selected {
                     StatusBarView(session: session)
                 }
             }
@@ -50,12 +44,12 @@ struct TerminalTabsView: View {
         .toolbar {
             if #available(macOS 26.0, *) {
                 ToolbarItem(placement: .navigation) {
-                    if !sessionManager.sessions.isEmpty { tabChips }
+                    if !sessionManager.tabs.isEmpty { tabChips }
                 }
                 .sharedBackgroundVisibility(.hidden)
             } else {
                 ToolbarItem(placement: .navigation) {
-                    if !sessionManager.sessions.isEmpty { tabChips }
+                    if !sessionManager.tabs.isEmpty { tabChips }
                 }
             }
             ToolbarItem(placement: .principal) {
@@ -69,17 +63,17 @@ struct TerminalTabsView: View {
             }
             if #available(macOS 26.0, *) {
                 ToolbarItem(placement: .primaryAction) {
-                    if !sessionManager.sessions.isEmpty { panelButtons }
+                    if !sessionManager.tabs.isEmpty { panelButtons }
                 }
                 .sharedBackgroundVisibility(.hidden)
             } else {
                 ToolbarItem(placement: .primaryAction) {
-                    if !sessionManager.sessions.isEmpty { panelButtons }
+                    if !sessionManager.tabs.isEmpty { panelButtons }
                 }
             }
         }
         .alert(
-            "关闭标签页「\(sessionManager.pendingCloseSession?.spec.label ?? "")」?",
+            "关闭分屏「\(sessionManager.pendingCloseSession?.spec.label ?? "")」?",
             isPresented: Binding(
                 get: { manager.pendingCloseSession != nil },
                 set: { if !$0 { manager.pendingCloseSession = nil } }
@@ -87,31 +81,48 @@ struct TerminalTabsView: View {
         ) {
             Button("断开并关闭", role: .destructive) {
                 if let session = sessionManager.pendingCloseSession {
-                    sessionManager.close(session)
+                    sessionManager.closePane(session)
                 }
                 manager.pendingCloseSession = nil
             }
-            Button("取消", role: .cancel) {
-                manager.pendingCloseSession = nil
-            }
+            Button("取消", role: .cancel) { manager.pendingCloseSession = nil }
         } message: {
-            Text("该标签页有活跃的 SSH 连接。")
+            Text("该分屏有活跃的 SSH 连接。")
+        }
+        .alert(
+            "关闭标签页?",
+            isPresented: Binding(
+                get: { manager.pendingCloseTab != nil },
+                set: { if !$0 { manager.pendingCloseTab = nil } }
+            )
+        ) {
+            Button("断开并关闭", role: .destructive) {
+                if let tab = sessionManager.pendingCloseTab {
+                    sessionManager.closeTab(tab)
+                }
+                manager.pendingCloseTab = nil
+            }
+            Button("取消", role: .cancel) { manager.pendingCloseTab = nil }
+        } message: {
+            Text("该标签页含活跃的 SSH 连接(可能有多个分屏)。")
         }
     }
 
-    /// 标签 chips(标题栏左侧):横向滚动,两端渐隐提示还有更多,选中自动滚入视野
+    /// 标签 chips(标题栏左侧):每个标签一枚 chip(含嵌套分屏);两端渐隐,选中自动滚入
     private var tabChips: some View {
         ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 2) {
-                    ForEach(sessionManager.sessions) { session in
+                    ForEach(sessionManager.tabs) { tab in
                         TerminalTabChip(
-                            session: session,
-                            isSelected: session.id == sessionManager.selectedID,
-                            select: { sessionManager.select(id: session.id) },
-                            close: { sessionManager.requestClose(session) }
+                            tab: tab,
+                            focusedSession: sessionManager.session(tab.focusedID),
+                            paneCount: tab.root.leafIDs().count,
+                            isSelected: tab.id == sessionManager.selectedTabID,
+                            select: { sessionManager.selectTab(tab.id) },
+                            close: { sessionManager.requestCloseTab(tab) }
                         )
-                        .id(session.id)
+                        .id(tab.id)
                     }
                 }
                 .padding(.horizontal, 10)
@@ -126,11 +137,9 @@ struct TerminalTabsView: View {
                         .frame(width: 12)
                 }
             )
-            .onChange(of: sessionManager.selectedID) { _, selected in
+            .onChange(of: sessionManager.selectedTabID) { _, selected in
                 guard let selected else { return }
-                withAnimation(.easeOut(duration: 0.2)) {
-                    proxy.scrollTo(selected, anchor: .center)
-                }
+                withAnimation(.easeOut(duration: 0.2)) { proxy.scrollTo(selected, anchor: .center) }
             }
         }
     }
@@ -164,20 +173,6 @@ struct TerminalTabsView: View {
                 .fill(ThemeStore.shared.current.elevatedBackground)
                 .overlay(Capsule().stroke(ThemeStore.shared.current.borderColor, lineWidth: 1))
         )
-    }
-
-    @ViewBuilder
-    private func splitContainer(primary: TerminalSession, secondary: TerminalSession) -> some View {
-        let layout = sessionManager.splitAxis == .horizontal
-            ? AnyLayout(HStackLayout(spacing: 1))
-            : AnyLayout(VStackLayout(spacing: 1))
-        layout {
-            TerminalPaneView(session: primary)
-                .id(primary.id)
-            Divider()
-            TerminalPaneView(session: secondary)
-                .id(secondary.id)
-        }
     }
 
     private var emptyState: some View {
@@ -242,8 +237,51 @@ private struct SessionTitleCapsule: View {
     }
 }
 
+/// 分屏树递归视图:叶子=一个终端 pane(可点按聚焦、聚焦有强调边框),分支=按方向二分
+private struct PaneTreeView: View {
+    let node: PaneNode
+    let focusedID: UUID
+    let onFocus: (UUID) -> Void
+    @Environment(SessionManager.self) private var sessionManager
+
+    var body: some View {
+        switch node {
+        case .leaf(let sid):
+            if let session = sessionManager.session(sid) {
+                TerminalPaneView(session: session)
+                    .id(sid)
+                    .overlay(
+                        Rectangle()
+                            .stroke(
+                                sid == focusedID ? ThemeStore.shared.current.accentColor.opacity(0.55) : .clear,
+                                lineWidth: 1.5
+                            )
+                            .allowsHitTesting(false)
+                    )
+                    // 点非聚焦 pane 时先聚焦(不吞掉终端本身的交互)
+                    .onTapGesture { if sid != focusedID { onFocus(sid) } }
+            } else {
+                Color.clear
+            }
+        case .branch(_, let axis, let first, let second):
+            let layout = axis == .horizontal
+                ? AnyLayout(HStackLayout(spacing: 1))
+                : AnyLayout(VStackLayout(spacing: 1))
+            layout {
+                PaneTreeView(node: first, focusedID: focusedID, onFocus: onFocus)
+                Rectangle()
+                    .fill(ThemeStore.shared.current.borderColor)
+                    .frame(width: axis == .horizontal ? 1 : nil, height: axis == .vertical ? 1 : nil)
+                PaneTreeView(node: second, focusedID: focusedID, onFocus: onFocus)
+            }
+        }
+    }
+}
+
 private struct TerminalTabChip: View {
-    let session: TerminalSession
+    let tab: PaneTab
+    let focusedSession: TerminalSession?
+    let paneCount: Int
     let isSelected: Bool
     let select: () -> Void
     let close: () -> Void
@@ -255,9 +293,18 @@ private struct TerminalTabChip: View {
             Circle()
                 .fill(stateColor)
                 .frame(width: 6, height: 6)
-            Text(session.spec.label)
+            Text(focusedSession?.spec.label ?? "终端")
                 .font(.system(size: 12))
                 .lineLimit(1)
+            if paneCount > 1 {
+                Text("\(paneCount)")
+                    .font(.system(size: 9, weight: .semibold).monospacedDigit())
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 1)
+                    .background(Capsule().fill(Color.primary.opacity(0.1)))
+                    .help("\(paneCount) 个分屏")
+            }
             Button(action: close) {
                 Image(systemName: "xmark")
                     .font(.system(size: 8, weight: .bold))
@@ -283,8 +330,8 @@ private struct TerminalTabChip: View {
     }
 
     private var stateColor: Color {
-        switch session.state {
-        case .idle: return .gray
+        switch focusedSession?.state {
+        case .idle, .none: return .gray
         case .connecting: return .yellow
         case .connected: return .green
         case .disconnected(let reason):
