@@ -70,7 +70,5 @@ private struct WindowConfigurator: NSViewRepresentable {
         window.appearance = NSAppearance(named: appearanceName)
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
-        // 内容延伸到窗口顶端,消除标题栏预留的空白;各列自行让位红绿灯
-        window.styleMask.insert(.fullSizeContentView)
     }
 }
