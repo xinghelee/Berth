@@ -82,25 +82,35 @@ struct TerminalTabsView: View {
                 }
                 .padding(.leading, 6)
             }
-            PanelIconButton(
-                symbol: "folder",
-                help: "SFTP 文件(⌘⇧F)",
-                tint: sessionManager.isSFTPVisible ? ThemeStore.shared.current.accentColor : nil
-            ) {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
-                    sessionManager.isSFTPVisible.toggle()
+            // Safari 式按钮组:一个大胶囊容器,内含各个圆形悬停按钮
+            HStack(spacing: 2) {
+                PanelIconButton(
+                    symbol: "folder",
+                    help: "SFTP 文件(⌘⇧F)",
+                    tint: sessionManager.isSFTPVisible ? ThemeStore.shared.current.accentColor : nil
+                ) {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                        sessionManager.isSFTPVisible.toggle()
+                    }
+                }
+                PanelIconButton(
+                    symbol: "sidebar.right",
+                    help: "服务器信息(⌘I)",
+                    tint: sessionManager.isInspectorVisible ? ThemeStore.shared.current.accentColor : nil
+                ) {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                        sessionManager.isInspectorVisible.toggle()
+                    }
                 }
             }
-            PanelIconButton(
-                symbol: "sidebar.right",
-                help: "服务器信息(⌘I)",
-                tint: sessionManager.isInspectorVisible ? ThemeStore.shared.current.accentColor : nil
-            ) {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
-                    sessionManager.isInspectorVisible.toggle()
-                }
-            }
-            .padding(.trailing, 8)
+            .padding(.horizontal, 4)
+            .padding(.vertical, 2)
+            .background(
+                Capsule()
+                    .fill(ThemeStore.shared.current.elevatedBackground)
+                    .overlay(Capsule().stroke(ThemeStore.shared.current.borderColor, lineWidth: 1))
+            )
+            .padding(.trailing, 10)
         }
         .frame(height: AppLayout.topBarHeight)
         .padding(.top, AppLayout.columnTopPadding)

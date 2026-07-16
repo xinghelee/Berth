@@ -106,6 +106,7 @@ final class TerminalSession: Identifiable {
         self.terminalView = TerminalView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
         terminalView.font = .monospacedSystemFont(ofSize: fontSize, weight: .regular)
         ThemeStore.shared.apply(to: terminalView)
+        CursorPrefs.apply(to: terminalView)
         terminalView.terminalDelegate = self
     }
 

@@ -5,6 +5,8 @@ import UniformTypeIdentifiers
 /// 基础设置(M1)。M2 扩展:主题、字体族、scrollback、快捷键、安全策略等。
 struct SettingsView: View {
     @AppStorage(SettingsKeys.terminalFontSize) private var fontSize: Double = 13
+    @AppStorage(SettingsKeys.cursorShape) private var cursorShape = CursorPrefs.shapeBlock
+    @AppStorage(SettingsKeys.cursorBlink) private var cursorBlink = true
     @AppStorage(SettingsKeys.confirmBeforeClosingTab) private var confirmBeforeClosingTab = true
     @AppStorage(SettingsKeys.autoReconnect) private var autoReconnect = true
     @AppStorage(SettingsKeys.requireTouchIDForKeys) private var requireTouchID = true
@@ -34,7 +36,16 @@ struct SettingsView: View {
                 Text("字号变更对新开的标签页生效")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                Picker("光标样式", selection: $cursorShape) {
+                    Text("方块").tag(CursorPrefs.shapeBlock)
+                    Text("竖线").tag(CursorPrefs.shapeBar)
+                    Text("下划线").tag(CursorPrefs.shapeUnderline)
+                }
+                .pickerStyle(.segmented)
+                Toggle("光标闪烁", isOn: $cursorBlink)
             }
+            .onChange(of: cursorShape) { _, _ in CursorPrefs.applyToAllSessions() }
+            .onChange(of: cursorBlink) { _, _ in CursorPrefs.applyToAllSessions() }
             Section("标签页") {
                 Toggle("关闭有活跃连接的标签页前需要确认", isOn: $confirmBeforeClosingTab)
             }
