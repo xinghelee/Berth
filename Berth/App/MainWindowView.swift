@@ -39,7 +39,10 @@ struct MainWindowView: View {
         }
         .tint(theme.current.accentColor)
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: quickConnect.isPresented)
-        .background(WindowConfigurator(appearanceName: theme.current.appearanceName))
+        .background(WindowConfigurator(
+            appearanceName: theme.current.appearanceName,
+            backgroundColor: theme.current.backgroundNSColor
+        ))
         .sheet(item: $quickConnect.directConnectRequest) { request in
             DirectConnectSheet(request: request)
         }
@@ -52,8 +55,11 @@ struct MainWindowView: View {
 }
 
 /// 抓到承载视图的 NSWindow,套用主题外观并把标题栏并入内容区,得到统一的深色边到边观感。
+/// backgroundColor 钉死为主题底色:macOS 深色模式默认会把壁纸颜色渗进窗口材质(desktop tinting),
+/// 与主题冷色底冲突,表现为顶部/空白区一条不搭的暖灰。
 private struct WindowConfigurator: NSViewRepresentable {
     let appearanceName: NSAppearance.Name
+    let backgroundColor: NSColor
 
     func makeNSView(context: Context) -> NSView {
         let view = NSView()
@@ -70,5 +76,6 @@ private struct WindowConfigurator: NSViewRepresentable {
         window.appearance = NSAppearance(named: appearanceName)
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
+        window.backgroundColor = backgroundColor
     }
 }

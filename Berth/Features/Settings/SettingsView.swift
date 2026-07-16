@@ -24,7 +24,6 @@ struct SettingsView: View {
                     }
                 }
                 HStack {
-                    Text("字号")
                     Slider(value: $fontSize, in: 10...22, step: 1) {
                         Text("字号")
                     }
@@ -61,6 +60,10 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
+        // 跟随主题:系统表单底色会被壁纸渗色(desktop tinting),与主窗口主题不搭
+        .scrollContentBackground(.hidden)
+        .background(themeStore.current.panelBackground)
+        .tint(themeStore.current.accentColor)
         .frame(width: 460)
         .navigationTitle("设置")
     }

@@ -37,6 +37,9 @@ struct KeysListView: View {
             }
         }
         .background(theme.panelBackground)
+        // 与主机列表页一致:隐藏系统工具栏标题与材质,否则顶部出现一条系统材质色带(壁纸渗色,与主题不搭)
+        .toolbar(removing: .title)
+        .toolbarBackground(.hidden, for: .windowToolbar)
         .sheet(isPresented: $isGenerating) { GenerateKeySheet() }
         .sheet(isPresented: $isImporting) { ImportKeySheet() }
         .confirmationDialog(
