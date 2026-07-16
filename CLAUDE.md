@@ -71,7 +71,12 @@ BERTH_M1_AUTOTEST=1 BERTH_TRANSIENT_STORE=1 \
 - [x] M2 — 体验完善:⌘K 快速连接、ssh_config 导入+FSEvents 监听、粘贴 ssh 命令解析、密钥管理(生成/导入/Touch ID/storedKey 认证)、known_hosts 校验+指纹确认+变更警告、断线指数退避自动重连、⌘F 搜索、⌘D/⌘⇧D 分屏、4 套主题、中英本地化(zh-Hans 为基准)。单测 35 项 + M2/reconnect 自动化验收全绿
 - [x] M3 — 高级连接(已并入 main):跳板机链式、端口转发(本地/动态 SOCKS5/远程 全部真机验证)、HTTP/SOCKS5 代理、ssh-agent(ed25519+RSA)、服务器信息 inspector(⌘I,含资源图形化)、JSON 备份。均真机验证,35 单测绿
 - [~] M4 — 二期(部分已并入 main):
-  - [x] ~~iTerm2 主题导入~~ 按用户决定移除,改为 10 套内置主题(Midnight/Berth 深色/Tokyo Night/Catppuccin/Dracula/Nord/Gruvbox/Solarized + 2 套浅色)
-  - [x] SFTP 侧边文件面板 + 拖拽上传下载(复用会话连接;`BERTH_SFTP_AUTOTEST` 对 docker 真机跑通 list/upload/download 往返/delete)
+  - [x] ~~iTerm2 主题导入~~ 按用户决定移除,改为 20 套内置主题(含 4 套精选:松烟墨/夜泊琥珀/祖母绿/玉版宣);侧栏底部 🎨 配色面板 + ⚙ 设置入口
+  - [x] SFTP 侧边文件面板 + 拖拽上传下载(复用会话连接;`BERTH_SFTP_AUTOTEST` 真机跑通往返)
   - [ ] CloudKit 同步(last-write-wins + 删除墓碑)—— 需 iCloud entitlement/容器 + 签名构建才能验证,暂缓
   - [ ] 本地回显(predictive echo)完整版 —— 触及 SwiftTerm 渲染,需交互测延迟,暂缓
+- [x] M5 — 布局与体验大改(已并入 main):
+  - 布局:双栏(统一平铺主机列表侧栏 + 全宽终端),标题栏会话胶囊 + 标签 chips + 面板按钮组一行;应用图标(系缆桩)
+  - 连接稳定性:分屏/⌘T **连接复用**(引用计数 SSHConnection,不新建 TCP);Citadel 补丁 #4(握手失败关 channel);频率惩罚(PerSourcePenalties)人话化;Keychain 稳定签名修复
+  - 终端:**无限嵌套分屏**(PaneNode 树 + 焦点 + 塌缩);右键菜单;`exit` 关 pane;悬浮状态栏(CPU/内存/磁盘/时钟/退出码);光标样式;20 主题+配色面板
+  - 一批高价值功能(自动化+真机验证,35 单测绿):生产警戒+按主机配色、连接后自动执行命令、⌘P 命令面板、智能选择/⌘点击链接/选中即复制/中键粘贴、多会话广播输入(⌘⌥B)、命令集成(OSC 133 退出码)、Snippets 片段库({{变量}})、断线恢复工作目录(OSC 7)、SFTP chmod/预览/书签、远端文件本地编辑回传+传输进度、命令高亮一键装+切 zsh
