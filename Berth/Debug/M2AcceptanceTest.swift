@@ -233,6 +233,63 @@ enum M2AcceptanceTest {
         log("FORWARD_TIMEOUT state=\(session.state)")
     }
 
+    /// SFTP 验收:BERTH_SFTP_AUTOTEST=1,连目标后 list home → 上传 → 目录含新文件 → 下载校验 → 删除。
+    static func runSFTPIfRequested(container: ModelContainer) async {
+        let env = ProcessInfo.processInfo.environment
+        guard env["BERTH_SFTP_AUTOTEST"] == "1",
+              let host = env["BERTH_TEST_HOST"],
+              let user = env["BERTH_TEST_USER"],
+              let keyFile = env["BERTH_TEST_KEYFILE"],
+              let dumpBase = env["BERTH_TEST_DUMP"] else { return }
+        func log(_ line: String) {
+            try? line.write(toFile: dumpBase + ".sftp.log", atomically: true, encoding: .utf8)
+        }
+        let port = Int(env["BERTH_TEST_PORT"] ?? "22") ?? 22
+        UserDefaults.standard.set(false, forKey: SettingsKeys.requireTouchIDForKeys)
+        let spec = HostSpec(
+            hostID: UUID(), label: "sftp-test", hostname: host, port: port,
+            username: user, authMethod: .privateKeyFile, privateKeyPath: keyFile
+        )
+        let session = SessionManager.shared.open(spec: spec)
+        // 等连上
+        let deadline = Date().addingTimeInterval(20)
+        while Date() < deadline {
+            if session.hostKeyPrompt != nil { session.resolveHostKeyPrompt(accepted: true) }
+            if case .connected = session.state { break }
+            if case .disconnected(let reason) = session.state { log("SFTP_FAIL 连接失败 \(reason)"); return }
+            try? await Task.sleep(for: .milliseconds(200))
+        }
+        guard case .connected = session.state else { log("SFTP_FAIL 连接超时"); return }
+
+        let browser = SFTPBrowser { try await session.openSFTP() }
+        await browser.start()
+        guard browser.state == .ready else { log("SFTP_FAIL list: \(browser.state)"); return }
+        let homeListed = browser.entries.count
+
+        // 上传一个临时文件
+        let payload = "berth-sftp-\(homeListed)".data(using: .utf8)!
+        let localUp = URL(fileURLWithPath: NSTemporaryDirectory() + "berth_sftp_up.txt")
+        try? payload.write(to: localUp)
+        await browser.upload(from: localUp)
+        await browser.refresh()
+        let uploaded = browser.entries.contains { $0.name == "berth_sftp_up.txt" }
+
+        // 下载回来校验
+        let localDown = URL(fileURLWithPath: NSTemporaryDirectory() + "berth_sftp_down.txt")
+        if let entry = browser.entries.first(where: { $0.name == "berth_sftp_up.txt" }) {
+            await browser.download(entry, to: localDown)
+            let roundtrip = (try? Data(contentsOf: localDown)) == payload
+            // 清理
+            await browser.delete(entry)
+            await browser.refresh()
+            let deleted = !browser.entries.contains { $0.name == "berth_sftp_up.txt" }
+            log("SFTP_OK home=\(homeListed) uploaded=\(uploaded) roundtrip=\(roundtrip) deleted=\(deleted)")
+        } else {
+            log("SFTP_FAIL 上传后未找到文件 home=\(homeListed) uploaded=\(uploaded)")
+        }
+        browser.close()
+    }
+
     /// ssh-agent 验收:BERTH_AGENT_AUTOTEST=1,用 agent 认证连目标(agent 里须已 ssh-add 目标可用密钥)。
     static func runAgentIfRequested(container: ModelContainer) async {
         let env = ProcessInfo.processInfo.environment

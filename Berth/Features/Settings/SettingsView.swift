@@ -19,8 +19,16 @@ struct SettingsView: View {
                     get: { themeStore.current.id },
                     set: { themeStore.select(id: $0) }
                 )) {
-                    ForEach(TerminalTheme.builtIn) { theme in
+                    ForEach(themeStore.allThemes) { theme in
                         Text(theme.name).tag(theme.id)
+                    }
+                }
+                HStack {
+                    Button("导入 iTerm2 主题…") { importTheme() }
+                    if themeStore.imported.contains(where: { $0.id == themeStore.current.id }) {
+                        Button("删除当前导入主题", role: .destructive) {
+                            themeStore.removeImported(id: themeStore.current.id)
+                        }
                     }
                 }
                 HStack {
@@ -63,6 +71,21 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .frame(width: 460)
         .navigationTitle("设置")
+    }
+
+    private func importTheme() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [UTType(filenameExtension: "itermcolors") ?? .data, .data]
+        panel.allowsMultipleSelection = false
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            let data = try Data(contentsOf: url)
+            let theme = try ITermColorsImporter.theme(from: data, name: url.lastPathComponent)
+            themeStore.addImported(theme)
+            dataMessage = "已导入主题「\(theme.name)」"
+        } catch {
+            dataMessage = "导入主题失败:\(error.localizedDescription)"
+        }
     }
 
     private func exportBackup() {

@@ -25,6 +25,7 @@ struct BerthApp: App {
                     await M2AcceptanceTest.runProxyIfRequested(container: container)
                     await M2AcceptanceTest.runBackupIfRequested(container: container)
                     await M2AcceptanceTest.runAgentIfRequested(container: container)
+                    await M2AcceptanceTest.runSFTPIfRequested(container: container)
                 }
         }
         .modelContainer(container)
@@ -85,6 +86,11 @@ struct TerminalCommands: Commands {
                 SessionManager.shared.isInspectorVisible.toggle()
             }
             .keyboardShortcut("i", modifiers: .command)
+
+            Button("SFTP 文件面板") {
+                SessionManager.shared.isSFTPVisible.toggle()
+            }
+            .keyboardShortcut("f", modifiers: [.command, .shift])
 
             Button("左右分屏") {
                 SessionManager.shared.toggleSplit(axis: .horizontal)

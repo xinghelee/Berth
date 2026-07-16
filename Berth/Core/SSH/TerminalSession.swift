@@ -43,6 +43,7 @@ final class TerminalSession: Identifiable {
         case unsupportedKey
         case missingStoredKey
         case authenticationGateFailed
+        case notConnected
 
         var errorDescription: String? {
             switch self {
@@ -52,6 +53,8 @@ final class TerminalSession: Identifiable {
                 return "找不到该主机引用的密钥,请在「密钥」页检查或重新选择。"
             case .authenticationGateFailed:
                 return "身份验证未通过,已取消连接。可在设置中关闭「使用密钥前要求 Touch ID」。"
+            case .notConnected:
+                return "未连接,无法打开 SFTP。"
             }
         }
     }
@@ -233,6 +236,12 @@ final class TerminalSession: Identifiable {
 
     func focusTerminal() {
         terminalView.window?.makeFirstResponder(terminalView)
+    }
+
+    /// 在当前连接上开一个 SFTP 子通道(与 PTY 并存,复用同一 SSHClient)
+    func openSFTP() async throws -> SFTPClient {
+        guard let client else { throw SessionError.notConnected }
+        return try await client.openSFTP()
     }
 
     // MARK: - 端口转发

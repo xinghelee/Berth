@@ -5,7 +5,7 @@ import SwiftUI
 
 /// 配色主题:既驱动终端 ANSI 配色,也驱动整个窗口的界面(侧栏/列表/标签)配色,
 /// 让全局观感统一。内置若干套,深色为默认;iTerm2 导入在二期。
-struct TerminalTheme: Identifiable, Equatable {
+struct TerminalTheme: Identifiable, Equatable, Codable {
     let id: String
     let name: String
     let isDark: Bool
@@ -17,6 +17,10 @@ struct TerminalTheme: Identifiable, Equatable {
     let accent: String
     /// 16 色 ANSI(黑红绿黄蓝品青白 + 亮色)
     let ansi: [String]
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, isDark, background, foreground, cursor, selection, accent, ansi
+    }
 
     // MARK: 终端色
     var backgroundNSColor: NSColor { NSColor(hex: background) }
@@ -132,20 +136,53 @@ final class ThemeStore {
     static let shared = ThemeStore()
 
     private(set) var current: TerminalTheme
+    /// 用户导入的主题(iTerm2 等),持久化在 UserDefaults
+    private(set) var imported: [TerminalTheme]
+
+    /// 内置 + 导入,供设置页主题列表
+    var allThemes: [TerminalTheme] { TerminalTheme.builtIn + imported }
 
     init() {
+        let importedThemes = ThemeStore.loadImported()
+        self.imported = importedThemes
         let savedID = UserDefaults.standard.string(forKey: SettingsKeys.terminalTheme)
-        current = TerminalTheme.builtIn.first { $0.id == savedID } ?? .midnight
+        current = (TerminalTheme.builtIn + importedThemes).first { $0.id == savedID } ?? .midnight
     }
 
     func select(id: String) {
-        guard let theme = TerminalTheme.builtIn.first(where: { $0.id == id }) else { return }
+        guard let theme = allThemes.first(where: { $0.id == id }) else { return }
         current = theme
         UserDefaults.standard.set(theme.id, forKey: SettingsKeys.terminalTheme)
         for session in SessionManager.shared.sessions {
             apply(to: session.terminalView)
         }
         applyWindowChrome()
+    }
+
+    /// 导入一套主题(同 id 覆盖),并立即切换过去
+    func addImported(_ theme: TerminalTheme) {
+        imported.removeAll { $0.id == theme.id }
+        imported.append(theme)
+        persistImported()
+        select(id: theme.id)
+    }
+
+    func removeImported(id: String) {
+        imported.removeAll { $0.id == id }
+        persistImported()
+        if current.id == id { select(id: TerminalTheme.midnight.id) }
+    }
+
+    private static func loadImported() -> [TerminalTheme] {
+        guard let data = UserDefaults.standard.data(forKey: SettingsKeys.importedThemes),
+              let themes = try? JSONDecoder().decode([TerminalTheme].self, from: data) else { return [] }
+        return themes
+    }
+
+    private func persistImported() {
+        if let data = try? JSONEncoder().encode(imported) {
+            UserDefaults.standard.set(data, forKey: SettingsKeys.importedThemes)
+        }
     }
 
     /// 强制整个 app(含工具栏/标题栏/未着色区域)跟随主题深浅,不受系统浅色模式影响
