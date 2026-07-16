@@ -4,6 +4,8 @@ import SwiftTerm
 /// 终端视图子类:粘贴保护 —— 多行粘贴或含危险命令(sudo/rm -rf/dd/mkfs 等)先弹预览确认,
 /// 防止误粘贴直接执行。可在 设置 → 安全 关闭。
 final class BerthTerminalView: SwiftTerm.TerminalView {
+    /// 生产环境主机:任何粘贴都强制确认(不止多行/危险命令)
+    var isProductionHost = false
 
     // MARK: - 右键菜单(复制/粘贴 + 分屏)
 
@@ -68,7 +70,7 @@ final class BerthTerminalView: SwiftTerm.TerminalView {
         let enabled = UserDefaults.standard.object(forKey: SettingsKeys.pasteProtection) as? Bool ?? true
         guard enabled,
               let text = NSPasteboard.general.string(forType: .string),
-              Self.needsConfirmation(text) else {
+              (isProductionHost || Self.needsConfirmation(text)) else {
             super.paste(sender)
             return
         }

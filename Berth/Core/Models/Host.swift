@@ -48,6 +48,8 @@ final class Host {
     var proxyPort: Int = 1080
     var proxyUsername: String = ""
     var proxyRequiresAuth: Bool = false
+    /// 标记为生产环境:终端顶部红色警戒条 + 粘贴/危险命令强制确认
+    var isProduction: Bool = false
     @Relationship(deleteRule: .cascade, inverse: \PortForward.host) var portForwards: [PortForward] = []
 
     init(
@@ -65,7 +67,8 @@ final class Host {
         sortOrder: Int = 0,
         source: HostSource = .manual,
         jumpHostID: UUID? = nil,
-        proxy: ProxyConfig = ProxyConfig()
+        proxy: ProxyConfig = ProxyConfig(),
+        isProduction: Bool = false
     ) {
         self.id = id
         self.label = label
@@ -86,6 +89,7 @@ final class Host {
         self.proxyPort = proxy.port
         self.proxyUsername = proxy.username
         self.proxyRequiresAuth = proxy.requiresAuth
+        self.isProduction = isProduction
         self.createdAt = Date()
     }
 

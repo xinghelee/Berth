@@ -351,14 +351,16 @@ struct TerminalPaneView: View {
     @State private var isSearchActive = false
 
     var body: some View {
-        ZStack(alignment: .top) {
-            TerminalHostView(terminalView: session.terminalView)
-                .padding(.leading, 8)
-                .padding(.top, 4)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(nsColor: ThemeStore.shared.current.backgroundNSColor))
+        VStack(spacing: 0) {
+            hostStrip
+            ZStack(alignment: .top) {
+                TerminalHostView(terminalView: session.terminalView)
+                    .padding(.leading, 8)
+                    .padding(.top, 4)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color(nsColor: ThemeStore.shared.current.backgroundNSColor))
 
-            banner
+                banner
 
             if isSearchActive {
                 HStack {
@@ -370,6 +372,7 @@ struct TerminalPaneView: View {
                     }
                     .padding(.trailing, 12)
                 }
+            }
             }
         }
         .onChange(of: sessionManager.searchRequestToken) { _, _ in
@@ -383,6 +386,33 @@ struct TerminalPaneView: View {
             onDismiss: { session.resolveHostKeyPrompt(accepted: false) }
         ) { prompt in
             HostKeyPromptSheet(prompt: prompt, session: session)
+        }
+    }
+
+    /// 主机环境色条:生产=红色警戒条(带文字);否则若设了标签色=一条细色带
+    @ViewBuilder
+    private var hostStrip: some View {
+        if session.spec.isProduction {
+            HStack(spacing: 6) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 10))
+                Text("生产环境 · \(session.spec.label)")
+                    .font(.system(size: 11, weight: .semibold))
+                Spacer()
+            }
+            .foregroundStyle(.white)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 3)
+            .frame(maxWidth: .infinity)
+            .background(Color(red: 0.78, green: 0.13, blue: 0.13))
+        } else {
+            let tag = TagColor(rawValue: session.spec.tagColorRaw) ?? .none
+            if tag != .none {
+                Rectangle()
+                    .fill(tag.color)
+                    .frame(height: 3)
+                    .frame(maxWidth: .infinity)
+            }
         }
     }
 

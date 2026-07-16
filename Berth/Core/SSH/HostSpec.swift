@@ -53,6 +53,10 @@ struct HostSpec: Equatable, Sendable {
     var jump: [HostSpec]
     /// 连接后自动建立的端口转发(仅启用的)
     let forwards: [PortForwardSpec]
+    /// 生产环境标记:红色警戒条 + 强制粘贴/危险命令确认
+    var isProduction: Bool = false
+    /// 标签色(none 时不显示配色条),用于 pane 顶部环境色条
+    var tagColorRaw: String = TagColor.none.rawValue
 
     init(
         hostID: UUID,
@@ -65,7 +69,9 @@ struct HostSpec: Equatable, Sendable {
         keyID: UUID? = nil,
         proxy: ProxyConfig = ProxyConfig(),
         jump: [HostSpec] = [],
-        forwards: [PortForwardSpec] = []
+        forwards: [PortForwardSpec] = [],
+        isProduction: Bool = false,
+        tagColorRaw: String = TagColor.none.rawValue
     ) {
         self.hostID = hostID
         self.label = label
@@ -78,6 +84,8 @@ struct HostSpec: Equatable, Sendable {
         self.proxy = proxy
         self.jump = jump
         self.forwards = forwards
+        self.isProduction = isProduction
+        self.tagColorRaw = tagColorRaw
     }
 
     init(host: Host) {
@@ -90,6 +98,8 @@ struct HostSpec: Equatable, Sendable {
         self.privateKeyPath = host.privateKeyPath
         self.keyID = host.keyID
         self.proxy = host.proxy
+        self.isProduction = host.isProduction
+        self.tagColorRaw = host.tagColorRaw
         self.jump = []
         self.forwards = host.portForwards
             .filter(\.enabled)

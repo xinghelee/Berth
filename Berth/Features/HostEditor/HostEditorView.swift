@@ -31,6 +31,7 @@ struct HostEditorView: View {
     @State private var proxyUsername = ""
     @State private var proxyPassword = ""
     @State private var tagColor: TagColor = .none
+    @State private var isProduction = false
     @State private var note = ""
     @State private var validationMessage: String?
     @State private var quickFill = ""
@@ -165,6 +166,13 @@ struct HostEditorView: View {
                             Text(colorName(color)).tag(color)
                         }
                     }
+                    Toggle(isOn: $isProduction) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("生产环境")
+                            Text("终端顶部红色警戒条,粘贴/危险命令强制确认")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
                     TextField("备注", text: $note, axis: .vertical)
                         .lineLimit(2...4)
                 }
@@ -222,6 +230,7 @@ struct HostEditorView: View {
         proxyPort = String(host.proxy.port)
         proxyUsername = host.proxy.username
         tagColor = host.tagColor
+        isProduction = host.isProduction
         note = host.note
     }
 
@@ -323,6 +332,7 @@ struct HostEditorView: View {
             try? KeychainStore.save(proxyPassword, account: KeychainStore.proxyPasswordAccount(for: target.id))
         }
         target.tagColor = tagColor
+        target.isProduction = isProduction
         target.note = note
 
         do {
