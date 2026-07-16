@@ -32,6 +32,7 @@ struct HostEditorView: View {
     @State private var proxyPassword = ""
     @State private var tagColor: TagColor = .none
     @State private var isProduction = false
+    @State private var startupCommands = ""
     @State private var note = ""
     @State private var validationMessage: String?
     @State private var quickFill = ""
@@ -169,12 +170,25 @@ struct HostEditorView: View {
                     Toggle(isOn: $isProduction) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("生产环境")
-                            Text("终端顶部红色警戒条,粘贴/危险命令强制确认")
+                            Text("标题胶囊变红警戒,粘贴/危险命令强制确认")
                                 .font(.caption).foregroundStyle(.secondary)
                         }
                     }
                     TextField("备注", text: $note, axis: .vertical)
                         .lineLimit(2...4)
+                }
+
+                Section("连接后自动执行") {
+                    TextField(
+                        "启动命令",
+                        text: $startupCommands,
+                        prompt: Text("每行一条,例如:\ncd /app\ntmux attach || tmux").foregroundStyle(.quaternary),
+                        axis: .vertical
+                    )
+                    .lineLimit(2...6)
+                    .font(.system(size: 12, design: .monospaced))
+                    Text("连接建立后按顺序自动发送(各自动补回车)。分屏复制的会话不重复执行。")
+                        .font(.caption).foregroundStyle(.secondary)
                 }
 
                 if let message = validationMessage {
@@ -231,6 +245,7 @@ struct HostEditorView: View {
         proxyUsername = host.proxy.username
         tagColor = host.tagColor
         isProduction = host.isProduction
+        startupCommands = host.startupCommands
         note = host.note
     }
 
@@ -333,6 +348,7 @@ struct HostEditorView: View {
         }
         target.tagColor = tagColor
         target.isProduction = isProduction
+        target.startupCommands = startupCommands
         target.note = note
 
         do {

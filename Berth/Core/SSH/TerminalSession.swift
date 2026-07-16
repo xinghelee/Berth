@@ -552,6 +552,19 @@ final class TerminalSession: Identifiable {
                 if !self.isBorrower { self.startPortForwards() }
             }
 
+            // 连接后自动执行命令(逐行发送,自动补回车)。分屏借用会话不重复执行。
+            let startup = spec.startupCommands.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !isBorrower, !startup.isEmpty {
+                // 稍等 shell 提示符就绪再发,避免被吞
+                try? await Task.sleep(for: .milliseconds(400))
+                for line in startup.split(whereSeparator: \.isNewline) {
+                    let cmd = line.trimmingCharacters(in: .whitespaces)
+                    guard !cmd.isEmpty else { continue }
+                    try? await outbound.write(ByteBuffer(bytes: Array((cmd + "\n").utf8)))
+                    try? await Task.sleep(for: .milliseconds(120))
+                }
+            }
+
             // 单一消费者串行写入,保证按键与 resize 的顺序
             let stdinPump = Task {
                 for await event in stream {

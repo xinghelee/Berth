@@ -53,11 +53,24 @@ struct TerminalTabsView: View {
                     if !sessionManager.tabs.isEmpty { tabChips }
                 }
             }
-            ToolbarItem(placement: .principal) {
-                if let session = sessionManager.selected {
-                    SessionTitleCapsule(session: session) {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
-                            sessionManager.isInspectorVisible.toggle()
+            if #available(macOS 26.0, *) {
+                ToolbarItem(placement: .principal) {
+                    if let session = sessionManager.selected {
+                        SessionTitleCapsule(session: session) {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                                sessionManager.isInspectorVisible.toggle()
+                            }
+                        }
+                    }
+                }
+                .sharedBackgroundVisibility(.hidden)
+            } else {
+                ToolbarItem(placement: .principal) {
+                    if let session = sessionManager.selected {
+                        SessionTitleCapsule(session: session) {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                                sessionManager.isInspectorVisible.toggle()
+                            }
                         }
                     }
                 }
@@ -233,14 +246,20 @@ private struct SessionTitleCapsule: View {
             }
             .lineLimit(1)
             .foregroundStyle(isProd ? .white : .primary)
-            .padding(.horizontal, isProd ? 12 : 6)
-            .padding(.vertical, 3)
-            // 生产环境:整颗胶囊染红警戒(其余情况沿用系统 principal 胶囊底)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 4)
+            // 系统 principal 胶囊底已隐藏,这里自绘唯一一层:生产=红,否则=主题浮层色
             .background(
-                Capsule().fill(isProd ? Color(red: 0.78, green: 0.13, blue: 0.13) : .clear)
+                Capsule()
+                    .fill(isProd ? Color(red: 0.78, green: 0.13, blue: 0.13) : theme.elevatedBackground)
+                    .overlay(
+                        Capsule().stroke(
+                            isProd ? .clear : (hovering ? theme.accentColor.opacity(0.4) : theme.borderColor),
+                            lineWidth: 1
+                        )
+                    )
             )
             .contentShape(Capsule())
-            .opacity(hovering ? 1 : 0.9)
         }
         .buttonStyle(.plain)
         .animation(.easeOut(duration: 0.12), value: hovering)

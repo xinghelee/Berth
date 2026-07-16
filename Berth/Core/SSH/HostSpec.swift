@@ -57,6 +57,8 @@ struct HostSpec: Equatable, Sendable {
     var isProduction: Bool = false
     /// 标签色(none 时不显示配色条),用于 pane 顶部环境色条
     var tagColorRaw: String = TagColor.none.rawValue
+    /// 连接建立后自动执行的命令(每行一条)
+    var startupCommands: String = ""
 
     init(
         hostID: UUID,
@@ -71,7 +73,8 @@ struct HostSpec: Equatable, Sendable {
         jump: [HostSpec] = [],
         forwards: [PortForwardSpec] = [],
         isProduction: Bool = false,
-        tagColorRaw: String = TagColor.none.rawValue
+        tagColorRaw: String = TagColor.none.rawValue,
+        startupCommands: String = ""
     ) {
         self.hostID = hostID
         self.label = label
@@ -86,6 +89,7 @@ struct HostSpec: Equatable, Sendable {
         self.forwards = forwards
         self.isProduction = isProduction
         self.tagColorRaw = tagColorRaw
+        self.startupCommands = startupCommands
     }
 
     init(host: Host) {
@@ -100,6 +104,7 @@ struct HostSpec: Equatable, Sendable {
         self.proxy = host.proxy
         self.isProduction = host.isProduction
         self.tagColorRaw = host.tagColorRaw
+        self.startupCommands = host.startupCommands
         self.jump = []
         self.forwards = host.portForwards
             .filter(\.enabled)
