@@ -347,6 +347,38 @@ enum M2AcceptanceTest {
         manager.close(owner)
     }
 
+    /// Keychain 跨构建持久化探针:BERTH_KEYCHAIN_PROBE=save|read|cleanup。
+    /// 用途:验证换稳定签名后,新构建能静默读到旧构建保存的密码项(ad-hoc 签名下会 errSecAuthFailed)。
+    static func runKeychainProbeIfRequested() async {
+        let env = ProcessInfo.processInfo.environment
+        guard let mode = env["BERTH_KEYCHAIN_PROBE"], let dumpBase = env["BERTH_TEST_DUMP"] else { return }
+        func log(_ line: String) {
+            try? line.write(toFile: dumpBase + ".keychain.log", atomically: true, encoding: .utf8)
+        }
+        let account = "debug.crossbuild.probe"
+        switch mode {
+        case "save":
+            do {
+                try KeychainStore.save("probe-secret-123", account: account)
+                log("KEYCHAIN_SAVE_OK")
+            } catch {
+                log("KEYCHAIN_SAVE_FAIL \(error.localizedDescription)")
+            }
+        case "read":
+            do {
+                let value = try KeychainStore.read(account: account)
+                log(value == "probe-secret-123" ? "KEYCHAIN_READ_OK" : "KEYCHAIN_READ_MISMATCH \(value ?? "nil")")
+            } catch {
+                log("KEYCHAIN_READ_FAIL \(error.localizedDescription)")
+            }
+        case "cleanup":
+            try? KeychainStore.delete(account: account)
+            log("KEYCHAIN_CLEANUP_OK")
+        default:
+            break
+        }
+    }
+
     /// ssh-agent 验收:BERTH_AGENT_AUTOTEST=1,用 agent 认证连目标(agent 里须已 ssh-add 目标可用密钥)。
     static func runAgentIfRequested(container: ModelContainer) async {
         let env = ProcessInfo.processInfo.environment
@@ -558,3 +590,4 @@ enum M2AcceptanceTest {
         try? text.write(toFile: path, atomically: true, encoding: .utf8)
     }
 }
+
