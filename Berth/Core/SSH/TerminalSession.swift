@@ -140,15 +140,24 @@ final class TerminalSession: Identifiable {
 
         sessionTask = Task {
             var disconnectReason: DisconnectReason
+            var shellExited = false
             do {
                 try await runSession()
+                // 干净返回(收到 exit-status 0 / 干净 EOF)= shell 正常退出
+                shellExited = !userInitiatedDisconnect
                 disconnectReason = userInitiatedDisconnect ? .userInitiated : .remoteClosed
             } catch is CancellationError {
                 disconnectReason = .userInitiated
             } catch {
-                disconnectReason = userInitiatedDisconnect
-                    ? .userInitiated
-                    : .error(SSHErrorMapper.friendlyMessage(for: error, hostname: spec.hostname, port: spec.port))
+                if userInitiatedDisconnect {
+                    disconnectReason = .userInitiated
+                } else if Self.isCleanShellExit(error) {
+                    // 抛出的其实是通道 EOF/关闭(exit 与连接关闭竞速),视为 shell 退出
+                    shellExited = true
+                    disconnectReason = .remoteClosed
+                } else {
+                    disconnectReason = .error(SSHErrorMapper.friendlyMessage(for: error, hostname: spec.hostname, port: spec.port))
+                }
             }
             state = .disconnected(disconnectReason)
             stopPortForwards()
@@ -171,12 +180,25 @@ final class TerminalSession: Identifiable {
             releasing?.release()
             // 远端 shell 正常退出(exit/logout → PTY EOF,干净关闭)→ 关掉该 pane,不重连;
             // 网络异常(.error)才保留断线横幅 + 自动重连
-            if case .remoteClosed = disconnectReason, everConnected {
+            if shellExited, everConnected {
                 onShellExit?()
             } else {
                 maybeScheduleReconnect(after: disconnectReason)
             }
         }
+    }
+
+    /// 判断断开是否为 shell 正常退出(通道 EOF/关闭)而非网络异常(reset/timeout/refused…)
+    private static func isCleanShellExit(_ error: Error) -> Bool {
+        let s = String(describing: error).lowercased()
+        // 明确的网络异常关键词 → 不是干净退出,应保留横幅并重连
+        let networky = ["reset", "refused", "timed out", "timeout", "unreachable",
+                        "no route", "broken pipe", "not connected", "connection closed by",
+                        "handshake", "posix"]
+        if networky.contains(where: { s.contains($0) }) { return false }
+        // 其余(通道 EOF/关闭/退出码/未知)一律按 shell 退出处理 —— 已连上时通道关闭
+        // 绝大多数就是用户敲了 exit;真正的网络掉线基本都会命中上面的关键词
+        return true
     }
 
     func disconnect() {

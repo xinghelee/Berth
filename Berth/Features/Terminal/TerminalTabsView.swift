@@ -11,7 +11,8 @@ struct TerminalTabsView: View {
                 emptyState
             } else if let tab = sessionManager.selectedTab {
                 HStack(spacing: 0) {
-                    PaneTreeView(node: tab.root, focusedID: tab.focusedID) { id in
+                    // 单 pane 不显示焦点边框(只有分屏时才需要区分)
+                    PaneTreeView(node: tab.root, focusedID: tab.focusedID, showsFocus: tab.root.leafIDs().count > 1) { id in
                         sessionManager.focusPane(id)
                     }
                     if let session = sessionManager.selected {
@@ -241,6 +242,7 @@ private struct SessionTitleCapsule: View {
 private struct PaneTreeView: View {
     let node: PaneNode
     let focusedID: UUID
+    var showsFocus: Bool = true
     let onFocus: (UUID) -> Void
     @Environment(SessionManager.self) private var sessionManager
 
@@ -253,7 +255,7 @@ private struct PaneTreeView: View {
                     .overlay(
                         Rectangle()
                             .stroke(
-                                sid == focusedID ? ThemeStore.shared.current.accentColor.opacity(0.55) : .clear,
+                                (showsFocus && sid == focusedID) ? ThemeStore.shared.current.accentColor.opacity(0.55) : .clear,
                                 lineWidth: 1.5
                             )
                             .allowsHitTesting(false)
@@ -268,11 +270,11 @@ private struct PaneTreeView: View {
                 ? AnyLayout(HStackLayout(spacing: 1))
                 : AnyLayout(VStackLayout(spacing: 1))
             layout {
-                PaneTreeView(node: first, focusedID: focusedID, onFocus: onFocus)
+                PaneTreeView(node: first, focusedID: focusedID, showsFocus: showsFocus, onFocus: onFocus)
                 Rectangle()
                     .fill(ThemeStore.shared.current.borderColor)
                     .frame(width: axis == .horizontal ? 1 : nil, height: axis == .vertical ? 1 : nil)
-                PaneTreeView(node: second, focusedID: focusedID, onFocus: onFocus)
+                PaneTreeView(node: second, focusedID: focusedID, showsFocus: showsFocus, onFocus: onFocus)
             }
         }
     }
