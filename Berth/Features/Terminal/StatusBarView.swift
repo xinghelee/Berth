@@ -62,17 +62,14 @@ struct StatusBarView: View {
             .frame(height: 28)
             // 悬浮卡片:圆角 + 细描边 + 轻投影,与浮动侧栏气质一致
             .background(
-                RoundedRectangle(cornerRadius: 9)
+                Capsule()
                     .fill(theme.elevatedBackground)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 9)
-                            .stroke(theme.borderColor, lineWidth: 1)
-                    )
+                    .overlay(Capsule().stroke(theme.borderColor, lineWidth: 1))
                     .shadow(color: .black.opacity(0.22), radius: 7, y: 2)
             )
         }
         .padding(.horizontal, 10)
-        .padding(.bottom, 10)
+        .padding(.bottom, 14)
         .task(id: session.id) {
             // 资源轮询:连接中每 5s 拉一次;断开时清空,避免残留旧数据
             while !Task.isCancelled {
