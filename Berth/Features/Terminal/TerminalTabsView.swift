@@ -46,6 +46,18 @@ struct TerminalTabsView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(ThemeStore.shared.current.chromeBackground)
+        // 顶部标题栏中央:Safari 地址栏式胶囊,展示当前会话的服务器信息,点按开合信息面板
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                if let session = sessionManager.selected {
+                    SessionTitleCapsule(session: session) {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                            sessionManager.isInspectorVisible.toggle()
+                        }
+                    }
+                }
+            }
+        }
         .alert(
             "关闭标签页「\(sessionManager.pendingCloseSession?.spec.label ?? "")」?",
             isPresented: Binding(
@@ -145,6 +157,64 @@ struct TerminalTabsView: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+/// 标题栏中央的会话信息胶囊(Safari 地址栏式):状态点 + 名称 + user@host,点按开合信息面板
+private struct SessionTitleCapsule: View {
+    let session: TerminalSession
+    let action: () -> Void
+
+    @State private var hovering = false
+
+    private var theme: TerminalTheme { ThemeStore.shared.current }
+
+    private var stateColor: Color {
+        switch session.state {
+        case .idle: return .gray
+        case .connecting: return .yellow
+        case .connected: return .green
+        case .disconnected(let reason):
+            return reason == .userInitiated ? .gray : .red
+        }
+    }
+
+    private var address: String {
+        let port = session.spec.port == 22 ? "" : ":\(session.spec.port)"
+        return "\(session.spec.username)@\(session.spec.hostname)\(port)"
+    }
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 7) {
+                Circle()
+                    .fill(stateColor)
+                    .frame(width: 6, height: 6)
+                Text(session.spec.label)
+                    .font(.system(size: 12, weight: .medium))
+                Text(address)
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundStyle(.secondary)
+            }
+            .lineLimit(1)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 5)
+            .background(
+                Capsule()
+                    .fill(hovering ? theme.elevatedBackground.opacity(1) : theme.elevatedBackground)
+                    .overlay(
+                        Capsule().stroke(
+                            hovering ? theme.accentColor.opacity(0.4) : theme.borderColor,
+                            lineWidth: 1
+                        )
+                    )
+            )
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .animation(.easeOut(duration: 0.12), value: hovering)
+        .onHover { hovering = $0 }
+        .help("当前会话:\(address) —— 点按查看服务器信息(⌘I)")
     }
 }
 
