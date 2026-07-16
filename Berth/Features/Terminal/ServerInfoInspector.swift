@@ -11,6 +11,8 @@ struct ServerInfoInspector: View {
     @State private var highlightState: HighlightUIState = .idle
     /// 非 zsh 主机:记录检测到的 shell,展示「安装并切换到 zsh」按钮
     @State private var notZshShell: String?
+    /// 切换 zsh 成功后提示重连(新登录才用新 shell)
+    @State private var offerReconnect = false
 
     private enum HighlightUIState: Equatable { case idle, working, done(String) }
 
@@ -290,7 +292,8 @@ struct ServerInfoInspector: View {
                                 notZshShell = nil
                                 switch await session.installAndSwitchToZsh() {
                                 case .done, .needsRelogin:
-                                    highlightState = .done("已装 zsh 并设为默认 shell + 启用高亮。断开重连(或重开 shell)后生效。")
+                                    offerReconnect = true
+                                    highlightState = .done("已装 zsh 并设为默认 shell + 启用高亮。当前会话仍是旧 shell,重连后生效。")
                                 case .failed(let msg):
                                     highlightState = .done("切换失败:\(msg)")
                                 }
@@ -316,6 +319,22 @@ struct ServerInfoInspector: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
+                    if offerReconnect {
+                        Button {
+                            offerReconnect = false
+                            highlightState = .idle
+                            Task {
+                                session.disconnect()
+                                try? await Task.sleep(for: .milliseconds(300))
+                                session.connect()
+                            }
+                        } label: {
+                            Label("立即重连生效", systemImage: "arrow.clockwise")
+                                .font(.system(size: 12))
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.small)
+                    }
                 }
             }
         }
