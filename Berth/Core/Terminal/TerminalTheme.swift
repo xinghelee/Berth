@@ -201,9 +201,108 @@ extension TerminalTheme {
         ]
     )
 
+    // MARK: 轻松活泼系
+
+    /// 糖果霓虹(Snazzy):暗底高饱和糖果色,鲜亮跳脱
+    static let snazzy = TerminalTheme(
+        id: "snazzy",
+        name: "Snazzy 糖果",
+        isDark: true,
+        background: "#282A36",
+        foreground: "#EFF0EB",
+        cursor: "#FF6AC1",
+        selection: "#3E404A",
+        accent: "#FF6AC1",
+        ansi: [
+            "#282A36", "#FF5C57", "#5AF78E", "#F3F99D", "#57C7FF", "#FF6AC1", "#9AEDFE", "#F1F1F0",
+            "#686868", "#FF5C57", "#5AF78E", "#F3F99D", "#57C7FF", "#FF6AC1", "#9AEDFE", "#EFF0EB",
+        ]
+    )
+
+    /// Catppuccin Mocha:软糖粉彩暗色,温柔不刺眼
+    static let catppuccinMocha = TerminalTheme(
+        id: "catppuccin-mocha",
+        name: "Catppuccin Mocha",
+        isDark: true,
+        background: "#1E1E2E",
+        foreground: "#CDD6F4",
+        cursor: "#F5E0DC",
+        selection: "#45475A",
+        accent: "#CBA6F7",
+        ansi: [
+            "#45475A", "#F38BA8", "#A6E3A1", "#F9E2AF", "#89B4FA", "#F5C2E7", "#94E2D5", "#BAC2DE",
+            "#585B70", "#F38BA8", "#A6E3A1", "#F9E2AF", "#89B4FA", "#F5C2E7", "#94E2D5", "#A6ADC8",
+        ]
+    )
+
+    /// 复古霓虹(Synthwave '84 气质):紫夜底 + 霓虹粉青
+    static let synthwave = TerminalTheme(
+        id: "synthwave-84",
+        name: "霓虹 '84",
+        isDark: true,
+        background: "#262335",
+        foreground: "#F4F0FF",
+        cursor: "#F92AAD",
+        selection: "#463465",
+        accent: "#F92AAD",
+        ansi: [
+            "#3B3363", "#FE4450", "#72F1B8", "#FEDE5D", "#6D77B3", "#FF7EDB", "#03EDF9", "#F4F0FF",
+            "#615C85", "#FE4450", "#72F1B8", "#FEDE5D", "#6D77B3", "#FF7EDB", "#03EDF9", "#FFFFFF",
+        ]
+    )
+
+    /// Catppuccin Latte:奶油底粉彩,清淡活泼(浅色)
+    static let catppuccinLatte = TerminalTheme(
+        id: "catppuccin-latte",
+        name: "Catppuccin Latte(浅色)",
+        isDark: false,
+        background: "#EFF1F5",
+        foreground: "#4C4F69",
+        cursor: "#DC8A78",
+        selection: "#CCD0DA",
+        accent: "#8839EF",
+        ansi: [
+            "#5C5F77", "#D20F39", "#40A02B", "#DF8E1D", "#1E66F5", "#EA76CB", "#179299", "#ACB0BE",
+            "#6C6F85", "#D20F39", "#40A02B", "#DF8E1D", "#1E66F5", "#EA76CB", "#179299", "#BCC0CC",
+        ]
+    )
+
+    /// 晨雾玫瑰(Rosé Pine Dawn):米白底 + 灰紫玫瑰,柔和梦幻(浅色)
+    static let rosePineDawn = TerminalTheme(
+        id: "rose-pine-dawn",
+        name: "晨雾玫瑰(浅色)",
+        isDark: false,
+        background: "#FAF4ED",
+        foreground: "#575279",
+        cursor: "#D7827E",
+        selection: "#DFDAD9",
+        accent: "#D7827E",
+        ansi: [
+            "#F2E9E1", "#B4637A", "#286983", "#EA9D34", "#56949F", "#907AA9", "#D7827E", "#575279",
+            "#9893A5", "#B4637A", "#286983", "#EA9D34", "#56949F", "#907AA9", "#D7827E", "#575279",
+        ]
+    )
+
+    /// Ayu Light:清爽白底 + 暖橙点缀,明快(浅色)
+    static let ayuLight = TerminalTheme(
+        id: "ayu-light",
+        name: "Ayu 清晨(浅色)",
+        isDark: false,
+        background: "#FCFCFC",
+        foreground: "#5C6166",
+        cursor: "#FF9940",
+        selection: "#E7F2FF",
+        accent: "#FF9940",
+        ansi: [
+            "#010101", "#F07171", "#86B300", "#F2AE49", "#399EE6", "#A37ACC", "#4CBF99", "#C7C7C7",
+            "#686868", "#F07171", "#86B300", "#F2AE49", "#399EE6", "#A37ACC", "#4CBF99", "#D1D1D1",
+        ]
+    )
+
     static let builtIn: [TerminalTheme] = [
         .midnight, .berthDark, .tokyoNight, .catppuccinMacchiato, .dracula,
-        .nord, .gruvboxDark, .solarizedDark, .oneLight, .githubLight,
+        .nord, .gruvboxDark, .solarizedDark, .snazzy, .catppuccinMocha, .synthwave,
+        .oneLight, .githubLight, .catppuccinLatte, .rosePineDawn, .ayuLight,
     ]
 }
 

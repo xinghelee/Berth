@@ -199,6 +199,8 @@ struct TerminalPaneView: View {
     var body: some View {
         ZStack(alignment: .top) {
             TerminalHostView(terminalView: session.terminalView)
+                .padding(.leading, 8)
+                .padding(.top, 4)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(nsColor: ThemeStore.shared.current.backgroundNSColor))
 

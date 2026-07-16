@@ -12,12 +12,16 @@ struct ThemePanelView: View {
             Text("终端配色")
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(.secondary)
-            LazyVGrid(columns: columns, spacing: 8) {
-                ForEach(TerminalTheme.builtIn) { theme in
-                    ThemeCard(theme: theme, isSelected: themeStore.current.id == theme.id)
-                        .onTapGesture { themeStore.select(id: theme.id) }
+            ScrollView {
+                LazyVGrid(columns: columns, spacing: 8) {
+                    ForEach(TerminalTheme.builtIn) { theme in
+                        ThemeCard(theme: theme, isSelected: themeStore.current.id == theme.id)
+                            .onTapGesture { themeStore.select(id: theme.id) }
+                    }
                 }
+                .padding(.bottom, 2)
             }
+            .frame(maxHeight: 440)
             Text("对所有已打开的终端即时生效")
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
