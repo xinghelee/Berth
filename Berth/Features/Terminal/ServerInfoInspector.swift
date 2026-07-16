@@ -8,6 +8,9 @@ struct ServerInfoInspector: View {
     @State private var info: ServerInfo?
     @State private var isLoading = false
     @State private var now = Date()
+    @State private var highlightState: HighlightUIState = .idle
+
+    private enum HighlightUIState: Equatable { case idle, working, done(String) }
 
     private var theme: TerminalTheme { ThemeStore.shared.current }
     private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -25,6 +28,7 @@ struct ServerInfoInspector: View {
                     if !session.spec.hostname.isEmpty {
                         serverSection
                     }
+                    highlightSection
                 }
                 .padding(14)
             }
@@ -245,6 +249,49 @@ struct ServerInfoInspector: View {
         let h = seconds / 3600, m = (seconds % 3600) / 60, s = seconds % 60
         if h > 0 { return String(format: "%d:%02d:%02d", h, m, s) }
         return String(format: "%d:%02d", m, s)
+    }
+
+    @ViewBuilder
+    private var highlightSection: some View {
+        if case .connected = session.state {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("增强")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.tertiary)
+                switch highlightState {
+                case .idle:
+                    Button {
+                        Task {
+                            highlightState = .working
+                            let result = await session.enableShellHighlight()
+                            switch result {
+                            case .installed: highlightState = .done("已启用,重开 shell 或执行 source ~/.zshrc 生效")
+                            case .alreadyEnabled: highlightState = .done("此主机已启用命令高亮")
+                            case .failed(let msg): highlightState = .done("失败:\(msg)")
+                            }
+                        }
+                    } label: {
+                        Label("启用命令高亮", systemImage: "paintbrush.pointed")
+                            .font(.system(size: 12))
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    Text("在此服务器安装 zsh-syntax-highlighting,输入命令实时染色")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                case .working:
+                    HStack(spacing: 6) {
+                        ProgressView().controlSize(.mini)
+                        Text("安装中…").font(.caption).foregroundStyle(.secondary)
+                    }
+                case .done(let msg):
+                    Text(msg)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
     }
 
     private func refresh() async {

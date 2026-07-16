@@ -189,6 +189,9 @@ struct SFTPPanelView: View {
                 Button("打开") { Task { await browser?.enter(entry) } }
             } else {
                 Button("用本地编辑器打开") { browser?.editRemotely(entry) }
+                if browser?.editing[browserRemotePath(entry)] != nil {
+                    Button("停止编辑(取消自动回传)") { browser?.stopEditing(browserRemotePath(entry)) }
+                }
                 Button("下载…") { downloadPick(entry) }
             }
             Button("重命名…") { renaming = entry; renameText = entry.name }

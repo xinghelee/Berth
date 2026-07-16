@@ -266,6 +266,57 @@ final class TerminalSession: Identifiable {
         "'" + s.replacingOccurrences(of: "'", with: "'\\''") + "'"
     }
 
+    enum ShellHighlightResult { case installed, alreadyEnabled, failed(String) }
+
+    /// 方案1:在远端启用命令高亮(zsh-syntax-highlighting)。检测包管理器 → 安装 →
+    /// 幂等追加 source 行到 ~/.zshrc。返回结果供 UI 提示。全程一条命令,不影响当前 PTY。
+    func enableShellHighlight() async -> ShellHighlightResult {
+        guard let client else { return .failed("未连接") }
+        // sudo 非交互;找到高亮脚本路径后幂等写入 .zshrc(带 Berth 标记,避免重复追加)
+        let script = #"""
+        set -e
+        MARK='# >>> berth syntax-highlight >>>'
+        find_zsh_hl() {
+          for p in \
+            /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh \
+            /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh \
+            /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh \
+            /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh; do
+            [ -f "$p" ] && { echo "$p"; return 0; }
+          done
+          return 1
+        }
+        if grep -q "$MARK" "$HOME/.zshrc" 2>/dev/null; then echo BERTH_ALREADY; exit 0; fi
+        HL=$(find_zsh_hl || true)
+        if [ -z "$HL" ]; then
+          SUDO=""; [ "$(id -u)" != "0" ] && command -v sudo >/dev/null && SUDO="sudo -n"
+          if command -v apt-get >/dev/null; then $SUDO apt-get update -qq && $SUDO DEBIAN_FRONTEND=noninteractive apt-get install -y -qq zsh-syntax-highlighting
+          elif command -v dnf >/dev/null; then $SUDO dnf install -y -q zsh-syntax-highlighting
+          elif command -v yum >/dev/null; then $SUDO yum install -y -q zsh-syntax-highlighting
+          elif command -v apk >/dev/null; then $SUDO apk add --no-progress zsh-syntax-highlighting
+          elif command -v pacman >/dev/null; then $SUDO pacman -S --noconfirm zsh-syntax-highlighting
+          elif command -v brew >/dev/null; then brew install zsh-syntax-highlighting
+          else echo BERTH_NOPKG; exit 1
+          fi
+          HL=$(find_zsh_hl || true)
+        fi
+        [ -z "$HL" ] && { echo BERTH_NOTFOUND; exit 1; }
+        printf '\n%s\n[ -f %s ] && source %s\n# <<< berth syntax-highlight <<<\n' "$MARK" "$HL" "$HL" >> "$HOME/.zshrc"
+        echo BERTH_DONE
+        """#
+        do {
+            let buffer = try await client.executeCommand("sh -c \(shellQuote(script)) 2>&1")
+            let out = String(buffer: buffer)
+            if out.contains("BERTH_ALREADY") { return .alreadyEnabled }
+            if out.contains("BERTH_DONE") { return .installed }
+            if out.contains("BERTH_NOPKG") { return .failed("未识别的包管理器,请手动安装 zsh-syntax-highlighting") }
+            if out.contains("BERTH_NOTFOUND") { return .failed("安装后未找到高亮脚本(可能需要 sudo 权限)") }
+            return .failed(out.trimmingCharacters(in: .whitespacesAndNewlines).suffix(200).description)
+        } catch {
+            return .failed(SSHErrorMapper.friendlyMessage(for: error, hostname: spec.hostname, port: spec.port))
+        }
+    }
+
     /// 后台时长任务完成提醒:app 不在前台,且本次输出距上次输出静默 ≥10s → 视为长命令出结果
     private func noteOutputForNotification() {
         let now = Date()

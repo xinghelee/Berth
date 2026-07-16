@@ -154,6 +154,8 @@ final class SFTPBrowser {
     private(set) var editing: [String: EditState] = [:]
     enum EditState: Equatable { case syncing, idle, failed }
     @ObservationIgnored private var editTasks: [String: Task<Void, Never>] = [:]
+    /// 已在编辑的远端路径 → 本地临时副本(供再次点击时直接重开编辑器)
+    @ObservationIgnored private var editLocalURLs: [String: URL] = [:]
 
     /// 双击文件时:拉到本地临时目录,用默认编辑器打开,轮询本地改动自动回传到原路径。
     /// openInEditor=false 仅供自动化验收(不真的启动编辑器),返回本地临时文件路径。
@@ -161,11 +163,18 @@ final class SFTPBrowser {
     func editRemotely(_ entry: Entry, openInEditor: Bool = true) -> URL? {
         guard let sftp, !entry.isDirectory else { return nil }
         let remotePath = join(path, entry.name)
-        guard editTasks[remotePath] == nil else { return nil } // 已在编辑
+        // 已在编辑:直接重开已有本地副本,不再重复下载/新建监听
+        if editTasks[remotePath] != nil {
+            if let existing = editLocalURLs[remotePath], openInEditor {
+                NSWorkspace.shared.open(existing)
+            }
+            return editLocalURLs[remotePath]
+        }
 
         let dir = URL(fileURLWithPath: NSTemporaryDirectory())
             .appendingPathComponent("berth-edit-\(UUID().uuidString)", isDirectory: true)
         let localURL = dir.appendingPathComponent(entry.name)
+        editLocalURLs[remotePath] = localURL
 
         editing[remotePath] = .syncing
         let task = Task { [weak self] in
@@ -221,6 +230,7 @@ final class SFTPBrowser {
     func stopEditing(_ remotePath: String) {
         editTasks[remotePath]?.cancel()
         editTasks[remotePath] = nil
+        editLocalURLs[remotePath] = nil
         editing[remotePath] = nil
     }
 
@@ -263,6 +273,7 @@ final class SFTPBrowser {
         isClosed = true
         for task in editTasks.values { task.cancel() }
         editTasks = [:]
+        editLocalURLs = [:]
         editing = [:]
         let client = sftp
         sftp = nil
