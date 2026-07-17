@@ -8,6 +8,8 @@ struct SSHConfigHost: Equatable, Identifiable {
     var port: Int?
     var identityFile: String?
     var proxyJump: String?
+    /// PubkeyAuthentication no 或 PreferredAuthentications 不含 publickey 时为 true
+    var prefersPasswordAuth: Bool = false
 
     var id: String { alias }
 }
@@ -56,6 +58,10 @@ enum SSHConfigParser {
                         host.identityFile = expandTilde(value, home: homeDirectory)
                     case "proxyjump":
                         host.proxyJump = value
+                    case "pubkeyauthentication":
+                        if value.lowercased() == "no" { host.prefersPasswordAuth = true }
+                    case "preferredauthentications":
+                        if !value.lowercased().contains("publickey") { host.prefersPasswordAuth = true }
                     default:
                         break
                     }

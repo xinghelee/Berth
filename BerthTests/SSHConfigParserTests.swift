@@ -23,6 +23,25 @@ final class SSHConfigParserTests: XCTestCase {
         XCTAssertEqual(hosts[0].hostname, "bare.example.com")
     }
 
+    func testPubkeyDisabledMarksPasswordAuth() {
+        let config = """
+        Host pw-only
+            HostName 10.0.0.9
+            PubkeyAuthentication no
+
+        Host kb-only
+            HostName 10.0.0.10
+            PreferredAuthentications password,keyboard-interactive
+
+        Host normal
+            HostName 10.0.0.11
+        """
+        let hosts = SSHConfigParser.parse(config)
+        XCTAssertTrue(hosts[0].prefersPasswordAuth)
+        XCTAssertTrue(hosts[1].prefersPasswordAuth)
+        XCTAssertFalse(hosts[2].prefersPasswordAuth)
+    }
+
     func testMultipleAliasesInOneHostLine() {
         let config = """
         Host web api

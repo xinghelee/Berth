@@ -113,7 +113,12 @@ final class SSHConfigService {
             host.hostname = entry.hostname
             host.port = entry.port ?? 22
             host.username = entry.user ?? NSUserName()
-            if let identityFile = entry.identityFile {
+            if entry.prefersPasswordAuth {
+                // config 明确禁用公钥(PubkeyAuthentication no / PreferredAuthentications
+                // 不含 publickey):按密码认证导入,密码首次连接前需在 Keychain 里补
+                host.authMethod = .password
+                host.privateKeyPath = nil
+            } else if let identityFile = entry.identityFile {
                 host.authMethod = .privateKeyFile
                 host.privateKeyPath = identityFile
             } else {
