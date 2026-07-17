@@ -233,6 +233,68 @@ enum M2AcceptanceTest {
         log("FORWARD_TIMEOUT state=\(session.state)")
     }
 
+    /// 即时端口转发验收:BERTH_RUNTIME_FWD_AUTOTEST=1。连接时不带任何转发,
+    /// 连上后调 addRuntimeForward 临时加一条 local 转发(懒创建 service),验证绑定端口可用。
+    static func runRuntimeForwardIfRequested(container: ModelContainer) async {
+        let env = ProcessInfo.processInfo.environment
+        guard env["BERTH_RUNTIME_FWD_AUTOTEST"] == "1",
+              let host = env["BERTH_TEST_HOST"],
+              let user = env["BERTH_TEST_USER"],
+              let keyFile = env["BERTH_TEST_KEYFILE"],
+              let dumpBase = env["BERTH_TEST_DUMP"] else { return }
+        let targetHost = env["BERTH_FWD_TARGET_HOST"] ?? "127.0.0.1"
+        let targetPort = Int(env["BERTH_FWD_TARGET_PORT"] ?? "22") ?? 22
+        let bindPort = Int(env["BERTH_FWD_BIND_PORT"] ?? "0") ?? 0
+
+        func log(_ line: String) {
+            try? line.write(toFile: dumpBase + ".runtimefwd.log", atomically: true, encoding: .utf8)
+        }
+        log("RUNTIME_FWD_STARTED host=\(host)")
+        UserDefaults.standard.set(false, forKey: SettingsKeys.requireTouchIDForKeys)
+
+        // 连接时不带任何转发
+        let connectPort = Int(env["BERTH_TEST_PORT"] ?? "22") ?? 22
+        let spec = HostSpec(
+            hostID: UUID(), label: "rtfwd", hostname: host, port: connectPort,
+            username: user, authMethod: .privateKeyFile, privateKeyPath: keyFile,
+            forwards: []
+        )
+        let session = SessionManager.shared.open(spec: spec)
+
+        let deadline = Date().addingTimeInterval(30)
+        var forwardID: UUID?
+        while Date() < deadline {
+            if session.hostKeyPrompt != nil { session.resolveHostKeyPrompt(accepted: true) }
+            if case .disconnected(let reason) = session.state {
+                log("RUNTIME_FWD_DISCONNECTED \(reason)")
+                return
+            }
+            // 连上后临时加一条转发
+            if case .connected = session.state, forwardID == nil {
+                let forward = PortForwardSpec(
+                    kind: .local, bindHost: "127.0.0.1", bindPort: bindPort,
+                    targetHost: targetHost, targetPort: targetPort
+                )
+                forwardID = forward.id
+                let ok = session.addRuntimeForward(forward)
+                log("RUNTIME_FWD_ADDED ok=\(ok)")
+            }
+            if let id = forwardID {
+                if case .failed(let reason)? = session.forwardStates[id] {
+                    log("RUNTIME_FWD_FAILED \(reason)")
+                    return
+                }
+                if case .active(let boundPort)? = session.forwardStates[id] {
+                    log("RUNTIME_FWD_ACTIVE port=\(boundPort) runtimeCount=\(session.runtimeForwards.count)")
+                    try? await Task.sleep(for: .seconds(30))
+                    return
+                }
+            }
+            try? await Task.sleep(for: .milliseconds(200))
+        }
+        log("RUNTIME_FWD_TIMEOUT state=\(session.state)")
+    }
+
     /// SFTP 验收:BERTH_SFTP_AUTOTEST=1,连目标后 list home → 上传 → 目录含新文件 → 下载校验 → 删除。
     static func runSFTPIfRequested(container: ModelContainer) async {
         let env = ProcessInfo.processInfo.environment

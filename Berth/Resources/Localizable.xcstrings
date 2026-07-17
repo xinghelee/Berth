@@ -831,6 +831,16 @@
         }
       }
     },
+    "临时端口转发": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ad-hoc Port Forward"
+          }
+        }
+      }
+    },
     "主机": {
       "localizations": {
         "en": {
@@ -1177,6 +1187,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Stop Logging Session"
+          }
+        }
+      }
+    },
+    "停止这条临时转发": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop this ad-hoc forward"
           }
         }
       }
@@ -1767,6 +1787,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Search scrollback"
+          }
+        }
+      }
+    },
+    "在本地开一个 SOCKS5 代理端口,经此服务器出网。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open a local SOCKS5 proxy port that routes through this server."
           }
         }
       }
@@ -2431,6 +2461,16 @@
         }
       }
     },
+    "建立": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create"
+          }
+        }
+      }
+    },
     "当前": {
       "localizations": {
         "en": {
@@ -2597,6 +2637,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Save all current tabs and splits as a workspace"
+          }
+        }
+      }
+    },
+    "把本地端口转到远端目标(如本地 8080 → 远端 127.0.0.1:80)。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Forward a local port to a remote target (e.g. local 8080 → remote 127.0.0.1:80)."
+          }
+        }
+      }
+    },
+    "把远端端口转回本地目标(如远端 8080 → 本地 127.0.0.1:3000)。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Forward a remote port back to a local target (e.g. remote 8080 → local 127.0.0.1:3000)."
           }
         }
       }
@@ -2917,6 +2977,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Misty Rose (Light)"
+          }
+        }
+      }
+    },
+    "暂无转发。点右上「+」临时加一条(不落库)。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No forwards. Tap + to add an ad-hoc one (not saved)."
           }
         }
       }
@@ -3537,6 +3607,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Target host"
+          }
+        }
+      }
+    },
+    "目标端口需要是 1-65535 之间的数字。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Target port must be a number between 1 and 65535."
           }
         }
       }

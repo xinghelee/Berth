@@ -13,6 +13,7 @@ struct ServerInfoInspector: View {
     @State private var notZshShell: String?
     /// 切换 zsh 成功后提示重连(新登录才用新 shell)
     @State private var offerReconnect = false
+    @State private var isAddingForward = false
 
     private enum HighlightUIState: Equatable { case idle, working, done(String) }
 
@@ -26,9 +27,7 @@ struct ServerInfoInspector: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     connectionSection
-                    if !session.spec.forwards.isEmpty {
-                        forwardsSection
-                    }
+                    forwardsSection
                     if !session.spec.hostname.isEmpty {
                         serverSection
                     }
@@ -66,25 +65,73 @@ struct ServerInfoInspector: View {
         }
     }
 
+    @ViewBuilder
     private var forwardsSection: some View {
-        section("端口转发") {
-            ForEach(session.spec.forwards) { forward in
-                HStack(alignment: .top, spacing: 6) {
-                    Circle()
-                        .fill(forwardColor(forward.id))
-                        .frame(width: 7, height: 7)
-                        .padding(.top, 4)
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(forward.summary)
-                            .font(.caption)
-                            .textSelection(.enabled)
-                        Text(forwardStatusText(forward.id))
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
+        // 只连接、无任何转发时不显示整段(仅保留一个入口按钮由标题栏承载)
+        if !session.spec.forwards.isEmpty || !session.runtimeForwards.isEmpty || isConnected {
+            section("端口转发") {
+                ForEach(session.spec.forwards) { forward in
+                    forwardRow(forward, removable: false)
+                }
+                ForEach(session.runtimeForwards) { forward in
+                    forwardRow(forward, removable: true)
+                }
+                if session.spec.forwards.isEmpty && session.runtimeForwards.isEmpty {
+                    Text("暂无转发。点右上「+」临时加一条(不落库)。")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+                Button {
+                    isAddingForward = true
+                } label: {
+                    Label("临时端口转发", systemImage: "plus")
+                        .font(.caption)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(theme.accentColor)
+                .disabled(!isConnected)
+                .popover(isPresented: $isAddingForward, arrowEdge: .leading) {
+                    AddForwardPopover { spec in
+                        session.addRuntimeForward(spec)
+                        isAddingForward = false
                     }
                 }
             }
         }
+    }
+
+    private func forwardRow(_ forward: PortForwardSpec, removable: Bool) -> some View {
+        HStack(alignment: .top, spacing: 6) {
+            Circle()
+                .fill(forwardColor(forward.id))
+                .frame(width: 7, height: 7)
+                .padding(.top, 4)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(forward.summary)
+                    .font(.caption)
+                    .textSelection(.enabled)
+                Text(forwardStatusText(forward.id))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 4)
+            if removable {
+                Button {
+                    session.removeRuntimeForward(forward.id)
+                } label: {
+                    Image(systemName: "stop.circle")
+                        .font(.caption)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+                .help("停止这条临时转发")
+            }
+        }
+    }
+
+    private var isConnected: Bool {
+        if case .connected = session.state { return true }
+        return false
     }
 
     private func forwardColor(_ id: UUID) -> Color {

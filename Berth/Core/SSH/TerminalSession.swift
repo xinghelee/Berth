@@ -660,19 +660,49 @@ final class TerminalSession: Identifiable {
     // MARK: - 端口转发
 
     private func startPortForwards() {
-        guard let client, !spec.forwards.isEmpty else { return }
-        forwardStates = Dictionary(uniqueKeysWithValues: spec.forwards.map { ($0.id, .starting) })
-        let service = PortForwardService(client: client) { [weak self] id, state in
-            Task { @MainActor in self?.forwardStates[id] = state }
-        }
-        forwardService = service
-        service.start(spec.forwards)
+        guard !spec.forwards.isEmpty else { return }
+        for forward in spec.forwards { forwardStates[forward.id] = .starting }
+        ensureForwardService()?.start(spec.forwards)
     }
 
     private func stopPortForwards() {
         forwardService?.stopAll()
         forwardService = nil
         forwardStates = [:]
+        runtimeForwards = []
+    }
+
+    /// 惰性创建转发 service(主机没配转发时也能临时加)。未连接返回 nil。
+    private func ensureForwardService() -> PortForwardService? {
+        if let forwardService { return forwardService }
+        guard let client else { return nil }
+        let service = PortForwardService(client: client) { [weak self] id, state in
+            Task { @MainActor in self?.forwardStates[id] = state }
+        }
+        forwardService = service
+        return service
+    }
+
+    // MARK: - 即时(临时)端口转发
+
+    /// 运行中临时新增的转发(不落库),供 UI 展示与单独停止
+    private(set) var runtimeForwards: [PortForwardSpec] = []
+
+    /// 会话运行中临时加一条转发;需已连接。成功返回该转发 id。
+    @discardableResult
+    func addRuntimeForward(_ spec: PortForwardSpec) -> Bool {
+        guard case .connected = state, let service = ensureForwardService() else { return false }
+        runtimeForwards.append(spec)
+        forwardStates[spec.id] = .starting
+        service.start([spec])
+        return true
+    }
+
+    /// 停止并移除一条临时转发
+    func removeRuntimeForward(_ id: UUID) {
+        forwardService?.stop(id)
+        runtimeForwards.removeAll { $0.id == id }
+        forwardStates[id] = nil
     }
 
     // MARK: - 连接实现

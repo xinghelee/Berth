@@ -53,6 +53,12 @@ final class PortForwardService: @unchecked Sendable {
         }
     }
 
+    /// 停止单条转发(临时转发的删除)
+    func stop(_ id: UUID) {
+        tasks[id]?.cancel()
+        tasks[id] = nil
+    }
+
     func stopAll() {
         for task in tasks.values { task.cancel() }
         tasks.removeAll()
