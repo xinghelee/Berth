@@ -31,6 +31,10 @@ struct StatusBarView: View {
                     HStack(spacing: 3) {
                         Image(systemName: code == 0 ? "checkmark" : "xmark")
                         if code != 0 { Text("\(code)") }
+                        if let duration = durationText(session.lastCommandDuration) {
+                            Text(duration)
+                                .foregroundStyle(.tertiary)
+                        }
                     }
                     .foregroundStyle(code == 0 ? Color.green : Color.red)
                     .help(code == 0 ? "上条命令成功" : "上条命令退出码 \(code)")
@@ -131,6 +135,15 @@ struct StatusBarView: View {
     }
 
     /// 1 分钟负载换算核占比;取不到核数时直接显示负载值
+    /// 命令耗时的紧凑格式:0.4s / 2.1s / 1m23s;不足 0.1s 不显示
+    private func durationText(_ duration: TimeInterval?) -> String? {
+        guard let duration, duration >= 0.1 else { return nil }
+        if duration < 60 { return String(format: "%.1fs", duration) }
+        let minutes = Int(duration) / 60
+        let seconds = Int(duration) % 60
+        return "\(minutes)m\(seconds)s"
+    }
+
     private func cpuText(_ info: ServerInfo) -> String? {
         guard let load1 = info.loadValues.first else { return nil }
         if info.cpuCount > 0 {

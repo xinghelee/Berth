@@ -121,6 +121,16 @@ struct TerminalCommands: Commands {
                 SessionManager.shared.requestSearch()
             }
             .keyboardShortcut("f", modifiers: .command)
+
+            Button("上一条命令") {
+                SessionManager.shared.selected?.jumpToPreviousCommand()
+            }
+            .keyboardShortcut(.upArrow, modifiers: .command)
+
+            Button("下一条命令") {
+                SessionManager.shared.selected?.jumpToNextCommand()
+            }
+            .keyboardShortcut(.downArrow, modifiers: .command)
         }
 
         CommandMenu("终端") {

@@ -670,6 +670,16 @@
         }
       }
     },
+    "上一条命令": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Previous Command"
+          }
+        }
+      }
+    },
     "上下分屏": {
       "localizations": {
         "en": {
@@ -716,6 +726,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Last command exited with code %lld"
+          }
+        }
+      }
+    },
+    "下一条命令": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next Command"
           }
         }
       }
