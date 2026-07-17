@@ -40,7 +40,7 @@ enum Distro: CaseIterable {
         // 顺序即优先级:PVE 的 os-release 是 Debian、TrueNAS 基于 FreeBSD/Debian,
         // 专有系统必须排在通用发行版之前
         let table: [(String, Distro)] = [
-            ("proxmox", .proxmox), ("pve", .proxmox),
+            ("proxmox", .proxmox),
             ("immortalwrt", .immortalwrt), ("istoreos", .istoreos), ("ikuai", .ikuai), ("爱快", .ikuai),
             ("routeros", .routeros), ("mikrotik", .routeros),
             ("pfsense", .pfsense), ("opnsense", .opnsense),

@@ -283,15 +283,11 @@ final class TerminalSession: Identifiable {
         stdinWriter?.yield(.bytes(Array(text.utf8)))
     }
 
-    /// 连接后异步探测系统名并回写 Host(驱动侧栏系统徽章),失败静默。
-    /// Proxmox 的 os-release 报 Debian,真实身份在内核后缀 -pve,单独甄别。
+    /// 连接后异步探测系统名并回写 Host(驱动侧栏系统徽章),失败静默。以 os-release 为准。
     private func captureServerOS() {
         Task { [weak self] in
             guard let self, let info = await self.fetchServerInfo() else { return }
-            var os = info.os.isEmpty ? info.kernel : info.os
-            if info.kernel.localizedCaseInsensitiveContains("pve") {
-                os = "Proxmox VE · " + os
-            }
+            let os = info.os.isEmpty ? info.kernel : info.os
             SessionManager.shared.recordServerOS(hostID: self.spec.hostID, os: os)
         }
     }
