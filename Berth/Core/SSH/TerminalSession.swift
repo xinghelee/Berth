@@ -33,7 +33,7 @@ final class TerminalSession: Identifiable {
         var message: String? {
             switch self {
             case .userInitiated: return nil
-            case .remoteClosed: return "连接已被服务器关闭"
+            case .remoteClosed: return String(localized: "连接已被服务器关闭")
             case .error(let text): return text
             }
         }
@@ -48,13 +48,13 @@ final class TerminalSession: Identifiable {
         var errorDescription: String? {
             switch self {
             case .unsupportedKey:
-                return "无法解析私钥文件:目前支持 OpenSSH 格式的 ed25519 / RSA 私钥。若密钥带 passphrase,请确认已正确填写。"
+                return String(localized: "无法解析私钥文件:目前支持 OpenSSH 格式的 ed25519 / RSA 私钥。若密钥带 passphrase,请确认已正确填写。")
             case .missingStoredKey:
-                return "找不到该主机引用的密钥,请在「密钥」页检查或重新选择。"
+                return String(localized: "找不到该主机引用的密钥,请在「密钥」页检查或重新选择。")
             case .authenticationGateFailed:
-                return "身份验证未通过,已取消连接。可在设置中关闭「使用密钥前要求 Touch ID」。"
+                return String(localized: "身份验证未通过,已取消连接。可在设置中关闭「使用密钥前要求 Touch ID」。")
             case .notConnected:
-                return "未连接,无法打开 SFTP。"
+                return String(localized: "未连接,无法打开 SFTP。")
             }
         }
     }
@@ -150,7 +150,7 @@ final class TerminalSession: Identifiable {
         // 重连(此前连过)且开启了恢复工作目录 → 连上后自动 cd 回上次目录
         let restoreEnabled = UserDefaults.standard.object(forKey: SettingsKeys.restoreWorkingDir) as? Bool ?? true
         restoreDirOnConnect = (everConnected && restoreEnabled) ? lastRemoteDirectory : nil
-        state = .connecting(detail: "正在连接 \(spec.hostname):\(spec.port)…")
+        state = .connecting(detail: String(localized: "正在连接 \(spec.hostname):\(spec.port)…"))
 
         sessionTask = Task {
             var disconnectReason: DisconnectReason
@@ -269,7 +269,7 @@ final class TerminalSession: Identifiable {
                 self.hostKeyContinuation?.resume(returning: false)
                 self.hostKeyContinuation = continuation
                 self.hostKeyPrompt = prompt
-                self.state = .connecting(detail: "等待主机密钥确认…")
+                self.state = .connecting(detail: String(localized: "等待主机密钥确认…"))
             }
         }
     }
@@ -317,16 +317,24 @@ final class TerminalSession: Identifiable {
     /// 发出 OSC 133 A/B/C/D 标记,客户端据此感知命令边界与退出码。幂等,重连后生效。
     func enableCommandIntegration() async -> CommandIntegrationResult {
         guard let client else { return .failed("未连接") }
+        // ⚠️ bash 钩子必须只在交互 shell 生效:Debian 系 bash 对 ssh 远程命令也会 source
+        // .bashrc,无守卫的 DEBUG trap 会把 OSC 133 转义写进非交互会话的 stdout,直接
+        // 打断 SFTP/scp 等子系统协议(表现为 "Received message too long")。
+        // v2 标记 + 安装时自动清除旧版无守卫块,老主机重装即自愈。
         let script = #"""
         exec 2>&1
-        MARK='# >>> berth command-integration >>>'
-        END='# <<< berth command-integration <<<'
-        BASH_HOOK='__berth_preexec() { printf "\033]133;C\007"; }
+        OLD_MARK='# >>> berth command-integration >>>'
+        OLD_END='# <<< berth command-integration <<<'
+        MARK='# >>> berth shell-integration v2 >>>'
+        END='# <<< berth shell-integration v2 <<<'
+        BASH_HOOK='case $- in *i*)
+        __berth_preexec() { printf "\033]133;C\007"; }
         __berth_precmd() { local e=$?; printf "\033]133;D;%s\007\033]133;A\007\033]7;file://%s%s\007" "$e" "${HOSTNAME:-}" "$PWD"; }
         if [ -n "$BASH_VERSION" ]; then
           case "$PROMPT_COMMAND" in *__berth_precmd*) : ;; *) PROMPT_COMMAND="__berth_precmd;${PROMPT_COMMAND}";; esac
           trap "__berth_preexec" DEBUG
-        fi'
+        fi
+        ;; esac'
         ZSH_HOOK='autoload -Uz add-zsh-hook 2>/dev/null
         __berth_preexec() { printf "\033]133;C\007"; }
         __berth_precmd() { printf "\033]133;D;%s\007\033]133;A\007\033]7;file://%s%s\007" "$?" "${HOST:-}" "$PWD"; }
@@ -335,7 +343,10 @@ final class TerminalSession: Identifiable {
         added=0
         for RC in "$HOME/.bashrc" "$HOME/.zshrc"; do
           touch "$RC" 2>/dev/null || continue
-          if grep -q "$MARK" "$RC" 2>/dev/null; then continue; fi
+          if grep -qF "$OLD_MARK" "$RC" 2>/dev/null; then
+            sed -i "/^# >>> berth command-integration >>>/,/^# <<< berth command-integration <<</d" "$RC" 2>/dev/null
+          fi
+          if grep -qF "$MARK" "$RC" 2>/dev/null; then continue; fi
           case "$RC" in
             *.bashrc) printf '\n%s\n%s\n%s\n' "$MARK" "$BASH_HOOK" "$END" >> "$RC" && added=1 ;;
             *.zshrc)  printf '\n%s\n%s\n%s\n' "$MARK" "$ZSH_HOOK" "$END" >> "$RC" && added=1 ;;
@@ -400,9 +411,9 @@ final class TerminalSession: Identifiable {
             let buffer = try await client.executeCommand("sh -c \(shellQuote(script))")
             let out = String(buffer: buffer)
             if out.contains("BERTH_SWITCHED") { return .needsRelogin }
-            if out.contains("BERTH_CHSH_FAIL") { return .failed("切换默认 shell 失败(可能需要密码或权限)") }
-            if out.contains("BERTH_NOPKG") { return .failed("未识别的包管理器,无法自动安装 zsh") }
-            if out.contains("BERTH_NOZSH") { return .failed("安装后仍未找到 zsh") }
+            if out.contains("BERTH_CHSH_FAIL") { return .failed(String(localized: "切换默认 shell 失败(可能需要密码或权限)")) }
+            if out.contains("BERTH_NOPKG") { return .failed(String(localized: "未识别的包管理器,无法自动安装 zsh")) }
+            if out.contains("BERTH_NOZSH") { return .failed(String(localized: "安装后仍未找到 zsh")) }
             return .failed(String(out.trimmingCharacters(in: .whitespacesAndNewlines).suffix(200)))
         } catch {
             return .failed(SSHErrorMapper.friendlyMessage(for: error, hostname: spec.hostname, port: spec.port))
@@ -458,10 +469,10 @@ final class TerminalSession: Identifiable {
             if out.contains("BERTH_DONE") { return .installed }
             if let range = out.range(of: "BERTH_NOTZSH:") {
                 let shell = out[range.upperBound...].prefix { !$0.isNewline }
-                return .notZsh(shell.isEmpty ? "非 zsh" : String(shell))
+                return .notZsh(shell.isEmpty ? String(localized: "非 zsh") : String(shell))
             }
-            if out.contains("BERTH_NOPKG") { return .failed("未识别的包管理器,请手动安装 zsh-syntax-highlighting") }
-            if out.contains("BERTH_NOTFOUND") { return .failed("安装后未找到高亮脚本(可能需要 sudo 权限)") }
+            if out.contains("BERTH_NOPKG") { return .failed(String(localized: "未识别的包管理器,请手动安装 zsh-syntax-highlighting")) }
+            if out.contains("BERTH_NOTFOUND") { return .failed(String(localized: "安装后未找到高亮脚本(可能需要 sudo 权限)")) }
             return .failed(String(out.trimmingCharacters(in: .whitespacesAndNewlines).suffix(200)))
         } catch {
             return .failed(SSHErrorMapper.friendlyMessage(for: error, hostname: spec.hostname, port: spec.port))
@@ -478,7 +489,7 @@ final class TerminalSession: Identifiable {
         // 同会话 30s 内不重复打扰
         if let lastNotified = lastNotifiedAt, now.timeIntervalSince(lastNotified) < 30 { return }
         lastNotifiedAt = now
-        NotificationService.post(title: spec.label, body: "长任务有新输出(静默 \(Int(now.timeIntervalSince(last))) 秒后)")
+        NotificationService.post(title: spec.label, body: String(localized: "长任务有新输出(静默 \(Int(now.timeIntervalSince(last))) 秒后)"))
     }
 
     func focusTerminal() {
@@ -520,19 +531,19 @@ final class TerminalSession: Identifiable {
 
         // 连最外层跳板
         let first = spec.jump[0]
-        state = .connecting(detail: "正在连接跳板机 \(first.hostname):\(first.port)…")
+        state = .connecting(detail: String(localized: "正在连接跳板机 \(first.hostname):\(first.port)…"))
         var current = try await connectEntry(to: first, useTransient: false)
         jumpClients.append(current)
 
         // 逐跳 jump 到后续跳板
         for hop in spec.jump.dropFirst() {
-            state = .connecting(detail: "经跳板机 → \(hop.hostname):\(hop.port)…")
+            state = .connecting(detail: String(localized: "经跳板机 → \(hop.hostname):\(hop.port)…"))
             current = try await current.jump(to: try settings(for: hop, useTransient: false))
             jumpClients.append(current)
         }
 
         // 最后 jump 到目标本机
-        state = .connecting(detail: "经跳板机 → \(spec.hostname):\(spec.port)…")
+        state = .connecting(detail: String(localized: "经跳板机 → \(spec.hostname):\(spec.port)…"))
         return try await current.jump(to: try settings(for: spec, useTransient: true))
     }
 
@@ -542,7 +553,7 @@ final class TerminalSession: Identifiable {
         guard spec.proxy.isEnabled else {
             return try await SSHClient.connect(to: clientSettings)
         }
-        state = .connecting(detail: "经代理 \(spec.proxy.host):\(spec.proxy.port) 连接 \(hop.hostname):\(hop.port)…")
+        state = .connecting(detail: String(localized: "经代理 \(spec.proxy.host):\(spec.proxy.port) 连接 \(hop.hostname):\(hop.port)…"))
         let proxyPassword = spec.proxy.requiresAuth
             ? try KeychainStore.read(account: KeychainStore.proxyPasswordAccount(for: spec.hostID))
             : nil
@@ -565,7 +576,7 @@ final class TerminalSession: Identifiable {
             borrow.retain()
             connection = borrow
             client = borrow.client
-            state = .connecting(detail: "复用现有连接,正在打开终端通道…")
+            state = .connecting(detail: String(localized: "复用现有连接,正在打开终端通道…"))
         } else {
             isBorrower = false
             willBorrow = nil
@@ -578,7 +589,7 @@ final class TerminalSession: Identifiable {
             jumpClients = []
             connection.retain()
             client = established
-            state = .connecting(detail: "认证成功,正在打开终端通道…")
+            state = .connecting(detail: String(localized: "认证成功,正在打开终端通道…"))
         }
         self.client = client
         self.connection = connection
@@ -739,11 +750,11 @@ final class TerminalSession: Identifiable {
     private func requireTouchIDIfEnabled() async throws {
         let enabled = UserDefaults.standard.object(forKey: SettingsKeys.requireTouchIDForKeys) as? Bool ?? true
         guard enabled else { return }
-        state = .connecting(detail: "等待身份验证(Touch ID)…")
+        state = .connecting(detail: String(localized: "等待身份验证(Touch ID)…"))
         let context = LAContext()
         do {
             // deviceOwnerAuthentication:优先生物识别,失败回退登录密码
-            try await context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: "使用私钥连接 \(spec.label)")
+            try await context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: String(localized: "使用私钥连接 \(spec.label)"))
         } catch {
             throw SessionError.authenticationGateFailed
         }
@@ -798,7 +809,7 @@ extension TerminalSession: TerminalViewDelegate {
             guard enabled, !NSApp.isActive else { return }
             if let lastNotified = lastNotifiedAt, Date().timeIntervalSince(lastNotified) < 30 { return }
             lastNotifiedAt = Date()
-            NotificationService.post(title: spec.label, body: "终端响铃")
+            NotificationService.post(title: spec.label, body: String(localized: "终端响铃"))
         }
     }
 
