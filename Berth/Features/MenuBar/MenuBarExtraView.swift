@@ -16,8 +16,12 @@ struct MenuBarExtraView: View {
                         NSApp.activate(ignoringOtherApps: true)
                         sessionManager.focusPane(session.id)
                     } label: {
-                        // 菜单会把模板符号强制单色,彩色状态点用 emoji
-                        Text("\(stateDot(session)) \(session.spec.label)")
+                        // 菜单会把模板符号强制单色,自绘非模板圆点保留颜色且尺寸可控
+                        Label {
+                            Text(session.spec.label)
+                        } icon: {
+                            Image(nsImage: Self.dotImage(for: session))
+                        }
                     }
                 }
             }
@@ -54,12 +58,28 @@ struct MenuBarExtraView: View {
         }
     }
 
-    private func stateDot(_ session: TerminalSession) -> String {
+    private static let greenDot = makeDot(.systemGreen)
+    private static let yellowDot = makeDot(.systemYellow)
+    private static let grayDot = makeDot(.tertiaryLabelColor)
+
+    private static func dotImage(for session: TerminalSession) -> NSImage {
         switch session.state {
-        case .connected: return "🟢"
-        case .connecting: return "🟡"
-        case .idle, .disconnected: return "⚪️"
+        case .connected: return greenDot
+        case .connecting: return yellowDot
+        case .idle, .disconnected: return grayDot
         }
+    }
+
+    /// 9pt 实心圆点,非模板图,菜单中保留颜色
+    private static func makeDot(_ color: NSColor) -> NSImage {
+        let size = NSSize(width: 9, height: 9)
+        let image = NSImage(size: size, flipped: false) { rect in
+            color.setFill()
+            NSBezierPath(ovalIn: rect.insetBy(dx: 0.5, dy: 0.5)).fill()
+            return true
+        }
+        image.isTemplate = false
+        return image
     }
 
     private func connect(_ host: Host) {
