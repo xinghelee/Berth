@@ -98,7 +98,7 @@ struct ServerInfoInspector: View {
 
     private func forwardStatusText(_ id: UUID) -> String {
         switch session.forwardStates[id] {
-        case .active(let port): return String(localized: "运行中 · 端口 \(port)")
+        case .active(let port): return String(localized: "运行中 · 端口 \(String(port))")
         case .starting: return String(localized: "启动中…")
         case .failed(let reason): return reason
         case .none: return String(localized: "未启动")

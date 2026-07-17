@@ -29,8 +29,8 @@ struct PortForwardSpec: Equatable, Sendable, Identifiable {
 
     var summary: String {
         switch kind {
-        case .local: return String(localized: "本地 \(bindHost):\(bindPort) → \(targetHost):\(targetPort)")
-        case .remote: return String(localized: "远程 \(bindHost):\(bindPort) → \(targetHost):\(targetPort)")
+        case .local: return String(localized: "本地 \(bindHost):\(String(bindPort)) → \(targetHost):\(String(targetPort))")
+        case .remote: return String(localized: "远程 \(bindHost):\(String(bindPort)) → \(targetHost):\(String(targetPort))")
         case .dynamic: return "SOCKS5 \(bindHost):\(bindPort)"
         }
     }

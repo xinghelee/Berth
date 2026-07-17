@@ -158,7 +158,7 @@ final class TerminalSession: Identifiable {
         // 重连(此前连过)且开启了恢复工作目录 → 连上后自动 cd 回上次目录
         let restoreEnabled = UserDefaults.standard.object(forKey: SettingsKeys.restoreWorkingDir) as? Bool ?? true
         restoreDirOnConnect = (everConnected && restoreEnabled) ? lastRemoteDirectory : nil
-        state = .connecting(detail: String(localized: "正在连接 \(spec.hostname):\(spec.port)…"))
+        state = .connecting(detail: String(localized: "正在连接 \(spec.hostname):\(String(spec.port))…"))
 
         sessionTask = Task {
             var disconnectReason: DisconnectReason
@@ -595,19 +595,19 @@ final class TerminalSession: Identifiable {
 
         // 连最外层跳板
         let first = spec.jump[0]
-        state = .connecting(detail: String(localized: "正在连接跳板机 \(first.hostname):\(first.port)…"))
+        state = .connecting(detail: String(localized: "正在连接跳板机 \(first.hostname):\(String(first.port))…"))
         var current = try await connectEntry(to: first, useTransient: false)
         jumpClients.append(current)
 
         // 逐跳 jump 到后续跳板
         for hop in spec.jump.dropFirst() {
-            state = .connecting(detail: String(localized: "经跳板机 → \(hop.hostname):\(hop.port)…"))
+            state = .connecting(detail: String(localized: "经跳板机 → \(hop.hostname):\(String(hop.port))…"))
             current = try await current.jump(to: try settings(for: hop, useTransient: false))
             jumpClients.append(current)
         }
 
         // 最后 jump 到目标本机
-        state = .connecting(detail: String(localized: "经跳板机 → \(spec.hostname):\(spec.port)…"))
+        state = .connecting(detail: String(localized: "经跳板机 → \(spec.hostname):\(String(spec.port))…"))
         return try await current.jump(to: try settings(for: spec, useTransient: true))
     }
 
@@ -617,7 +617,7 @@ final class TerminalSession: Identifiable {
         guard spec.proxy.isEnabled else {
             return try await SSHClient.connect(to: clientSettings)
         }
-        state = .connecting(detail: String(localized: "经代理 \(spec.proxy.host):\(spec.proxy.port) 连接 \(hop.hostname):\(hop.port)…"))
+        state = .connecting(detail: String(localized: "经代理 \(spec.proxy.host):\(String(spec.proxy.port)) 连接 \(hop.hostname):\(String(hop.port))…"))
         let proxyPassword = spec.proxy.requiresAuth
             ? try KeychainStore.read(account: KeychainStore.proxyPasswordAccount(for: spec.hostID))
             : nil

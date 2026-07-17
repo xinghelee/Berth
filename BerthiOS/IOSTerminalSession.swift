@@ -98,7 +98,7 @@ final class IOSTerminalSession {
     // MARK: - 连接主流程
 
     private func run(cols: Int, rows: Int) async {
-        state = .connecting(String(localized: "正在连接 \(spec.hostname):\(spec.port)…"))
+        state = .connecting(String(localized: "正在连接 \(spec.hostname):\(String(spec.port))…"))
         do {
             let client = try await establishClient()
             self.client = client
@@ -194,17 +194,17 @@ final class IOSTerminalSession {
         }
 
         let first = spec.jump[0]
-        state = .connecting(String(localized: "正在连接跳板机 \(first.hostname):\(first.port)…"))
+        state = .connecting(String(localized: "正在连接跳板机 \(first.hostname):\(String(first.port))…"))
         var current = try await connectEntry(to: first)
         jumpClients.append(current)
 
         for hop in spec.jump.dropFirst() {
-            state = .connecting(String(localized: "经跳板机 → \(hop.hostname):\(hop.port)…"))
+            state = .connecting(String(localized: "经跳板机 → \(hop.hostname):\(String(hop.port))…"))
             current = try await current.jump(to: try settings(for: hop))
             jumpClients.append(current)
         }
 
-        state = .connecting(String(localized: "经跳板机 → \(spec.hostname):\(spec.port)…"))
+        state = .connecting(String(localized: "经跳板机 → \(spec.hostname):\(String(spec.port))…"))
         return try await current.jump(to: try settings(for: spec))
     }
 
@@ -214,7 +214,7 @@ final class IOSTerminalSession {
         guard spec.proxy.isEnabled else {
             return try await SSHClient.connect(to: clientSettings)
         }
-        state = .connecting(String(localized: "经代理 \(spec.proxy.host):\(spec.proxy.port) 连接 \(hop.hostname):\(hop.port)…"))
+        state = .connecting(String(localized: "经代理 \(spec.proxy.host):\(String(spec.proxy.port)) 连接 \(hop.hostname):\(String(hop.port))…"))
         let proxyPassword = spec.proxy.requiresAuth
             ? try KeychainStore.read(account: KeychainStore.proxyPasswordAccount(for: spec.hostID))
             : nil

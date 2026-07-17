@@ -325,7 +325,7 @@ struct HostEditorView: View {
                     && $0.port == portNumber
                     && $0.username == trimmedUsername
             }) {
-                validationMessage = String(localized: "该主机已存在:「\(duplicate.label)」(\(duplicate.username)@\(duplicate.hostname):\(duplicate.port)),不能重复添加。")
+                validationMessage = String(localized: "该主机已存在:「\(duplicate.label)」(\(duplicate.username)@\(duplicate.hostname):\(String(duplicate.port))),不能重复添加。")
                 return
             }
         }

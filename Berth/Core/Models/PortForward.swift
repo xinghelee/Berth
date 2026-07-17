@@ -61,7 +61,7 @@ final class PortForward {
         case .local:
             return "\(bindHost):\(bindPort) → \(targetHost):\(targetPort)"
         case .remote:
-            return String(localized: "远端 \(bindHost):\(bindPort) → \(targetHost):\(targetPort)")
+            return String(localized: "远端 \(bindHost):\(String(bindPort)) → \(targetHost):\(String(targetPort))")
         case .dynamic:
             return "SOCKS5 \(bindHost):\(bindPort)"
         }
