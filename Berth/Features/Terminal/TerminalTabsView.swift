@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 /// 右侧终端区:标签条 + 当前会话终端 + 断线横幅。
@@ -426,9 +427,11 @@ private struct TerminalTabChip: View {
 struct TerminalPaneView: View {
     @Bindable var session: TerminalSession
     @Environment(SessionManager.self) private var sessionManager
+    @Environment(\.modelContext) private var modelContext
 
     @State private var searchModel = TerminalSearchModel()
     @State private var isSearchActive = false
+    @State private var editingHost: Host?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -467,6 +470,31 @@ struct TerminalPaneView: View {
         ) { prompt in
             HostKeyPromptSheet(prompt: prompt, session: session)
         }
+        .sheet(item: $editingHost) { host in
+            HostEditorView(host: host, defaultGroupID: nil)
+        }
+    }
+
+    /// 断线横幅的编辑入口:托管主机直接编辑;config 镜像复制为托管主机再编辑(同侧栏)
+    private func editHost() {
+        let hostID = session.spec.hostID
+        let descriptor = FetchDescriptor<Host>(predicate: #Predicate { $0.id == hostID })
+        guard let host = try? modelContext.fetch(descriptor).first else { return }
+        if host.source == .sshConfig {
+            let copy = Host(
+                label: host.label,
+                hostname: host.hostname,
+                port: host.port,
+                username: host.username,
+                authMethod: host.authMethod,
+                privateKeyPath: host.privateKeyPath,
+                note: host.note
+            )
+            modelContext.insert(copy)
+            editingHost = copy
+        } else {
+            editingHost = host
+        }
     }
 
     /// 非生产主机若设了标签色,顶部一条细色带区分环境(生产环境改由标题胶囊变红提示)
@@ -501,6 +529,8 @@ struct TerminalPaneView: View {
                     Button("停止") { session.cancelAutoReconnect() }
                         .controlSize(.small)
                 }
+                Button("编辑主机…") { editHost() }
+                    .controlSize(.small)
                 Button("立即重连") { session.connect() }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.small)

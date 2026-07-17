@@ -3669,6 +3669,16 @@
         }
       }
     },
+    "编辑主机…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit Host…"
+          }
+        }
+      }
+    },
     "编辑片段": {
       "localizations": {
         "en": {

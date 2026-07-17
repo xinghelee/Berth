@@ -165,7 +165,8 @@ final class TerminalSession: Identifiable {
             } catch {
                 if userInitiatedDisconnect {
                     disconnectReason = .userInitiated
-                } else if Self.isCleanShellExit(error) {
+                } else if everConnected, Self.isCleanShellExit(error) {
+                    // 连接阶段的失败(认证被拒等)不可能是 shell 退出,必须走 .error 保留详情
                     // 抛出的其实是通道 EOF/关闭(exit 与连接关闭竞速),视为 shell 退出
                     shellExited = true
                     disconnectReason = .remoteClosed
