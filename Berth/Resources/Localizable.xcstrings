@@ -1491,6 +1491,16 @@
         }
       }
     },
+    "匹配终端输出的正则,命中即发系统通知(如日志出现 ERROR)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A regex matched against terminal output fires a system notification (e.g. ERROR in logs)"
+          }
+        }
+      }
+    },
     "原记录指纹": {
       "localizations": {
         "en": {
@@ -1637,6 +1647,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Enable command highlighting"
+          }
+        }
+      }
+    },
+    "命中时响铃": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play sound on match"
           }
         }
       }
@@ -2107,6 +2127,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Key type"
+          }
+        }
+      }
+    },
+    "对所有会话的终端输出逐行(忽略大小写)匹配;命中即发系统通知,同一触发器 3 秒内不重复。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Matched line-by-line (case-insensitive) against every session's output; a match fires a system notification, throttled to once per 3s per trigger."
           }
         }
       }
@@ -2731,6 +2761,16 @@
         }
       }
     },
+    "新建触发器": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New Trigger"
+          }
+        }
+      }
+    },
     "方块": {
       "localizations": {
         "en": {
@@ -3177,6 +3217,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Orange"
+          }
+        }
+      }
+    },
+    "正则(如:ERROR|错误|panic)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regex (e.g. ERROR|failed|panic)"
+          }
+        }
+      }
+    },
+    "正则表达式无效": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invalid regular expression"
           }
         }
       }
@@ -3951,6 +4011,26 @@
         }
       }
     },
+    "规则": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rule"
+          }
+        }
+      }
+    },
+    "触发器命中:%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trigger matched: %@"
+          }
+        }
+      }
+    },
     "认证": {
       "localizations": {
         "en": {
@@ -4271,6 +4351,26 @@
         }
       }
     },
+    "输出触发器": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Output Triggers"
+          }
+        }
+      }
+    },
+    "输出触发器…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Output Triggers…"
+          }
+        }
+      }
+    },
     "运行中 · 端口 %@": {
       "localizations": {
         "en": {
@@ -4317,6 +4417,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "No snippets yet"
+          }
+        }
+      }
+    },
+    "还没有触发器": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No triggers yet"
           }
         }
       }

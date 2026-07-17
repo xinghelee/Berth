@@ -121,6 +121,8 @@ final class TerminalSession: Identifiable {
     /// 后台长任务通知:上次输出/上次通知时间
     @ObservationIgnored private var lastOutputAt: Date?
     @ObservationIgnored private var lastNotifiedAt: Date?
+    /// 触发器匹配用的未完成行缓冲(按 \n 切分,剥离转义)
+    @ObservationIgnored private var triggerLineBuffer = ""
 
     private enum StdinEvent {
         case bytes([UInt8])
@@ -308,6 +310,22 @@ final class TerminalSession: Identifiable {
     }
 
     /// 记录一个提示符行(scroll-invariant),供命令间跳转
+    /// 触发器:把输出按行喂给引擎(引擎无启用项时几乎零成本)
+    private func matchTriggers(bytes: [UInt8]) {
+        guard TriggerEngine.shared.hasEnabledTriggers else { triggerLineBuffer = ""; return }
+        guard let text = String(bytes: bytes, encoding: .utf8) else { return }
+        triggerLineBuffer += text
+        while let nl = triggerLineBuffer.firstIndex(of: "\n") {
+            let line = String(triggerLineBuffer[..<nl])
+            triggerLineBuffer.removeSubrange(triggerLineBuffer.startIndex...nl)
+            TriggerEngine.shared.scan(line: line, hostLabel: spec.label)
+        }
+        // 缓冲过长(无换行的持续输出)截断,避免无限增长
+        if triggerLineBuffer.count > 8192 {
+            triggerLineBuffer = String(triggerLineBuffer.suffix(4096))
+        }
+    }
+
     /// 光标当前所在的 scroll-invariant 行号
     private func currentScrollInvariantRow() -> Int {
         refreshScrollInvariantBounds()
@@ -796,6 +814,7 @@ final class TerminalSession: Identifiable {
                     if fed < bytes.count {
                         self.terminalView.feed(byteArray: bytes[fed...])
                     }
+                    self.matchTriggers(bytes: bytes)
                 }
             }
         }

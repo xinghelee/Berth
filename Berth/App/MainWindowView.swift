@@ -62,6 +62,7 @@ struct MainWindowView: View {
         .task {
             Persistence.dedupManualHosts(container: modelContext.container)
             SSHConfigService.shared.start(container: modelContext.container)
+            TriggerEngine.shared.start(container: modelContext.container)
             theme.applyWindowChrome()
         }
     }

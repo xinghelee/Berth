@@ -68,6 +68,18 @@ struct BerthApp: App {
         }
         .modelContainer(container)
 
+        // 输出触发器:正则匹配终端输出发通知
+        Window("输出触发器", id: "triggers") {
+            TriggersListView()
+                .frame(minWidth: 440, idealWidth: 480, minHeight: 320, idealHeight: 420)
+                .background(WindowConfigurator(
+                    appearanceName: ThemeStore.shared.current.appearanceName,
+                    backgroundColor: ThemeStore.shared.current.backgroundNSColor,
+                    keepsTitle: true
+                ))
+        }
+        .modelContainer(container)
+
         // 命令片段管理
         Window("命令片段", id: "snippets") {
             SnippetsListView()
@@ -195,6 +207,10 @@ struct TerminalCommands: Commands {
 
             Button("会话模板…") {
                 openWindow(id: "workspaces")
+            }
+
+            Button("输出触发器…") {
+                openWindow(id: "triggers")
             }
 
             Button("命令片段…") {
