@@ -166,7 +166,7 @@ final class IOSTerminalSession {
         } catch let error as HostKeyError {
             state = .failed(error.localizedDescription)
         } catch {
-            state = .failed(SSHErrorMapper.friendlyMessage(for: error, hostname: spec.hostname, port: spec.port))
+            state = .failed(SSHErrorMapper.friendlyMessage(for: error, hostname: spec.hostname, port: spec.port, authMethod: spec.authMethod))
         }
         teardown()
     }

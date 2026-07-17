@@ -2750,16 +2750,6 @@
         }
       }
     },
-    "服务器拒绝了认证:检查用户名、密码或密钥是否正确(公钥是否已加入 authorized_keys)。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The server rejected authentication: check the username, password or key (is the public key in authorized_keys?)."
-          }
-        }
-      }
-    },
     "未启动": {
       "localizations": {
         "en": {
@@ -3736,6 +3726,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Authentication"
+          }
+        }
+      }
+    },
+    "认证失败:密码不正确,或服务器没有开放该用户的密码登录。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authentication failed: the password is incorrect, or the server doesn't allow password login for this user."
+          }
+        }
+      }
+    },
+    "认证失败:服务器不接受这把密钥。请确认公钥已加入服务器上该用户的 ~/.ssh/authorized_keys,且用户名无误。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authentication failed: the server did not accept this key. Make sure its public key is in ~/.ssh/authorized_keys for this user on the server, and that the username is correct."
+          }
+        }
+      }
+    },
+    "认证失败:服务器拒绝了用户名、密码或密钥。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authentication failed: the server rejected the username, password or key."
           }
         }
       }

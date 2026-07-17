@@ -171,7 +171,7 @@ final class TerminalSession: Identifiable {
                     shellExited = true
                     disconnectReason = .remoteClosed
                 } else {
-                    disconnectReason = .error(SSHErrorMapper.friendlyMessage(for: error, hostname: spec.hostname, port: spec.port))
+                    disconnectReason = .error(SSHErrorMapper.friendlyMessage(for: error, hostname: spec.hostname, port: spec.port, authMethod: spec.authMethod))
                 }
             }
             state = .disconnected(disconnectReason)
@@ -371,7 +371,7 @@ final class TerminalSession: Identifiable {
             if out.contains("BERTH_ALREADY") { return .alreadyEnabled }
             return .failed(String(out.trimmingCharacters(in: .whitespacesAndNewlines).suffix(200)))
         } catch {
-            return .failed(SSHErrorMapper.friendlyMessage(for: error, hostname: spec.hostname, port: spec.port))
+            return .failed(SSHErrorMapper.friendlyMessage(for: error, hostname: spec.hostname, port: spec.port, authMethod: spec.authMethod))
         }
     }
 
@@ -426,7 +426,7 @@ final class TerminalSession: Identifiable {
             if out.contains("BERTH_NOZSH") { return .failed(String(localized: "安装后仍未找到 zsh")) }
             return .failed(String(out.trimmingCharacters(in: .whitespacesAndNewlines).suffix(200)))
         } catch {
-            return .failed(SSHErrorMapper.friendlyMessage(for: error, hostname: spec.hostname, port: spec.port))
+            return .failed(SSHErrorMapper.friendlyMessage(for: error, hostname: spec.hostname, port: spec.port, authMethod: spec.authMethod))
         }
     }
 
@@ -485,7 +485,7 @@ final class TerminalSession: Identifiable {
             if out.contains("BERTH_NOTFOUND") { return .failed(String(localized: "安装后未找到高亮脚本(可能需要 sudo 权限)")) }
             return .failed(String(out.trimmingCharacters(in: .whitespacesAndNewlines).suffix(200)))
         } catch {
-            return .failed(SSHErrorMapper.friendlyMessage(for: error, hostname: spec.hostname, port: spec.port))
+            return .failed(SSHErrorMapper.friendlyMessage(for: error, hostname: spec.hostname, port: spec.port, authMethod: spec.authMethod))
         }
     }
 
