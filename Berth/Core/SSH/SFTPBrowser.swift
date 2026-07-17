@@ -29,6 +29,8 @@ final class SFTPBrowser {
 
     private(set) var state: State = .idle
     private(set) var path = "/"
+    /// 登录 home,供路径输入的 ~ 展开
+    private(set) var homePath = "/"
     private(set) var entries: [Entry] = []
     /// 正在传输的说明(上传/下载),nil 表示空闲
     private(set) var transfer: String?
@@ -44,21 +46,34 @@ final class SFTPBrowser {
         self.opener = opener
     }
 
-    /// 打开 SFTP 并列出 home 目录
+    /// 打开 SFTP 并列出 home 目录。子通道打开可能被服务器无响应地挂住
+    /// (sshd 未启用 SFTP 子系统 / MaxSessions 限制),15s 看门狗置失败态可重试。
     func start() async {
         guard sftp == nil, state != .loading else { return }
         state = .loading
+        let opening = Task { try await self.opener() }
+        let watchdog = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(15))
+            guard let self, self.state == .loading, self.sftp == nil else { return }
+            opening.cancel()
+            self.state = .failed(String(localized: "打开 SFTP 超时:服务器可能未启用 SFTP 子系统或已达会话上限,点刷新重试。"))
+            // 迟到的 client 直接关掉,不能泄漏子通道
+            Task.detached { if let late = try? await opening.value { try? await late.close() } }
+        }
         do {
-            let client = try await opener()
-            if isClosed {
+            let client = try await opening.value
+            watchdog.cancel()
+            if isClosed || state != .loading {
                 Task.detached { try? await client.close() }
                 return
             }
             sftp = client
             let home = (try? await client.getRealPath(atPath: ".")) ?? "/"
+            homePath = home
             await list(path: home)
         } catch {
-            state = .failed(friendly(error))
+            // 看门狗超时置败后,opening 被 cancel 抛错到这里,不要覆盖超时提示
+            if state == .loading { state = .failed(friendly(error)) }
         }
     }
 
@@ -82,8 +97,19 @@ final class SFTPBrowser {
         await list(path: parent.isEmpty ? "/" : parent)
     }
 
+    /// 手输路径跳转:支持 ~、~/xxx 与相对当前目录的路径
     func navigate(to newPath: String) async {
-        await list(path: newPath)
+        var target = newPath.trimmingCharacters(in: .whitespaces)
+        guard !target.isEmpty else { return }
+        if target == "~" {
+            target = homePath
+        } else if target.hasPrefix("~/") {
+            target = join(homePath, String(target.dropFirst(2)))
+        } else if !target.hasPrefix("/") {
+            target = join(path, target)
+        }
+        if target.count > 1, target.hasSuffix("/") { target.removeLast() }
+        await list(path: target)
     }
 
     private func list(path newPath: String) async {
@@ -123,7 +149,7 @@ final class SFTPBrowser {
 
     func download(_ entry: Entry, to localURL: URL) async {
         guard let sftp, !entry.isDirectory else { return }
-        transfer = "下载 \(entry.name)…"
+        transfer = String(localized: "下载 \(entry.name)…")
         transferProgress = entry.size > 0 ? 0 : nil
         defer { transfer = nil; transferProgress = nil }
         do {
@@ -150,7 +176,7 @@ final class SFTPBrowser {
     func upload(from localURL: URL) async {
         guard let sftp else { return }
         let name = localURL.lastPathComponent
-        transfer = "上传 \(name)…"
+        transfer = String(localized: "上传 \(name)…")
         defer { transfer = nil; transferProgress = nil }
         do {
             let data = try Data(contentsOf: localURL)
@@ -384,10 +410,10 @@ final class SFTPBrowser {
 
     private func friendly(_ error: Error) -> String {
         let raw = String(describing: error)
-        if raw.localizedCaseInsensitiveContains("permission") { return "权限不足" }
+        if raw.localizedCaseInsensitiveContains("permission") { return String(localized: "权限不足") }
         if raw.localizedCaseInsensitiveContains("noSuchFile") || raw.localizedCaseInsensitiveContains("no such") {
-            return "文件或目录不存在"
+            return String(localized: "文件或目录不存在")
         }
-        return "SFTP 操作失败:\(raw)"
+        return String(localized: "SFTP 操作失败:\(raw)")
     }
 }

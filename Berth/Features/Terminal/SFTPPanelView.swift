@@ -14,6 +14,9 @@ struct SFTPPanelView: View {
     @State private var pendingDelete: SFTPBrowser.Entry?
     @State private var isDropTargeted = false
     @State private var hoveredEntryID: UUID?
+    @State private var isEditingPath = false
+    @State private var pathInput = ""
+    @FocusState private var pathFieldFocused: Bool
     @State private var chmodEntry: SFTPBrowser.Entry?
     @State private var chmodMode: UInt32 = 0
     @State private var previewEntry: SFTPBrowser.Entry?
@@ -73,10 +76,10 @@ struct SFTPPanelView: View {
     }
 
     private var header: some View {
-        PanelHeader(title: "文件") {
+        PanelHeader(title: String(localized: "文件")) {
             PanelIconButton(symbol: "folder.badge.plus", help: "新建文件夹") { creatingDir = true }
-            PanelIconButton(symbol: "square.and.arrow.up", help: "上传文件") { uploadPick() }
-            PanelIconButton(symbol: "arrow.clockwise", help: "刷新") { Task { await browser?.refresh() } }
+            PanelIconButton(symbol: "square.and.arrow.up", help: String(localized: "上传文件")) { uploadPick() }
+            PanelIconButton(symbol: "arrow.clockwise", help: String(localized: "刷新")) { Task { await browser?.refresh() } }
             PanelIconButton(symbol: "xmark", help: "关闭") { onClose() }
         }
         .alert("新建文件夹", isPresented: $creatingDir) {
@@ -98,11 +101,34 @@ struct SFTPPanelView: View {
                 .buttonStyle(.plain)
                 .foregroundStyle(browser?.path == "/" ? .tertiary : .secondary)
                 .disabled(browser?.path == "/")
-            Text(browser?.path ?? "/")
-                .font(.system(size: 11, design: .monospaced))
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-                .truncationMode(.head)
+            if isEditingPath {
+                TextField(String(localized: "输入路径,回车跳转"), text: $pathInput)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 11, design: .monospaced))
+                    .focused($pathFieldFocused)
+                    .onSubmit {
+                        let target = pathInput
+                        isEditingPath = false
+                        Task { await browser?.navigate(to: target) }
+                    }
+                    .onExitCommand { isEditingPath = false }
+                    .onChange(of: pathFieldFocused) { _, focused in
+                        if !focused { isEditingPath = false }
+                    }
+            } else {
+                Text(browser?.path ?? "/")
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.head)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        pathInput = browser?.path ?? "/"
+                        isEditingPath = true
+                        pathFieldFocused = true
+                    }
+                    .help(String(localized: "点按输入路径(支持 ~ 与相对路径)"))
+            }
             Spacer()
             // 书签菜单
             Menu {
@@ -221,7 +247,7 @@ struct SFTPPanelView: View {
             if entry.isDirectory {
                 Button("打开") { Task { await browser?.enter(entry) } }
             } else {
-                Button("预览") { previewEntry = entry; Task { previewText = await browser?.previewText(entry) ?? "(无法预览:二进制或过大)" } }
+                Button("预览") { previewEntry = entry; Task { previewText = await browser?.previewText(entry) ?? String(localized: "(无法预览:二进制或过大)") } }
                 Button("用本地编辑器打开") { browser?.editRemotely(entry) }
                 if browser?.editing[browserRemotePath(entry)] != nil {
                     Button("停止编辑(取消自动回传)") { browser?.stopEditing(browserRemotePath(entry)) }
@@ -332,8 +358,8 @@ private struct ChmodSheet: View {
     let apply: () -> Void
     let cancel: () -> Void
 
-    private let rows: [(String, Int)] = [("所有者", 6), ("组", 3), ("其他", 0)]
-    private let bits: [(String, UInt32)] = [("读", 4), ("写", 2), ("执行", 1)]
+    private let rows: [(String, Int)] = [(String(localized: "所有者"), 6), (String(localized: "组"), 3), (String(localized: "其他"), 0)]
+    private let bits: [(String, UInt32)] = [(String(localized: "读"), 4), (String(localized: "写"), 2), (String(localized: "执行"), 1)]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -359,7 +385,7 @@ private struct ChmodSheet: View {
                     }
                 }
             }
-            Text(String(format: "八进制:%03o", mode))
+            Text(String(format: String(localized: "八进制:%03o"), mode))
                 .font(.system(size: 12, design: .monospaced))
                 .foregroundStyle(.secondary)
             HStack {
