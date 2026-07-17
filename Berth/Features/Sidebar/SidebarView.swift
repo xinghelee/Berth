@@ -335,15 +335,21 @@ private struct HostRow: View {
         }
     }
 
-    private var isConnected: Bool {
-        if case .connected = sessionManager.liveState(for: host.id) { return true }
-        return false
-    }
-
     var body: some View {
         HStack(spacing: 8) {
             OSBadge(osName: host.osName)
-            statusBar
+            RoundedRectangle(cornerRadius: 1.5)
+                .fill(dotColor)
+                .frame(width: 3, height: 26)
+                .shadow(
+                    color: {
+                        if case .connected = sessionManager.liveState(for: host.id) {
+                            return Color.green.opacity(0.6)
+                        }
+                        return .clear
+                    }(),
+                    radius: 3
+                )
             VStack(alignment: .leading, spacing: 2) {
                 Text(host.label)
                     .font(.system(size: 13.5, weight: .medium))
@@ -373,25 +379,6 @@ private struct HostRow: View {
         .animation(.easeOut(duration: 0.12), value: hovering)
         .onHover { hovering = $0 }
         .help("\(host.address)\(host.lastConnectedAt.map { String(localized: " · 最近连接 ") + $0.formatted(.relative(presentation: .named)) } ?? "")")
-    }
-
-    /// 状态竖条:连接态带呼吸(亮度/辉光循环),空闲静止
-    @ViewBuilder
-    private var statusBar: some View {
-        let bar = RoundedRectangle(cornerRadius: 1.5)
-            .fill(dotColor)
-            .frame(width: 3, height: 26)
-        if isConnected {
-            bar.phaseAnimator([1.0, 0.45]) { view, phase in
-                view
-                    .opacity(phase)
-                    .shadow(color: Color.green.opacity(0.7 * phase), radius: 2 + 2 * phase)
-            } animation: { _ in
-                .easeInOut(duration: 1.5)
-            }
-        } else {
-            bar
-        }
     }
 }
 
