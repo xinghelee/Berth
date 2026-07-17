@@ -534,21 +534,22 @@ struct TerminalPaneView: View {
         if case .disconnected(let reason) = session.state {
             let accent: Color = reason == .userInitiated ? .secondary : .red
             let theme = ThemeStore.shared.current
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 9) {
                     Image(systemName: "bolt.slash.fill")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.system(size: 16, weight: .medium))
                         .foregroundStyle(accent)
                     Text(session.spec.label)
-                        .font(.system(size: 13, weight: .semibold))
-                    Text("\(session.spec.username)@\(session.spec.hostname)")
-                        .font(.system(size: 11, design: .monospaced))
-                        .foregroundStyle(.tertiary)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
+                        .font(.system(size: 16, weight: .semibold))
+                    Spacer(minLength: 0)
                 }
+                Text("\(session.spec.username)@\(session.spec.hostname)")
+                    .font(.system(size: 12.5, design: .monospaced))
+                    .foregroundStyle(.tertiary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
                 Text(reason.message ?? String(localized: "连接已断开"))
-                    .font(.system(size: 12))
+                    .font(.system(size: 13.5))
                     .foregroundStyle(.secondary)
                     .textSelection(.enabled)
                     .fixedSize(horizontal: false, vertical: true)
@@ -557,26 +558,37 @@ struct TerminalPaneView: View {
                     HStack(spacing: 6) {
                         ProgressView().controlSize(.mini)
                         Text("自动重连中(第 \(session.reconnectAttempt) 次)")
-                            .font(.system(size: 11))
+                            .font(.system(size: 12))
                             .foregroundStyle(.secondary)
                         Button("停止") { session.cancelAutoReconnect() }
                             .controlSize(.small)
                         Spacer()
                     }
                 }
-                HStack(spacing: 8) {
-                    Spacer()
-                    Button("编辑主机…") { editHost() }
-                        .fixedSize()
-                    Button("立即重连") { session.connect() }
-                        .buttonStyle(.borderedProminent)
-                        .fixedSize()
+                HStack(spacing: 10) {
+                    Button {
+                        editHost()
+                    } label: {
+                        Text("编辑主机")
+                            .font(.system(size: 13.5))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    Button {
+                        session.connect()
+                    } label: {
+                        Text("立即重连")
+                            .font(.system(size: 13.5))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
                 }
-                .controlSize(.small)
+                .buttonBorderShape(.capsule)
+                .controlSize(.regular)
                 .padding(.top, 4)
             }
-            .padding(16)
-            .frame(width: 320)
+            .padding(18)
+            .frame(width: 340)
             .background(RoundedRectangle(cornerRadius: 12).fill(theme.elevatedBackground))
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(theme.borderColor, lineWidth: 1))
             .shadow(color: .black.opacity(0.35), radius: 18, y: 6)
