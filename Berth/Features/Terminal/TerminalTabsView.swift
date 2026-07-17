@@ -515,6 +515,8 @@ struct TerminalPaneView: View {
             } else {
                 KeychainStore.deleteSecrets(for: host.id)
                 modelContext.delete(host)
+                // 显式保存,让侧栏 @Query 立即刷新
+                try? modelContext.save()
             }
         }
         sessionManager.closePane(session)
