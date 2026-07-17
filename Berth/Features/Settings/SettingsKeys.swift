@@ -17,4 +17,6 @@ enum SettingsKeys {
     static let restoreWorkingDir = "session.restoreWorkingDir"
     /// 界面语言:system / zh-Hans / en(写 AppleLanguages 覆盖,重启生效)
     static let appLanguage = "app.language"
+    /// 菜单栏常驻图标
+    static let menuBarExtra = "app.menuBarExtra"
 }

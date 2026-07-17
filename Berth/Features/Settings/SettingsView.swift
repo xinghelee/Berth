@@ -17,6 +17,7 @@ struct SettingsView: View {
     @AppStorage(SettingsKeys.restoreSessions) private var restoreSessions = true
     @AppStorage(SettingsKeys.restoreWorkingDir) private var restoreWorkingDir = true
     @AppStorage(SettingsKeys.appLanguage) private var appLanguage = "system"
+    @AppStorage(SettingsKeys.menuBarExtra) private var menuBarExtraEnabled = true
     @State private var themeStore = ThemeStore.shared
     @State private var dataMessage: String?
     @State private var showAcknowledgements = false
@@ -85,6 +86,9 @@ struct SettingsView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+            }
+            Section("通用") {
+                Toggle("在菜单栏显示图标(会话切换 / 快速连接)", isOn: $menuBarExtraEnabled)
             }
             Section("语言") {
                 Picker("界面语言", selection: $appLanguage) {

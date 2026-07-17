@@ -1680,6 +1680,16 @@
         }
       }
     },
+    "在菜单栏显示图标(会话切换 / 快速连接)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show menu bar icon (session switcher / quick connect)"
+          }
+        }
+      }
+    },
     "填写变量": {
       "localizations": {
         "en": {
@@ -2366,6 +2376,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Open"
+          }
+        }
+      }
+    },
+    "打开 Berth": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Berth"
           }
         }
       }
@@ -3066,6 +3086,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "No matching hosts"
+          }
+        }
+      }
+    },
+    "活跃会话": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Active Sessions"
           }
         }
       }
@@ -4300,6 +4330,16 @@
         }
       }
     },
+    "退出 Berth": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quit Berth"
+          }
+        }
+      }
+    },
     "选中即复制到剪贴板": {
       "localizations": {
         "en": {
@@ -4326,6 +4366,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choose File…"
+          }
+        }
+      }
+    },
+    "通用": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "General"
           }
         }
       }

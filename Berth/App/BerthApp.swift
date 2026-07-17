@@ -71,6 +71,20 @@ struct BerthApp: App {
         Settings {
             SettingsView()
         }
+
+        // 菜单栏常驻入口(设置里可关)
+        MenuBarExtra(
+            "Berth",
+            systemImage: "terminal",
+            isInserted: .init(
+                get: { UserDefaults.standard.object(forKey: SettingsKeys.menuBarExtra) as? Bool ?? true },
+                set: { UserDefaults.standard.set($0, forKey: SettingsKeys.menuBarExtra) }
+            )
+        ) {
+            MenuBarExtraView()
+                .environment(sessionManager)
+        }
+        .modelContainer(container)
     }
 }
 
