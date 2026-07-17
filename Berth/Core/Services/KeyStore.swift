@@ -15,9 +15,9 @@ enum KeyStore {
         var errorDescription: String? {
             switch self {
             case .unsupportedKey:
-                return "无法解析密钥:支持 OpenSSH 格式的 ed25519 / RSA 私钥;若有 passphrase 请一并填写。"
+                return String(localized: "无法解析密钥:支持 OpenSSH 格式的 ed25519 / RSA 私钥;若有 passphrase 请一并填写。")
             case .emptyName:
-                return "给密钥起个名字。"
+                return String(localized: "给密钥起个名字。")
             }
         }
     }

@@ -44,8 +44,8 @@ struct ServerInfoInspector: View {
     }
 
     private var header: some View {
-        PanelHeader(title: "信息") {
-            PanelIconButton(symbol: "arrow.clockwise", help: "刷新", spinning: isLoading) {
+        PanelHeader(title: String(localized: "信息")) {
+            PanelIconButton(symbol: "arrow.clockwise", help: String(localized: "刷新"), spinning: isLoading) {
                 Task { await refresh() }
             }
             PanelIconButton(symbol: "xmark", help: "关闭") { onClose() }
@@ -54,14 +54,14 @@ struct ServerInfoInspector: View {
 
     private var connectionSection: some View {
         section("连接") {
-            infoRow("主机", session.spec.hostname)
+            infoRow(String(localized: "主机"), session.spec.hostname)
             infoRow("端口", String(session.spec.port))
-            infoRow("用户", session.spec.username)
+            infoRow(String(localized: "用户"), session.spec.username)
             infoRow("认证", authLabel)
             if let connectedAt = session.connectedAt, case .connected = session.state {
-                infoRow("已连接", durationString(from: connectedAt))
+                infoRow(String(localized: "已连接"), durationString(from: connectedAt))
             } else {
-                infoRow("状态", stateLabel)
+                infoRow(String(localized: "状态"), stateLabel)
             }
         }
     }
@@ -98,48 +98,48 @@ struct ServerInfoInspector: View {
 
     private func forwardStatusText(_ id: UUID) -> String {
         switch session.forwardStates[id] {
-        case .active(let port): return "运行中 · 端口 \(port)"
-        case .starting: return "启动中…"
+        case .active(let port): return String(localized: "运行中 · 端口 \(port)")
+        case .starting: return String(localized: "启动中…")
         case .failed(let reason): return reason
-        case .none: return "未启动"
+        case .none: return String(localized: "未启动")
         }
     }
 
     @ViewBuilder
     private var serverSection: some View {
         if let info, !info.textRows.isEmpty {
-            section("服务器") {
+            section(String(localized: "服务器")) {
                 if !info.hostname.isEmpty {
-                    infoRow("主机名", info.hostname)
+                    infoRow(String(localized: "主机名"), info.hostname)
                 }
                 ForEach(info.textRows, id: \.0) { row in
                     infoRow(row.0, row.1)
                 }
             }
-            section("资源") {
+            section(String(localized: "资源")) {
                 if let memory = info.memoryUsage {
                     meter(
-                        label: "内存",
+                        label: String(localized: "内存"),
                         fraction: memory.used / memory.total,
                         value: "\(Int(memory.used)) / \(Int(memory.total)) MB"
                     )
                 }
                 if let diskPercent = info.diskPercent {
-                    meter(label: "磁盘 /", fraction: diskPercent, value: info.diskUsage)
+                    meter(label: String(localized: "磁盘 /"), fraction: diskPercent, value: info.diskUsage)
                 }
                 if !info.loadValues.isEmpty {
                     loadMeter(info)
                 }
             }
         } else if isLoading {
-            section("服务器") {
+            section(String(localized: "服务器")) {
                 HStack(spacing: 6) {
                     ProgressView().controlSize(.small)
                     Text("读取中…").font(.caption).foregroundStyle(.secondary)
                 }
             }
         } else {
-            section("服务器") {
+            section(String(localized: "服务器")) {
                 Text(session.state == .connected ? "无法读取服务器信息" : "未连接")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -241,10 +241,10 @@ struct ServerInfoInspector: View {
 
     private var stateLabel: String {
         switch session.state {
-        case .idle: return "空闲"
-        case .connecting: return "连接中"
-        case .connected: return "已连接"
-        case .disconnected: return "已断开"
+        case .idle: return String(localized: "空闲")
+        case .connecting: return String(localized: "连接中")
+        case .connected: return String(localized: "已连接")
+        case .disconnected: return String(localized: "已断开")
         }
     }
 
@@ -269,10 +269,10 @@ struct ServerInfoInspector: View {
                             highlightState = .working
                             let result = await session.enableShellHighlight()
                             switch result {
-                            case .installed: highlightState = .done("已启用,重开 shell 或执行 source ~/.zshrc 生效")
-                            case .alreadyEnabled: highlightState = .done("此主机已启用命令高亮")
+                            case .installed: highlightState = .done(String(localized: "已启用,重开 shell 或执行 source ~/.zshrc 生效"))
+                            case .alreadyEnabled: highlightState = .done(String(localized: "此主机已启用命令高亮"))
                             case .notZsh(let shell): notZshShell = shell; highlightState = .idle
-                            case .failed(let msg): highlightState = .done("失败:\(msg)")
+                            case .failed(let msg): highlightState = .done(String(localized: "失败:\(msg)"))
                             }
                         }
                     } label: {
@@ -285,9 +285,9 @@ struct ServerInfoInspector: View {
                         Task {
                             highlightState = .working
                             switch await session.enableCommandIntegration() {
-                            case .installed: highlightState = .done("已启用命令集成(退出码/命令边界),重连后生效。")
-                            case .alreadyEnabled: highlightState = .done("命令集成已启用。")
-                            case .failed(let msg): highlightState = .done("失败:\(msg)")
+                            case .installed: highlightState = .done(String(localized: "已启用命令集成(退出码/命令边界),重连后生效。"))
+                            case .alreadyEnabled: highlightState = .done(String(localized: "命令集成已启用。"))
+                            case .failed(let msg): highlightState = .done(String(localized: "失败:\(msg)"))
                             }
                         }
                     } label: {
@@ -308,9 +308,9 @@ struct ServerInfoInspector: View {
                                 switch await session.installAndSwitchToZsh() {
                                 case .done, .needsRelogin:
                                     offerReconnect = true
-                                    highlightState = .done("已装 zsh 并设为默认 shell + 启用高亮。当前会话仍是旧 shell,重连后生效。")
+                                    highlightState = .done(String(localized: "已装 zsh 并设为默认 shell + 启用高亮。当前会话仍是旧 shell,重连后生效。"))
                                 case .failed(let msg):
-                                    highlightState = .done("切换失败:\(msg)")
+                                    highlightState = .done(String(localized: "切换失败:\(msg)"))
                                 }
                             }
                         } label: {

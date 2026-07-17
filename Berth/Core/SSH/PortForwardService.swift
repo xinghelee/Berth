@@ -203,11 +203,11 @@ final class PortForwardService: @unchecked Sendable {
     private static func message(for error: Error) -> String {
         let raw = String(describing: error)
         if raw.localizedCaseInsensitiveContains("addressInUse") || raw.localizedCaseInsensitiveContains("in use") {
-            return "端口已被占用"
+            return String(localized: "端口已被占用")
         }
         if raw.localizedCaseInsensitiveContains("permission") {
-            return "无权限绑定该端口(<1024 需特权)"
+            return String(localized: "无权限绑定该端口(<1024 需特权)")
         }
-        return "转发失败:\(raw)"
+        return String(localized: "转发失败:\(raw)")
     }
 }

@@ -14,11 +14,11 @@ final class BerthTerminalView: SwiftTerm.TerminalView {
         // SwiftTerm 未实现菜单校验,自动校验会把自定义项判为禁用;这里手动管理启用态
         menu.autoenablesItems = false
 
-        let copyItem = NSMenuItem(title: "复制", action: #selector(copy(_:)), keyEquivalent: "c")
+        let copyItem = NSMenuItem(title: String(localized: "复制"), action: #selector(copy(_:)), keyEquivalent: "c")
         copyItem.target = self
         menu.addItem(copyItem)
 
-        let pasteItem = NSMenuItem(title: "粘贴", action: #selector(paste(_:)), keyEquivalent: "v")
+        let pasteItem = NSMenuItem(title: String(localized: "粘贴"), action: #selector(paste(_:)), keyEquivalent: "v")
         pasteItem.target = self
         menu.addItem(pasteItem)
 
@@ -35,14 +35,14 @@ final class BerthTerminalView: SwiftTerm.TerminalView {
         vItem.image = NSImage(systemSymbolName: "rectangle.split.1x2", accessibilityDescription: nil)
         menu.addItem(vItem)
 
-        let closePaneItem = NSMenuItem(title: "关闭此分屏", action: #selector(berthClosePane), keyEquivalent: "")
+        let closePaneItem = NSMenuItem(title: String(localized: "关闭此分屏"), action: #selector(berthClosePane), keyEquivalent: "")
         closePaneItem.target = self
         closePaneItem.image = NSImage(systemSymbolName: "xmark.rectangle", accessibilityDescription: nil)
         menu.addItem(closePaneItem)
 
         menu.addItem(.separator())
 
-        let findItem = NSMenuItem(title: "查找…", action: #selector(berthFind), keyEquivalent: "f")
+        let findItem = NSMenuItem(title: String(localized: "查找…"), action: #selector(berthFind), keyEquivalent: "f")
         findItem.target = self
         menu.addItem(findItem)
 
@@ -97,10 +97,10 @@ final class BerthTerminalView: SwiftTerm.TerminalView {
             return
         }
         let alert = NSAlert()
-        alert.messageText = "确认粘贴到终端?"
+        alert.messageText = String(localized: "确认粘贴到终端?")
         alert.informativeText = Self.preview(text)
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "粘贴")
+        alert.addButton(withTitle: String(localized: "粘贴"))
         alert.addButton(withTitle: "取消")
         if alert.runModal() == .alertFirstButtonReturn {
             super.paste(sender)
@@ -123,7 +123,7 @@ final class BerthTerminalView: SwiftTerm.TerminalView {
         if lines.count > 12 {
             shown += "\n…"
         }
-        let header = lines.count > 1 ? "共 \(lines.count) 行:\n\n" : ""
+        let header = lines.count > 1 ? String(localized: "共 \(lines.count) 行:\n\n") : ""
         return String((header + shown).prefix(1200))
     }
 }

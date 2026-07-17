@@ -121,12 +121,12 @@ struct StatusBarView: View {
     private func stateText(now: Date) -> String {
         switch session.state {
         case .idle: return "未连接"
-        case .connecting: return "连接中…"
+        case .connecting: return String(localized: "连接中…")
         case .connected:
-            guard let start = session.connectedAt else { return "已连接" }
-            return "已连接 " + durationString(from: start, to: now)
+            guard let start = session.connectedAt else { return String(localized: "已连接") }
+            return String(localized: "已连接 \(durationString(from: start, to: now))")
         case .disconnected(let reason):
-            return reason == .userInitiated ? "已断开" : "连接断开"
+            return reason == .userInitiated ? String(localized: "已断开") : String(localized: "连接断开")
         }
     }
 
@@ -136,17 +136,17 @@ struct StatusBarView: View {
         if info.cpuCount > 0 {
             return "CPU \(Int((load1 / Double(info.cpuCount) * 100).rounded()))%"
         }
-        return String(format: "负载 %.2f", load1)
+        return String(format: String(localized: "负载 %.2f"), load1)
     }
 
     private func memText(_ info: ServerInfo) -> String? {
         guard let usage = info.memoryUsage, usage.total > 0 else { return nil }
-        return "内存 \(Int((usage.used / usage.total * 100).rounded()))%"
+        return String(localized: "内存 \(Int((usage.used / usage.total * 100).rounded()))%")
     }
 
     private func diskText(_ info: ServerInfo) -> String? {
         guard let percent = info.diskPercent else { return nil }
-        return "磁盘 \(Int(percent))%"
+        return String(localized: "磁盘 \(Int(percent))%")
     }
 
     private var forwardAllActive: Bool {
@@ -161,7 +161,7 @@ struct StatusBarView: View {
             if case .active = $0 { return true }
             return false
         }.count
-        return "转发 \(active)/\(session.forwardStates.count)"
+        return String(localized: "转发 \(active)/\(session.forwardStates.count)")
     }
 
     private func durationString(from start: Date, to now: Date) -> String {

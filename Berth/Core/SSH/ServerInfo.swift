@@ -39,9 +39,9 @@ struct ServerInfo: Equatable {
         func add(_ label: String, _ value: String) {
             if !value.isEmpty { result.append((label, value)) }
         }
-        add("系统", os)
-        add("内核", kernel)
-        add("运行时间", uptime)
+        add(String(localized: "系统"), os)
+        add(String(localized: "内核"), kernel)
+        add(String(localized: "运行时间"), uptime)
         return result
     }
 

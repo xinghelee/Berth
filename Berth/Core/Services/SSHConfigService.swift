@@ -110,7 +110,7 @@ final class SSHConfigService {
                 host.authMethod = .privateKeyFile
                 host.privateKeyPath = defaultIdentityFile()
             }
-            host.note = entry.proxyJump.map { "ProxyJump \($0)(跳板机连接将在后续版本支持)" } ?? ""
+            host.note = entry.proxyJump.map { String(localized: "ProxyJump \($0)(跳板机连接将在后续版本支持)") } ?? ""
         }
 
         // config 中已移除的镜像主机一并删除

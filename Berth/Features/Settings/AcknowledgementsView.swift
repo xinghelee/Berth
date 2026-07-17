@@ -20,7 +20,7 @@ enum OpenSourceLibraries {
             version: "0.12.0",
             license: "MIT",
             url: "https://github.com/orlandos-nl/Citadel",
-            note: "已 vendor,含 Berth rsa-sha2-512 补丁",
+            note: String(localized: "已 vendor,含 Berth rsa-sha2-512 补丁"),
             licenseText: mit("Copyright (c) 2022 Orlandos")
         ),
         OpenSourceLibrary(
@@ -28,7 +28,7 @@ enum OpenSourceLibraries {
             version: "0.3.4",
             license: "Apache 2.0",
             url: "https://github.com/Joannis/swift-nio-ssh",
-            note: "已 vendor(Joannis fork),含 Berth 补丁",
+            note: String(localized: "已 vendor(Joannis fork),含 Berth 补丁"),
             licenseText: apache2
         ),
         OpenSourceLibrary(

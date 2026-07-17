@@ -1,0 +1,4119 @@
+{
+  "sourceLanguage": "zh-Hans",
+  "strings": {
+    " · 最近连接 ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " · Last connected "
+          }
+        }
+      }
+    },
+    "%@%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@%@"
+          }
+        }
+      },
+      "shouldTranslate": false
+    },
+    "%@(%@)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ (%@)"
+          }
+        }
+      }
+    },
+    "%@:%@ 返回的主机密钥与 known_hosts 中的记录不一致。这可能意味着中间人攻击,也可能是服务器重装或更换了密钥。请先向服务器管理员核实,再决定是否继续。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The host key returned by %@:%@ does not match the record in known_hosts. This could indicate a man-in-the-middle attack, or the server may have been reinstalled or rotated its key. Verify with the server administrator before continuing."
+          }
+        }
+      }
+    },
+    "%lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld"
+          }
+        }
+      },
+      "shouldTranslate": false
+    },
+    "%lld pt": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld pt"
+          }
+        }
+      },
+      "shouldTranslate": false
+    },
+    "%lld 个分屏": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld panes"
+          }
+        }
+      }
+    },
+    "%lld 台主机": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld hosts"
+          }
+        }
+      }
+    },
+    "%lld 核": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld cores"
+          }
+        }
+      }
+    },
+    "%lld%%": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld%%"
+          }
+        }
+      },
+      "shouldTranslate": false
+    },
+    "%lld×%lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld×%lld"
+          }
+        }
+      },
+      "shouldTranslate": false
+    },
+    "(OpenSSH PerSourcePenalties 或 fail2ban)。请等待几分钟后再试,期间不要反复重连。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " (OpenSSH PerSourcePenalties or fail2ban). Wait a few minutes before retrying, and avoid repeated reconnects."
+          }
+        }
+      }
+    },
+    "(无法预览:二进制或过大)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "(cannot preview: binary or too large)"
+          }
+        }
+      }
+    },
+    "1 分钟负载 / 核数(%@%@)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1-min load / cores (%@%@)"
+          }
+        }
+      }
+    },
+    ">_": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ">_"
+          }
+        }
+      },
+      "shouldTranslate": false
+    },
+    "Aa": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aa"
+          }
+        }
+      },
+      "shouldTranslate": false
+    },
+    "Agent": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agent"
+          }
+        }
+      },
+      "shouldTranslate": false
+    },
+    "Ayu 清晨(浅色)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ayu Light"
+          }
+        }
+      }
+    },
+    "Berth": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Berth"
+          }
+        }
+      },
+      "shouldTranslate": false
+    },
+    "Berth 午夜": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Berth Midnight"
+          }
+        }
+      }
+    },
+    "Berth 深色": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Berth Dark"
+          }
+        }
+      }
+    },
+    "Berth-备份.json": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Berth-Backup.json"
+          }
+        }
+      }
+    },
+    "Catppuccin Latte(浅色)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Catppuccin Latte (Light)"
+          }
+        }
+      }
+    },
+    "GitHub Light(浅色)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub Light"
+          }
+        }
+      }
+    },
+    "HTTP 代理拒绝:%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HTTP proxy refused: %@"
+          }
+        }
+      }
+    },
+    "Keychain 中保存的凭据会一并删除,此操作不可撤销。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Credentials stored in Keychain will also be deleted. This cannot be undone."
+          }
+        }
+      }
+    },
+    "Keychain 中的私钥会一并删除,此操作不可撤销。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The private key in Keychain will also be deleted. This cannot be undone."
+          }
+        }
+      }
+    },
+    "Keychain 操作失败:%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keychain operation failed: %@"
+          }
+        }
+      }
+    },
+    "One Light(浅色)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One Light"
+          }
+        }
+      }
+    },
+    "Passphrase": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Passphrase"
+          }
+        }
+      },
+      "shouldTranslate": false
+    },
+    "Passphrase(没有则不填)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Passphrase (leave empty if none)"
+          }
+        }
+      }
+    },
+    "ProxyJump %@(跳板机连接将在后续版本支持)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ProxyJump %@ (jump host support coming in a later version)"
+          }
+        }
+      }
+    },
+    "SFTP 操作失败:%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SFTP operation failed: %@"
+          }
+        }
+      }
+    },
+    "SFTP 文件(⌘⇧F)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SFTP Files (⌘⇧F)"
+          }
+        }
+      }
+    },
+    "SFTP 文件面板": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SFTP File Panel"
+          }
+        }
+      }
+    },
+    "SOCKS 代理无可接受的认证方式": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SOCKS proxy offered no acceptable authentication method"
+          }
+        }
+      }
+    },
+    "SOCKS 代理认证失败": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SOCKS proxy authentication failed"
+          }
+        }
+      }
+    },
+    "SOCKS 代理连接失败(code %u)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SOCKS proxy connection failed (code %u)"
+          }
+        }
+      }
+    },
+    "SOCKS 代理选择了不支持的认证方式": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SOCKS proxy chose an unsupported authentication method"
+          }
+        }
+      }
+    },
+    "SOCKS 回复地址类型不支持": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unsupported address type in SOCKS reply"
+          }
+        }
+      }
+    },
+    "SOCKS 回复版本不符": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SOCKS reply version mismatch"
+          }
+        }
+      }
+    },
+    "SOCKS 版本不符": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SOCKS version mismatch"
+          }
+        }
+      }
+    },
+    "SSH_AUTH_SOCK 路径过长": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SSH_AUTH_SOCK path is too long"
+          }
+        }
+      }
+    },
+    "Snazzy 糖果": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Snazzy"
+          }
+        }
+      }
+    },
+    "agent 响应格式错误": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Malformed agent response"
+          }
+        }
+      }
+    },
+    "agent 响应长度异常": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unexpected agent response length"
+          }
+        }
+      }
+    },
+    "agent 未返回身份列表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agent returned no identity list"
+          }
+        }
+      }
+    },
+    "agent 签名响应格式错误": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Malformed agent signature response"
+          }
+        }
+      }
+    },
+    "agent 签名被拒绝": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agent refused to sign"
+          }
+        }
+      }
+    },
+    "config": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "config"
+          }
+        }
+      },
+      "shouldTranslate": false
+    },
+    "example.com 或 IP": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "example.com or IP"
+          }
+        }
+      }
+    },
+    "ssh-agent 签名失败。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ssh-agent signing failed."
+          }
+        }
+      }
+    },
+    "ssh-agent 里没有可用的密钥(试试 ssh-add)。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No usable keys in ssh-agent (try ssh-add)."
+          }
+        }
+      }
+    },
+    "~/.ssh/id_ed25519": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "~/.ssh/id_ed25519"
+          }
+        }
+      },
+      "shouldTranslate": false
+    },
+    "·": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "·"
+          }
+        }
+      },
+      "shouldTranslate": false
+    },
+    "⌘点击可打开终端里的链接;双击选词、三击选行。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⌘-click opens links in the terminal; double-click selects a word, triple-click selects a line."
+          }
+        }
+      }
+    },
+    "⚠️ 生产环境:%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⚠️ Production: %@"
+          }
+        }
+      }
+    },
+    "上下分屏": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Split Down"
+          }
+        }
+      }
+    },
+    "上传 %@…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uploading %@…"
+          }
+        }
+      }
+    },
+    "上传文件": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Upload Files"
+          }
+        }
+      }
+    },
+    "上条命令成功": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last command succeeded"
+          }
+        }
+      }
+    },
+    "上条命令退出码 %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last command exited with code %lld"
+          }
+        }
+      }
+    },
+    "下划线": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Underline"
+          }
+        }
+      }
+    },
+    "下载 %@…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Downloading %@…"
+          }
+        }
+      }
+    },
+    "下载…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Download…"
+          }
+        }
+      }
+    },
+    "不使用": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "None"
+          }
+        }
+      }
+    },
+    "中键粘贴": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Middle-click paste"
+          }
+        }
+      }
+    },
+    "主机": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Host"
+          }
+        }
+      }
+    },
+    "主机名": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hostname"
+          }
+        }
+      }
+    },
+    "主机地址": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Host address"
+          }
+        }
+      }
+    },
+    "主机地址和用户名不能为空。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Host address and username are required."
+          }
+        }
+      }
+    },
+    "主机密钥已变更!": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Host key has changed!"
+          }
+        }
+      }
+    },
+    "主题": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Theme"
+          }
+        }
+      }
+    },
+    "主题:%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Theme: %@"
+          }
+        }
+      }
+    },
+    "也可 ⌘K 粘贴 ssh 命令直连": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Or press ⌘K and paste an ssh command to connect"
+          }
+        }
+      }
+    },
+    "从 config 删除…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove from config…"
+          }
+        }
+      }
+    },
+    "从 ~/.ssh/config 删除「%@」?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove “%@” from ~/.ssh/config?"
+          }
+        }
+      }
+    },
+    "代理": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proxy"
+          }
+        }
+      }
+    },
+    "代理主机": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proxy host"
+          }
+        }
+      }
+    },
+    "代理端口": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proxy port"
+          }
+        }
+      }
+    },
+    "代理要求认证但未提供密码": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proxy requires authentication but no password was provided"
+          }
+        }
+      }
+    },
+    "代理连接被关闭": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proxy connection closed"
+          }
+        }
+      }
+    },
+    "会修改你的 ~/.ssh/config 文件(自动备份为 config.berth-backup),系统 ssh 也会随之生效。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This modifies your ~/.ssh/config (backed up as config.berth-backup); system ssh picks up the change too."
+          }
+        }
+      }
+    },
+    "会话": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Session"
+          }
+        }
+      }
+    },
+    "使用私钥连接 %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use private key to connect to %@"
+          }
+        }
+      }
+    },
+    "使用私钥连接前要求 Touch ID / 密码验证": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Require Touch ID / password before using private keys"
+          }
+        }
+      }
+    },
+    "使用系统 ssh-agent 里已加载的密钥(ed25519 / RSA)。用 ssh-add 加载密钥后即可。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use keys loaded in the system ssh-agent (ed25519 / RSA). Load a key with ssh-add and you're set."
+          }
+        }
+      }
+    },
+    "例如:个人 VPS": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "e.g. Personal VPS"
+          }
+        }
+      }
+    },
+    "例如:生产环境 API": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "e.g. Production API"
+          }
+        }
+      }
+    },
+    "保存": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save"
+          }
+        }
+      }
+    },
+    "保存为主机": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save as Host"
+          }
+        }
+      }
+    },
+    "保存主机后可添加端口转发。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save the host first to add port forwards."
+          }
+        }
+      }
+    },
+    "信任并连接": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trust and Connect"
+          }
+        }
+      }
+    },
+    "信息": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Info"
+          }
+        }
+      }
+    },
+    "停止": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop"
+          }
+        }
+      }
+    },
+    "停止广播输入": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop Broadcasting Input"
+          }
+        }
+      }
+    },
+    "停止编辑(取消自动回传)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop Editing (cancel auto-upload)"
+          }
+        }
+      }
+    },
+    "光标样式": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cursor style"
+          }
+        }
+      }
+    },
+    "光标闪烁": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blink cursor"
+          }
+        }
+      }
+    },
+    "八进制:%03o": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Octal: %03o"
+          }
+        }
+      }
+    },
+    "共 %lld 行:\n\n": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld lines total:\n\n"
+          }
+        }
+      }
+    },
+    "关于": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About"
+          }
+        }
+      }
+    },
+    "关闭": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
+          }
+        }
+      }
+    },
+    "关闭 SFTP 文件面板": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close SFTP File Panel"
+          }
+        }
+      }
+    },
+    "关闭 pane / 标签页": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close Pane / Tab"
+          }
+        }
+      }
+    },
+    "关闭分屏「%@」?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close pane “%@”?"
+          }
+        }
+      }
+    },
+    "关闭当前分屏": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close Current Pane"
+          }
+        }
+      }
+    },
+    "关闭有活跃连接的标签页前需要确认": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirm before closing tabs with active connections"
+          }
+        }
+      }
+    },
+    "关闭服务器信息面板": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close Server Info Panel"
+          }
+        }
+      }
+    },
+    "关闭标签页?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close tab?"
+          }
+        }
+      }
+    },
+    "关闭此分屏": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close This Pane"
+          }
+        }
+      }
+    },
+    "其他": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Others"
+          }
+        }
+      }
+    },
+    "内存": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Memory"
+          }
+        }
+      }
+    },
+    "内存 %lld%%": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mem %lld%%"
+          }
+        }
+      }
+    },
+    "内核": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kernel"
+          }
+        }
+      }
+    },
+    "写": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Write"
+          }
+        }
+      }
+    },
+    "写 agent 失败": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed to write to agent"
+          }
+        }
+      }
+    },
+    "分组": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Group"
+          }
+        }
+      }
+    },
+    "切换失败:%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch failed: %@"
+          }
+        }
+      }
+    },
+    "切换默认 shell 失败(可能需要密码或权限)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed to change the default shell (may require a password or permissions)"
+          }
+        }
+      }
+    },
+    "创建": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create"
+          }
+        }
+      }
+    },
+    "删除": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete"
+          }
+        }
+      }
+    },
+    "删除…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete…"
+          }
+        }
+      }
+    },
+    "删除「%@」?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete “%@”?"
+          }
+        }
+      }
+    },
+    "删除主机「%@」?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete host “%@”?"
+          }
+        }
+      }
+    },
+    "删除密钥「%@」?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete key “%@”?"
+          }
+        }
+      }
+    },
+    "刷新": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refresh"
+          }
+        }
+      }
+    },
+    "动态 SOCKS5 (-D)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dynamic SOCKS5 (-D)"
+          }
+        }
+      }
+    },
+    "原记录指纹": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Previously recorded fingerprint"
+          }
+        }
+      }
+    },
+    "双击左侧主机开始连接": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Double-click a host on the left to connect"
+          }
+        }
+      }
+    },
+    "发送": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send"
+          }
+        }
+      }
+    },
+    "发送到当前终端": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send to Current Terminal"
+          }
+        }
+      }
+    },
+    "取消": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        }
+      }
+    },
+    "取消收藏此目录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove Bookmark"
+          }
+        }
+      }
+    },
+    "取消连接": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel Connection"
+          }
+        }
+      }
+    },
+    "名称": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name"
+          }
+        }
+      }
+    },
+    "后台时长任务完成/响铃通知": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notify on long-task completion / bell in background"
+          }
+        }
+      }
+    },
+    "启动中…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starting…"
+          }
+        }
+      }
+    },
+    "启动命令": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Startup Commands"
+          }
+        }
+      }
+    },
+    "启动时恢复上次的标签页": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore previous tabs at launch"
+          }
+        }
+      }
+    },
+    "启用": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enable"
+          }
+        }
+      }
+    },
+    "启用命令集成(退出码可见)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enable shell integration (exit codes visible)"
+          }
+        }
+      }
+    },
+    "启用命令高亮": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enable command highlighting"
+          }
+        }
+      }
+    },
+    "命令(可含 {{变量}})": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Command (may contain {{variables}})"
+          }
+        }
+      }
+    },
+    "命令片段": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Snippets"
+          }
+        }
+      }
+    },
+    "命令里用 {{变量}} 可在发送时填值": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use {{variables}} in commands to fill in values when sending"
+          }
+        }
+      }
+    },
+    "命令集成已启用。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shell integration is enabled."
+          }
+        }
+      }
+    },
+    "命令面板…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Command Palette…"
+          }
+        }
+      }
+    },
+    "回传失败": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Upload failed"
+          }
+        }
+      }
+    },
+    "回车": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Return"
+          }
+        }
+      }
+    },
+    "在回滚缓冲中搜索": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search scrollback"
+          }
+        }
+      }
+    },
+    "在此服务器安装 zsh-syntax-highlighting,输入命令实时染色": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install zsh-syntax-highlighting on this server for live command coloring"
+          }
+        }
+      }
+    },
+    "在终端中查找": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find in Terminal"
+          }
+        }
+      }
+    },
+    "填写变量": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fill In Variables"
+          }
+        }
+      }
+    },
+    "增强": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enhancements"
+          }
+        }
+      }
+    },
+    "备份为 JSON,只含主机/分组/转发/代理结构;密码、passphrase、私钥在 Keychain,不会导出。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backups are JSON with hosts/groups/forwards/proxy structure only; passwords, passphrases and private keys stay in Keychain and are never exported."
+          }
+        }
+      }
+    },
+    "备注": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notes"
+          }
+        }
+      }
+    },
+    "备注(可选)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notes (optional)"
+          }
+        }
+      }
+    },
+    "复制": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy"
+          }
+        }
+      }
+    },
+    "复制 IP": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy IP"
+          }
+        }
+      }
+    },
+    "复制 ssh 命令": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy ssh Command"
+          }
+        }
+      }
+    },
+    "复制 ssh-copy-id 等效命令": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy ssh-copy-id Equivalent"
+          }
+        }
+      }
+    },
+    "复制公钥": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy Public Key"
+          }
+        }
+      }
+    },
+    "复制当前连接为新标签": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Duplicate Connection in New Tab"
+          }
+        }
+      }
+    },
+    "复用现有连接,正在打开终端通道…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reusing existing connection, opening terminal channel…"
+          }
+        }
+      }
+    },
+    "夜泊琥珀 Amber Mooring": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Amber Mooring"
+          }
+        }
+      }
+    },
+    "失败:%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed: %@"
+          }
+        }
+      }
+    },
+    "字号": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Font size"
+          }
+        }
+      }
+    },
+    "字号变更对新开的标签页生效": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Font size changes apply to new tabs"
+          }
+        }
+      }
+    },
+    "安全": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Security"
+          }
+        }
+      }
+    },
+    "安装中…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installing…"
+          }
+        }
+      }
+    },
+    "安装后仍未找到 zsh": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "zsh still not found after installation"
+          }
+        }
+      }
+    },
+    "安装后未找到高亮脚本(可能需要 sudo 权限)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Highlighting script not found after installation (may require sudo)"
+          }
+        }
+      }
+    },
+    "安装并切换到 zsh": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install and Switch to zsh"
+          }
+        }
+      }
+    },
+    "完成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        }
+      }
+    },
+    "密码": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Password"
+          }
+        }
+      }
+    },
+    "密码(可选,留空保持不变)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Password (optional; leave empty to keep)"
+          }
+        }
+      }
+    },
+    "密钥": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keys"
+          }
+        }
+      }
+    },
+    "密钥库": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Key Library"
+          }
+        }
+      }
+    },
+    "密钥库是空的": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Key library is empty"
+          }
+        }
+      }
+    },
+    "密钥库是空的,先到侧栏「密钥」页生成或导入。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Key library is empty. Generate or import one from the Keys page first."
+          }
+        }
+      }
+    },
+    "密钥管理": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Key Manager"
+          }
+        }
+      }
+    },
+    "密钥管理(独立窗口)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Key Manager (separate window)"
+          }
+        }
+      }
+    },
+    "密钥类型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Key type"
+          }
+        }
+      }
+    },
+    "对所有已打开的终端即时生效": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Applies immediately to all open terminals"
+          }
+        }
+      }
+    },
+    "导入": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import"
+          }
+        }
+      }
+    },
+    "导入备份…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import Backup…"
+          }
+        }
+      }
+    },
+    "导入失败:%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import failed: %@"
+          }
+        }
+      }
+    },
+    "导入密钥": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import Key"
+          }
+        }
+      }
+    },
+    "导入现有密钥…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import Existing Key…"
+          }
+        }
+      }
+    },
+    "导入私钥": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import Private Key"
+          }
+        }
+      }
+    },
+    "导出备份…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export Backup…"
+          }
+        }
+      }
+    },
+    "导出失败:%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export failed: %@"
+          }
+        }
+      }
+    },
+    "左右分屏": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Split Right"
+          }
+        }
+      }
+    },
+    "已 vendor(Joannis fork),含 Berth 补丁": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vendored (Joannis fork) with Berth patches"
+          }
+        }
+      }
+    },
+    "已 vendor,含 Berth rsa-sha2-512 补丁": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vendored with Berth rsa-sha2-512 patch"
+          }
+        }
+      }
+    },
+    "已中止连接:服务器主机密钥与 known_hosts 记录不一致,可能存在中间人攻击。确认服务器确实更换过密钥后,可在连接时选择更新。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connection aborted: the server's host key does not match the known_hosts record — possible man-in-the-middle attack. If you've confirmed the server actually rotated its key, you can choose to update it when connecting."
+          }
+        }
+      }
+    },
+    "已取消连接:你没有信任该服务器的主机密钥。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connection cancelled: you did not trust the server's host key."
+          }
+        }
+      }
+    },
+    "已启用,重开 shell 或执行 source ~/.zshrc 生效": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enabled — restart the shell or run source ~/.zshrc to take effect"
+          }
+        }
+      }
+    },
+    "已启用命令集成(退出码/命令边界),重连后生效。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shell integration enabled (exit codes / command boundaries); takes effect after reconnecting."
+          }
+        }
+      }
+    },
+    "已复制": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copied"
+          }
+        }
+      }
+    },
+    "已导入:新增 %lld 台主机、%lld 个分组(重复项已跳过)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Imported: %lld new hosts, %lld groups (duplicates skipped)"
+          }
+        }
+      }
+    },
+    "已导出到 %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exported to %@"
+          }
+        }
+      }
+    },
+    "已断开": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disconnected"
+          }
+        }
+      }
+    },
+    "已装 zsh 并设为默认 shell + 启用高亮。当前会话仍是旧 shell,重连后生效。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installed zsh as the default shell and enabled highlighting. This session still runs the old shell; reconnect to take effect."
+          }
+        }
+      }
+    },
+    "已连接": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connected"
+          }
+        }
+      }
+    },
+    "已连接 %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connected %@"
+          }
+        }
+      }
+    },
+    "广播输入:键入同步到当前标签所有分屏": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Broadcast input: keystrokes go to every pane in this tab"
+          }
+        }
+      }
+    },
+    "广播输入到所有分屏": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Broadcast Input to All Panes"
+          }
+        }
+      }
+    },
+    "应用": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apply"
+          }
+        }
+      }
+    },
+    "当前": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Current"
+          }
+        }
+      }
+    },
+    "当前会话:%@ —— 点按查看服务器信息(⌘I)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Current session: %@ — click for server info (⌘I)"
+          }
+        }
+      }
+    },
+    "当前登录 shell 是 %@,命令高亮仅支持 zsh。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Current login shell is %@; command highlighting requires zsh."
+          }
+        }
+      }
+    },
+    "快速新建": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quick Create"
+          }
+        }
+      }
+    },
+    "快速连接…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quick Connect…"
+          }
+        }
+      }
+    },
+    "我已核实,更新并连接": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I've Verified — Update and Connect"
+          }
+        }
+      }
+    },
+    "所有者": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Owner"
+          }
+        }
+      }
+    },
+    "打开": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open"
+          }
+        }
+      }
+    },
+    "打开 SFTP 文件面板": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open SFTP File Panel"
+          }
+        }
+      }
+    },
+    "打开 SFTP 超时:服务器可能未启用 SFTP 子系统或已达会话上限,点刷新重试。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SFTP open timed out: the server may not have the SFTP subsystem enabled or has hit its session limit. Click refresh to retry."
+          }
+        }
+      }
+    },
+    "打开服务器信息面板": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Server Info Panel"
+          }
+        }
+      }
+    },
+    "执行": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Execute"
+          }
+        }
+      }
+    },
+    "找不到 ssh-agent(SSH_AUTH_SOCK 未设置)。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ssh-agent not found (SSH_AUTH_SOCK is not set)."
+          }
+        }
+      }
+    },
+    "找不到该主机引用的密钥,请在「密钥」页检查或重新选择。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The key referenced by this host was not found. Check or reselect it on the Keys page."
+          }
+        }
+      }
+    },
+    "指纹": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fingerprint"
+          }
+        }
+      }
+    },
+    "搜索主机": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search hosts"
+          }
+        }
+      }
+    },
+    "搜索主机,或输入 user@host 直连": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search hosts, or type user@host to connect"
+          }
+        }
+      }
+    },
+    "搜索命令或主机…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search commands or hosts…"
+          }
+        }
+      }
+    },
+    "收藏此目录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bookmark This Directory"
+          }
+        }
+      }
+    },
+    "数据": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Data"
+          }
+        }
+      }
+    },
+    "整理": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Organize"
+          }
+        }
+      }
+    },
+    "文件": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Files"
+          }
+        }
+      }
+    },
+    "文件或目录不存在": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File or directory does not exist"
+          }
+        }
+      }
+    },
+    "断开并关闭": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disconnect and Close"
+          }
+        }
+      }
+    },
+    "新名称": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New name"
+          }
+        }
+      }
+    },
+    "新建主机": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New Host"
+          }
+        }
+      }
+    },
+    "新建文件夹": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New Folder"
+          }
+        }
+      }
+    },
+    "新建标签页(复制当前连接)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New Tab (duplicate current connection)"
+          }
+        }
+      }
+    },
+    "新建片段": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New Snippet"
+          }
+        }
+      }
+    },
+    "方块": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Block"
+          }
+        }
+      }
+    },
+    "无": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "None"
+          }
+        }
+      }
+    },
+    "无分组": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ungrouped"
+          }
+        }
+      }
+    },
+    "无匹配": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No matches"
+          }
+        }
+      }
+    },
+    "无权限绑定该端口(<1024 需特权)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No permission to bind this port (ports below 1024 require privileges)"
+          }
+        }
+      }
+    },
+    "无法创建 socket": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unable to create socket"
+          }
+        }
+      }
+    },
+    "无法解析密钥:支持 OpenSSH 格式的 ed25519 / RSA 私钥;若有 passphrase 请一并填写。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unable to parse the key: OpenSSH-format ed25519 / RSA private keys are supported; include the passphrase if it has one."
+          }
+        }
+      }
+    },
+    "无法解析私钥文件:目前支持 OpenSSH 格式的 ed25519 / RSA 私钥。若密钥带 passphrase,请确认已正确填写。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unable to parse the private key file: OpenSSH-format ed25519 / RSA keys are supported. If the key has a passphrase, make sure it's entered correctly."
+          }
+        }
+      }
+    },
+    "无法读取服务器信息": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unable to read server info"
+          }
+        }
+      }
+    },
+    "无法读取钥匙串中保存的密码(应用签名与保存时不一致,常见于开发构建更新后)。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unable to read the saved password from Keychain (the app signature differs from when it was saved — common after updating a development build)."
+          }
+        }
+      }
+    },
+    "无法验证 %@:%@ 的真实性。请核对下方指纹与服务器提供方公布的一致后再继续。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The authenticity of %@:%@ can't be verified. Compare the fingerprint below with the one published by your server provider before continuing."
+          }
+        }
+      }
+    },
+    "无终端": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No terminal"
+          }
+        }
+      }
+    },
+    "显示名": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Display name"
+          }
+        }
+      }
+    },
+    "晨雾玫瑰(浅色)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Misty Rose (Light)"
+          }
+        }
+      }
+    },
+    "有 %lld 台主机正在使用该密钥,删除后它们将无法连接。Keychain 中的私钥会一并删除,此操作不可撤销。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld hosts use this key and will no longer be able to connect. The private key in Keychain will also be deleted. This cannot be undone."
+          }
+        }
+      }
+    },
+    "服务器": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Server"
+          }
+        }
+      }
+    },
+    "服务器信息(⌘I)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Server Info (⌘I)"
+          }
+        }
+      }
+    },
+    "服务器信息面板": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Server Info Panel"
+          }
+        }
+      }
+    },
+    "服务器内存占用(%@)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Server memory usage (%@)"
+          }
+        }
+      }
+    },
+    "服务器在握手阶段关闭了连接:多半是本机 IP 触发了 %@ 的连接频率限制": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The server closed the connection during handshake — your IP most likely triggered rate limiting on %@"
+          }
+        }
+      }
+    },
+    "服务器拒绝了认证:检查用户名、密码或密钥是否正确(公钥是否已加入 authorized_keys)。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The server rejected authentication: check the username, password or key (is the public key in authorized_keys?)."
+          }
+        }
+      }
+    },
+    "未启动": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not started"
+          }
+        }
+      }
+    },
+    "未识别的包管理器,无法自动安装 zsh": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unrecognized package manager; can't install zsh automatically"
+          }
+        }
+      }
+    },
+    "未识别的包管理器,请手动安装 zsh-syntax-highlighting": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unrecognized package manager; install zsh-syntax-highlighting manually"
+          }
+        }
+      }
+    },
+    "未连接": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not connected"
+          }
+        }
+      }
+    },
+    "未连接,无法打开 SFTP。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not connected; can't open SFTP."
+          }
+        }
+      }
+    },
+    "未选择": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "None selected"
+          }
+        }
+      }
+    },
+    "本地 %@:%lld → %@:%lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local %@:%lld → %@:%lld"
+          }
+        }
+      }
+    },
+    "本地 (-L)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local (-L)"
+          }
+        }
+      }
+    },
+    "本地端口": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local port"
+          }
+        }
+      }
+    },
+    "权限:%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permissions: %@"
+          }
+        }
+      }
+    },
+    "权限…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permissions…"
+          }
+        }
+      }
+    },
+    "权限不足": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permission denied"
+          }
+        }
+      }
+    },
+    "来自 ~/.ssh/config(只读)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "From ~/.ssh/config (read-only)"
+          }
+        }
+      }
+    },
+    "松烟墨 Sumi PRO": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sumi PRO"
+          }
+        }
+      }
+    },
+    "查找…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find…"
+          }
+        }
+      }
+    },
+    "查看协议…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "View Licenses…"
+          }
+        }
+      }
+    },
+    "标签色": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Label color"
+          }
+        }
+      }
+    },
+    "标签页": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tabs"
+          }
+        }
+      }
+    },
+    "标签页 %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tab %lld"
+          }
+        }
+      }
+    },
+    "标题": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Title"
+          }
+        }
+      }
+    },
+    "标题胶囊变红警戒,粘贴/危险命令强制确认": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Title capsule turns red; pastes and dangerous commands require confirmation"
+          }
+        }
+      }
+    },
+    "根分区已用/总量:%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Root partition used/total: %@"
+          }
+        }
+      }
+    },
+    "橙": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Orange"
+          }
+        }
+      }
+    },
+    "正在连接 %@:%lld…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connecting to %@:%lld…"
+          }
+        }
+      }
+    },
+    "正在连接跳板机 %@:%lld…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connecting to jump host %@:%lld…"
+          }
+        }
+      }
+    },
+    "此主机已启用命令高亮": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Command highlighting is enabled on this host"
+          }
+        }
+      }
+    },
+    "每行一条,例如:\ncd /app\ntmux attach || tmux": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One per line, e.g.:\ncd /app\ntmux attach || tmux"
+          }
+        }
+      }
+    },
+    "没有则不填": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leave empty if none"
+          }
+        }
+      }
+    },
+    "没有匹配的主机": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No matching hosts"
+          }
+        }
+      }
+    },
+    "添加密钥": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add Key"
+          }
+        }
+      }
+    },
+    "添加转发": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add Forward"
+          }
+        }
+      }
+    },
+    "点按输入路径(支持 ~ 与相对路径)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Click to type a path (supports ~ and relative paths)"
+          }
+        }
+      }
+    },
+    "版本": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version"
+          }
+        }
+      }
+    },
+    "状态": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Status"
+          }
+        }
+      }
+    },
+    "玉版宣 Xuan PRO(浅色)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Xuan PRO (Light)"
+          }
+        }
+      }
+    },
+    "生产环境": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Production"
+          }
+        }
+      }
+    },
+    "生成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generate"
+          }
+        }
+      }
+    },
+    "生成 ed25519": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generate ed25519"
+          }
+        }
+      }
+    },
+    "生成 ed25519 密钥": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generate ed25519 Key"
+          }
+        }
+      }
+    },
+    "生成一把新密钥,或导入现有的 OpenSSH 私钥。\n私钥只保存在 macOS Keychain,不落盘。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generate a new key, or import an existing OpenSSH private key.\nPrivate keys are stored only in the macOS Keychain, never on disk."
+          }
+        }
+      }
+    },
+    "用户": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "User"
+          }
+        }
+      }
+    },
+    "用户名": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Username"
+          }
+        }
+      }
+    },
+    "用户名(可选)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Username (optional)"
+          }
+        }
+      }
+    },
+    "用本地编辑器打开": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open in Local Editor"
+          }
+        }
+      }
+    },
+    "留空保持不变": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leave empty to keep"
+          }
+        }
+      }
+    },
+    "目录书签": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Directory Bookmarks"
+          }
+        }
+      }
+    },
+    "目标": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Destination"
+          }
+        }
+      }
+    },
+    "目标主机": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Target host"
+          }
+        }
+      }
+    },
+    "直接连接 %@@%@%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect directly to %@@%@%@"
+          }
+        }
+      }
+    },
+    "确定": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        }
+      }
+    },
+    "确认粘贴到终端?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paste into the terminal?"
+          }
+        }
+      }
+    },
+    "磁盘 %lld%%": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disk %lld%%"
+          }
+        }
+      }
+    },
+    "磁盘 /": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disk /"
+          }
+        }
+      }
+    },
+    "祖母绿圣殿 Emerald": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emerald"
+          }
+        }
+      }
+    },
+    "私钥只保存在 macOS Keychain 中,不写入磁盘文件。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Private keys are stored only in the macOS Keychain and never written to disk."
+          }
+        }
+      }
+    },
+    "私钥文件": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Private key file"
+          }
+        }
+      }
+    },
+    "私钥路径": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Private key path"
+          }
+        }
+      }
+    },
+    "空目录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Empty directory"
+          }
+        }
+      }
+    },
+    "空闲": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Idle"
+          }
+        }
+      }
+    },
+    "立即重连": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reconnect Now"
+          }
+        }
+      }
+    },
+    "立即重连生效": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Takes effect after reconnecting"
+          }
+        }
+      }
+    },
+    "竖线": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bar"
+          }
+        }
+      }
+    },
+    "端口": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Port"
+          }
+        }
+      }
+    },
+    "端口已被占用": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Port already in use"
+          }
+        }
+      }
+    },
+    "端口转发": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Port Forwarding"
+          }
+        }
+      }
+    },
+    "端口转发状态(详见 ⌘I 信息面板)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Port forwarding status (see the ⌘I info panel)"
+          }
+        }
+      }
+    },
+    "端口需要是 1-65535 之间的数字。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Port must be a number between 1 and 65535."
+          }
+        }
+      }
+    },
+    "第三方开源库": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Third-Party Open Source Libraries"
+          }
+        }
+      }
+    },
+    "等待主机密钥确认…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waiting for host key confirmation…"
+          }
+        }
+      }
+    },
+    "等待身份验证(Touch ID)…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waiting for authentication (Touch ID)…"
+          }
+        }
+      }
+    },
+    "管理命令片段": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Manage Snippets"
+          }
+        }
+      }
+    },
+    "粘贴": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paste"
+          }
+        }
+      }
+    },
+    "粘贴 user@host:port 或 ssh 命令,自动填充下方字段": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paste user@host:port or an ssh command to autofill the fields below"
+          }
+        }
+      }
+    },
+    "粘贴保护:多行或危险命令先确认": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paste protection: confirm multi-line or dangerous commands"
+          }
+        }
+      }
+    },
+    "系统": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OS"
+          }
+        }
+      }
+    },
+    "紫": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Purple"
+          }
+        }
+      }
+    },
+    "红(生产)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Red (production)"
+          }
+        }
+      }
+    },
+    "组": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Group"
+          }
+        }
+      }
+    },
+    "终端": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terminal"
+          }
+        }
+      }
+    },
+    "终端列数 × 行数": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terminal columns × rows"
+          }
+        }
+      }
+    },
+    "终端响铃": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terminal bell"
+          }
+        }
+      }
+    },
+    "终端配色": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terminal Colors"
+          }
+        }
+      }
+    },
+    "经代理 %@:%lld 连接 %@:%lld…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Via proxy %@:%lld, connecting to %@:%lld…"
+          }
+        }
+      }
+    },
+    "经跳板机 → %@:%lld…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Via jump host → %@:%lld…"
+          }
+        }
+      }
+    },
+    "给密钥起个名字。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Give the key a name."
+          }
+        }
+      }
+    },
+    "绿": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Green"
+          }
+        }
+      }
+    },
+    "编辑…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit…"
+          }
+        }
+      }
+    },
+    "编辑中,保存即自动回传": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editing — saving uploads automatically"
+          }
+        }
+      }
+    },
+    "编辑片段": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit Snippet"
+          }
+        }
+      }
+    },
+    "自动重连中(第 %lld 次)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reconnecting (attempt %lld)"
+          }
+        }
+      }
+    },
+    "蓝": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blue"
+          }
+        }
+      }
+    },
+    "认证": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authentication"
+          }
+        }
+      }
+    },
+    "认证成功,正在打开终端通道…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authenticated, opening terminal channel…"
+          }
+        }
+      }
+    },
+    "认证方式": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authentication method"
+          }
+        }
+      }
+    },
+    "设置": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings"
+          }
+        }
+      }
+    },
+    "设置(⌘,)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings (⌘,)"
+          }
+        }
+      }
+    },
+    "该分屏有活跃的 SSH 连接。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This pane has an active SSH connection."
+          }
+        }
+      }
+    },
+    "该密钥类型暂不支持通过 agent 认证(目前支持 ed25519 / RSA)。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This key type isn't supported for agent authentication yet (ed25519 / RSA supported)."
+          }
+        }
+      }
+    },
+    "该标签页含活跃的 SSH 连接(可能有多个分屏)。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This tab has active SSH connections (possibly multiple panes)."
+          }
+        }
+      }
+    },
+    "请编辑该主机并重新输入密码,保存后即可恢复。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit the host and re-enter the password; saving restores it."
+          }
+        }
+      }
+    },
+    "请选择密钥库中的密钥。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a key from the key library."
+          }
+        }
+      }
+    },
+    "请选择私钥文件。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a private key file."
+          }
+        }
+      }
+    },
+    "读": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read"
+          }
+        }
+      }
+    },
+    "读 agent 失败": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed to read from agent"
+          }
+        }
+      }
+    },
+    "读取中…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading…"
+          }
+        }
+      }
+    },
+    "负载": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Load"
+          }
+        }
+      }
+    },
+    "负载 %.2f": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Load %.2f"
+          }
+        }
+      }
+    },
+    "资源": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resources"
+          }
+        }
+      }
+    },
+    "跳板机": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jump Hosts"
+          }
+        }
+      }
+    },
+    "身份验证未通过,已取消连接。可在设置中关闭「使用密钥前要求 Touch ID」。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authentication failed; connection cancelled. You can turn off “Require Touch ID before using keys” in Settings."
+          }
+        }
+      }
+    },
+    "转为托管主机…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Convert to Managed Host…"
+          }
+        }
+      }
+    },
+    "转发 %lld/%lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Forwards %lld/%lld"
+          }
+        }
+      }
+    },
+    "转发失败:%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Forward failed: %@"
+          }
+        }
+      }
+    },
+    "输入路径,回车跳转": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Type a path, press Return"
+          }
+        }
+      }
+    },
+    "运行中 · 端口 %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Running · port %lld"
+          }
+        }
+      }
+    },
+    "运行时间": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uptime"
+          }
+        }
+      }
+    },
+    "还没有主机": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hosts yet"
+          }
+        }
+      }
+    },
+    "还没有片段": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No snippets yet"
+          }
+        }
+      }
+    },
+    "远程 %@:%lld → %@:%lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remote %@:%lld → %@:%lld"
+          }
+        }
+      }
+    },
+    "远程 (-R)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remote (-R)"
+          }
+        }
+      }
+    },
+    "远端 %@:%lld → %@:%lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remote %@:%lld → %@:%lld"
+          }
+        }
+      }
+    },
+    "远端端口": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remote port"
+          }
+        }
+      }
+    },
+    "连不上 %@:%lld:连接被拒绝,检查端口号和 sshd 是否在运行。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can't reach %@:%lld — connection refused. Check the port and whether sshd is running."
+          }
+        }
+      }
+    },
+    "连不上 %@:%lld:连接超时,检查地址、防火墙或网络。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can't reach %@:%lld — connection timed out. Check the address, firewall or network."
+          }
+        }
+      }
+    },
+    "连不上 ssh-agent(%@)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can't reach ssh-agent (%@)"
+          }
+        }
+      }
+    },
+    "连接": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect"
+          }
+        }
+      }
+    },
+    "连接中": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connecting"
+          }
+        }
+      }
+    },
+    "连接中…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connecting…"
+          }
+        }
+      }
+    },
+    "连接后自动执行": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Run After Connect"
+          }
+        }
+      }
+    },
+    "连接失败:%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connection failed: %@"
+          }
+        }
+      }
+    },
+    "连接已中断:与 %@ 的会话被关闭。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connection interrupted: the session with %@ was closed."
+          }
+        }
+      }
+    },
+    "连接已断开": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connection lost"
+          }
+        }
+      }
+    },
+    "连接已被服务器关闭": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connection closed by the server"
+          }
+        }
+      }
+    },
+    "连接建立后按顺序自动发送(各自动补回车)。分屏复制的会话不重复执行。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sent in order once connected (Return appended to each). Duplicated split-pane sessions don't re-run them."
+          }
+        }
+      }
+    },
+    "连接断开": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disconnected"
+          }
+        }
+      }
+    },
+    "连接时先经跳板机(等效 ProxyJump),支持链式。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Route through jump hosts first (equivalent to ProxyJump); chaining supported."
+          }
+        }
+      }
+    },
+    "连接时自动建立;可在会话信息面板单独查看状态。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Established automatically on connect; check status in the session info panel."
+          }
+        }
+      }
+    },
+    "选中即复制到剪贴板": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy on select"
+          }
+        }
+      }
+    },
+    "选择…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose…"
+          }
+        }
+      }
+    },
+    "选择文件…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose File…"
+          }
+        }
+      }
+    },
+    "重命名": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rename"
+          }
+        }
+      }
+    },
+    "重命名…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rename…"
+          }
+        }
+      }
+    },
+    "重连后自动 cd 回上次工作目录(需命令集成)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "cd back to the last working directory after reconnect (requires shell integration)"
+          }
+        }
+      }
+    },
+    "长任务有新输出(静默 %lld 秒后)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Long task produced new output (after %lld s of silence)"
+          }
+        }
+      }
+    },
+    "霓虹 '84": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neon '84"
+          }
+        }
+      }
+    },
+    "非 zsh": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "not zsh"
+          }
+        }
+      }
+    },
+    "非主动断开时自动重连(指数退避)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auto-reconnect on unexpected disconnect (exponential backoff)"
+          }
+        }
+      }
+    },
+    "预览": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preview"
+          }
+        }
+      }
+    },
+    "首次连接此主机": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "First connection to this host"
+          }
+        }
+      }
+    },
+    "高级": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Advanced"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

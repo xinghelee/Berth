@@ -37,9 +37,9 @@ struct SSHAgentClient {
         let response = try roundTrip(type: Self.requestIdentities, payload: Data())
         var reader = SSHWireReader(response)
         guard let type = reader.readByte(), type == Self.identitiesAnswer else {
-            throw AgentError(message: "agent 未返回身份列表")
+            throw AgentError(message: String(localized: "agent 未返回身份列表"))
         }
-        guard let count = reader.readUInt32() else { throw AgentError(message: "agent 响应格式错误") }
+        guard let count = reader.readUInt32() else { throw AgentError(message: String(localized: "agent 响应格式错误")) }
         var identities: [Identity] = []
         for _ in 0..<count {
             guard let blob = reader.readData(), let comment = reader.readString() else { break }
@@ -57,9 +57,9 @@ struct SSHAgentClient {
         let response = try roundTrip(type: Self.signRequest, payload: writer.data)
         var reader = SSHWireReader(response)
         guard let type = reader.readByte(), type == Self.signResponse else {
-            throw AgentError(message: "agent 签名被拒绝")
+            throw AgentError(message: String(localized: "agent 签名被拒绝"))
         }
-        guard let signature = reader.readData() else { throw AgentError(message: "agent 签名响应格式错误") }
+        guard let signature = reader.readData() else { throw AgentError(message: String(localized: "agent 签名响应格式错误")) }
         return signature
     }
 
@@ -67,14 +67,14 @@ struct SSHAgentClient {
 
     private func roundTrip(type: UInt8, payload: Data) throws -> Data {
         let fd = socket(AF_UNIX, SOCK_STREAM, 0)
-        guard fd >= 0 else { throw AgentError(message: "无法创建 socket") }
+        guard fd >= 0 else { throw AgentError(message: String(localized: "无法创建 socket")) }
         defer { close(fd) }
 
         var addr = sockaddr_un()
         addr.sun_family = sa_family_t(AF_UNIX)
         let pathBytes = Array(socketPath.utf8)
         guard pathBytes.count < MemoryLayout.size(ofValue: addr.sun_path) else {
-            throw AgentError(message: "SSH_AUTH_SOCK 路径过长")
+            throw AgentError(message: String(localized: "SSH_AUTH_SOCK 路径过长"))
         }
         withUnsafeMutablePointer(to: &addr.sun_path) { ptr in
             ptr.withMemoryRebound(to: CChar.self, capacity: pathBytes.count + 1) { dst in
@@ -87,7 +87,7 @@ struct SSHAgentClient {
                 Foundation.connect(fd, $0, socklen_t(MemoryLayout<sockaddr_un>.size))
             }
         }
-        guard connected == 0 else { throw AgentError(message: "连不上 ssh-agent(\(socketPath))") }
+        guard connected == 0 else { throw AgentError(message: String(localized: "连不上 ssh-agent(\(socketPath))")) }
 
         // 发送:uint32 length + byte type + payload
         var frame = Data()
@@ -100,7 +100,7 @@ struct SSHAgentClient {
         // 读取:uint32 length + payload
         let header = try readExact(fd: fd, count: 4)
         let respLen = header.withUnsafeBytes { $0.load(as: UInt32.self).bigEndian }
-        guard respLen > 0, respLen < 1_000_000 else { throw AgentError(message: "agent 响应长度异常") }
+        guard respLen > 0, respLen < 1_000_000 else { throw AgentError(message: String(localized: "agent 响应长度异常")) }
         return try readExact(fd: fd, count: Int(respLen))
     }
 
@@ -110,7 +110,7 @@ struct SSHAgentClient {
             let base = raw.bindMemory(to: UInt8.self).baseAddress!
             while sent < data.count {
                 let n = write(fd, base + sent, data.count - sent)
-                if n <= 0 { throw AgentError(message: "写 agent 失败") }
+                if n <= 0 { throw AgentError(message: String(localized: "写 agent 失败")) }
                 sent += n
             }
         }
@@ -123,7 +123,7 @@ struct SSHAgentClient {
             let base = raw.bindMemory(to: UInt8.self).baseAddress!
             while received < count {
                 let n = read(fd, base + received, count - received)
-                if n <= 0 { throw AgentError(message: "读 agent 失败") }
+                if n <= 0 { throw AgentError(message: String(localized: "读 agent 失败")) }
                 received += n
             }
         }

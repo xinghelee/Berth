@@ -131,10 +131,10 @@ enum AgentAuthError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .noAgent: return "找不到 ssh-agent(SSH_AUTH_SOCK 未设置)。"
-        case .noIdentities: return "ssh-agent 里没有可用的密钥(试试 ssh-add)。"
-        case .unsupported: return "该密钥类型暂不支持通过 agent 认证(目前支持 ed25519 / RSA)。"
-        case .signatureFailed: return "ssh-agent 签名失败。"
+        case .noAgent: return String(localized: "找不到 ssh-agent(SSH_AUTH_SOCK 未设置)。")
+        case .noIdentities: return String(localized: "ssh-agent 里没有可用的密钥(试试 ssh-add)。")
+        case .unsupported: return String(localized: "该密钥类型暂不支持通过 agent 认证(目前支持 ed25519 / RSA)。")
+        case .signatureFailed: return String(localized: "ssh-agent 签名失败。")
         }
     }
 }

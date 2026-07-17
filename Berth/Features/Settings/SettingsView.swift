@@ -110,13 +110,13 @@ struct SettingsView: View {
             let data = try BackupService.export(context: modelContext)
             let panel = NSSavePanel()
             panel.allowedContentTypes = [.json]
-            panel.nameFieldStringValue = "Berth-备份.json"
+            panel.nameFieldStringValue = String(localized: "Berth-备份.json")
             if panel.runModal() == .OK, let url = panel.url {
                 try data.write(to: url)
-                dataMessage = "已导出到 \(url.lastPathComponent)"
+                dataMessage = String(localized: "已导出到 \(url.lastPathComponent)")
             }
         } catch {
-            dataMessage = "导出失败:\(error.localizedDescription)"
+            dataMessage = String(localized: "导出失败:\(error.localizedDescription)")
         }
     }
 
@@ -128,9 +128,9 @@ struct SettingsView: View {
         do {
             let data = try Data(contentsOf: url)
             let result = try BackupService.import(data, context: modelContext)
-            dataMessage = "已导入:新增 \(result.hosts) 台主机、\(result.groups) 个分组(重复项已跳过)"
+            dataMessage = String(localized: "已导入:新增 \(result.hosts) 台主机、\(result.groups) 个分组(重复项已跳过)")
         } catch {
-            dataMessage = "导入失败:\(error.localizedDescription)"
+            dataMessage = String(localized: "导入失败:\(error.localizedDescription)")
         }
     }
 }

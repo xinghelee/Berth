@@ -15,7 +15,7 @@ final class TerminalSearchModel {
 
     var statusText: String {
         if query.isEmpty { return "" }
-        if matches.isEmpty { return "无匹配" }
+        if matches.isEmpty { return String(localized: "无匹配") }
         return "\(currentIndex + 1) / \(matches.count)"
     }
 

@@ -52,7 +52,7 @@ extension TerminalTheme {
     /// 默认:精调深色,深靛蓝近黑底 + 柔和靛色强调(Linear/Things 3 气质)
     static let midnight = TerminalTheme(
         id: "berth-midnight",
-        name: "Berth 午夜",
+        name: String(localized: "Berth 午夜"),
         isDark: true,
         background: "#0F1117",
         foreground: "#E6E8EE",
@@ -68,7 +68,7 @@ extension TerminalTheme {
     /// 精调深色(One Dark 气质)
     static let berthDark = TerminalTheme(
         id: "berth-dark",
-        name: "Berth 深色",
+        name: String(localized: "Berth 深色"),
         isDark: true,
         background: "#1B1E25",
         foreground: "#EBEEF2",
@@ -113,7 +113,7 @@ extension TerminalTheme {
 
     static let oneLight = TerminalTheme(
         id: "one-light",
-        name: "One Light(浅色)",
+        name: String(localized: "One Light(浅色)"),
         isDark: false,
         background: "#FAFAFA",
         foreground: "#383A42",
@@ -188,7 +188,7 @@ extension TerminalTheme {
 
     static let githubLight = TerminalTheme(
         id: "github-light",
-        name: "GitHub Light(浅色)",
+        name: String(localized: "GitHub Light(浅色)"),
         isDark: false,
         background: "#FFFFFF",
         foreground: "#24292F",
@@ -206,7 +206,7 @@ extension TerminalTheme {
     /// 糖果霓虹(Snazzy):暗底高饱和糖果色,鲜亮跳脱
     static let snazzy = TerminalTheme(
         id: "snazzy",
-        name: "Snazzy 糖果",
+        name: String(localized: "Snazzy 糖果"),
         isDark: true,
         background: "#282A36",
         foreground: "#EFF0EB",
@@ -238,7 +238,7 @@ extension TerminalTheme {
     /// 复古霓虹(Synthwave '84 气质):紫夜底 + 霓虹粉青
     static let synthwave = TerminalTheme(
         id: "synthwave-84",
-        name: "霓虹 '84",
+        name: String(localized: "霓虹 '84"),
         isDark: true,
         background: "#262335",
         foreground: "#F4F0FF",
@@ -254,7 +254,7 @@ extension TerminalTheme {
     /// Catppuccin Latte:奶油底粉彩,清淡活泼(浅色)
     static let catppuccinLatte = TerminalTheme(
         id: "catppuccin-latte",
-        name: "Catppuccin Latte(浅色)",
+        name: String(localized: "Catppuccin Latte(浅色)"),
         isDark: false,
         background: "#EFF1F5",
         foreground: "#4C4F69",
@@ -270,7 +270,7 @@ extension TerminalTheme {
     /// 晨雾玫瑰(Rosé Pine Dawn):米白底 + 灰紫玫瑰,柔和梦幻(浅色)
     static let rosePineDawn = TerminalTheme(
         id: "rose-pine-dawn",
-        name: "晨雾玫瑰(浅色)",
+        name: String(localized: "晨雾玫瑰(浅色)"),
         isDark: false,
         background: "#FAF4ED",
         foreground: "#575279",
@@ -286,7 +286,7 @@ extension TerminalTheme {
     /// Ayu Light:清爽白底 + 暖橙点缀,明快(浅色)
     static let ayuLight = TerminalTheme(
         id: "ayu-light",
-        name: "Ayu 清晨(浅色)",
+        name: String(localized: "Ayu 清晨(浅色)"),
         isDark: false,
         background: "#FCFCFC",
         foreground: "#5C6166",
@@ -305,7 +305,7 @@ extension TerminalTheme {
     /// 与「玉版宣」共用色相体系,组成明暗成对的「墨与纸」双联。
     static let sumi = TerminalTheme(
         id: "berth-sumi",
-        name: "松烟墨 Sumi PRO",
+        name: String(localized: "松烟墨 Sumi PRO"),
         isDark: true,
         background: "#1B1817",
         foreground: "#E8E1D2",
@@ -321,7 +321,7 @@ extension TerminalTheme {
     /// 玉版宣:暖白宣纸底 + 松烟墨色小楷,矿物印色与「松烟墨」同源(浅色)
     static let xuan = TerminalTheme(
         id: "berth-xuan",
-        name: "玉版宣 Xuan PRO(浅色)",
+        name: String(localized: "玉版宣 Xuan PRO(浅色)"),
         isDark: false,
         background: "#F8F3E6",
         foreground: "#3B342C",
@@ -338,7 +338,7 @@ extension TerminalTheme {
     /// 「深夜靠港」与 Berth(泊位)品牌同构。
     static let amberMooring = TerminalTheme(
         id: "amber-mooring",
-        name: "夜泊琥珀 Amber Mooring",
+        name: String(localized: "夜泊琥珀 Amber Mooring"),
         isDark: true,
         background: "#1E1A17",
         foreground: "#E9E2D7",
@@ -355,7 +355,7 @@ extension TerminalTheme {
     /// 内置阵容中唯一的绿色系,对比度工程全场最强(fg/bg 16:1)
     static let emeraldSanctum = TerminalTheme(
         id: "emerald-sanctum",
-        name: "祖母绿圣殿 Emerald",
+        name: String(localized: "祖母绿圣殿 Emerald"),
         isDark: true,
         background: "#0D1712",
         foreground: "#E4F4EA",

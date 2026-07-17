@@ -55,7 +55,7 @@ struct HostEditorView: View {
                     }
                 }
                 Section("连接") {
-                    TextField("显示名", text: $label, prompt: Text(hostname.isEmpty ? "例如:生产环境 API" : hostname).foregroundStyle(.quaternary))
+                    TextField("显示名", text: $label, prompt: Text(hostname.isEmpty ? String(localized: "例如:生产环境 API") : hostname).foregroundStyle(.quaternary))
                     TextField("主机地址", text: $hostname, prompt: Text("example.com 或 IP").foregroundStyle(.quaternary))
                     TextField("端口", text: $port)
                     TextField("用户名", text: $username)
@@ -298,19 +298,19 @@ struct HostEditorView: View {
         let trimmedHostname = hostname.trimmingCharacters(in: .whitespaces)
         let trimmedUsername = username.trimmingCharacters(in: .whitespaces)
         guard !trimmedHostname.isEmpty, !trimmedUsername.isEmpty else {
-            validationMessage = "主机地址和用户名不能为空。"
+            validationMessage = String(localized: "主机地址和用户名不能为空。")
             return
         }
         guard let portNumber = Int(port), (1...65535).contains(portNumber) else {
-            validationMessage = "端口需要是 1-65535 之间的数字。"
+            validationMessage = String(localized: "端口需要是 1-65535 之间的数字。")
             return
         }
         if authMethod == .privateKeyFile && privateKeyPath.trimmingCharacters(in: .whitespaces).isEmpty {
-            validationMessage = "请选择私钥文件。"
+            validationMessage = String(localized: "请选择私钥文件。")
             return
         }
         if authMethod == .storedKey && selectedKeyID == nil {
-            validationMessage = "请选择密钥库中的密钥。"
+            validationMessage = String(localized: "请选择密钥库中的密钥。")
             return
         }
 
@@ -385,12 +385,12 @@ struct HostEditorView: View {
 
     private func colorName(_ color: TagColor) -> String {
         switch color {
-        case .none: return "无"
-        case .red: return "红(生产)"
-        case .orange: return "橙"
-        case .green: return "绿"
-        case .blue: return "蓝"
-        case .purple: return "紫"
+        case .none: return String(localized: "无")
+        case .red: return String(localized: "红(生产)")
+        case .orange: return String(localized: "橙")
+        case .green: return String(localized: "绿")
+        case .blue: return String(localized: "蓝")
+        case .purple: return String(localized: "紫")
         }
     }
 }
@@ -421,7 +421,7 @@ private struct ForwardRowView: View {
                 .buttonStyle(.borderless)
             }
             HStack(spacing: 6) {
-                portField(forward.kind == .remote ? "远端端口" : "本地端口", value: $forward.bindPort)
+                portField(forward.kind == .remote ? String(localized: "远端端口") : String(localized: "本地端口"), value: $forward.bindPort)
                 if forward.kind != .dynamic {
                     Image(systemName: "arrow.right").font(.caption2).foregroundStyle(.tertiary)
                     TextField("目标主机", text: $forward.targetHost)

@@ -26,9 +26,9 @@ struct HostKeyError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch kind {
         case .rejectedByUser:
-            return "已取消连接:你没有信任该服务器的主机密钥。"
+            return String(localized: "已取消连接:你没有信任该服务器的主机密钥。")
         case .changedRejected:
-            return "已中止连接:服务器主机密钥与 known_hosts 记录不一致,可能存在中间人攻击。确认服务器确实更换过密钥后,可在连接时选择更新。"
+            return String(localized: "已中止连接:服务器主机密钥与 known_hosts 记录不一致,可能存在中间人攻击。确认服务器确实更换过密钥后,可在连接时选择更新。")
         }
     }
 }

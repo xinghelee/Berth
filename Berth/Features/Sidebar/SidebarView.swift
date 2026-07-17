@@ -373,7 +373,7 @@ private struct HostRow: View {
         .contentShape(Rectangle())
         .animation(.easeOut(duration: 0.12), value: hovering)
         .onHover { hovering = $0 }
-        .help("\(host.address)\(host.lastConnectedAt.map { " · 最近连接 " + $0.formatted(.relative(presentation: .named)) } ?? "")")
+        .help("\(host.address)\(host.lastConnectedAt.map { String(localized: " · 最近连接 ") + $0.formatted(.relative(presentation: .named)) } ?? "")")
     }
 }
 

@@ -171,7 +171,7 @@ struct TerminalTabsView: View {
         HStack(spacing: 2) {
             PanelIconButton(
                 symbol: "folder",
-                help: "SFTP 文件(⌘⇧F)",
+                help: String(localized: "SFTP 文件(⌘⇧F)"),
                 tint: sessionManager.isSFTPVisible ? ThemeStore.shared.current.accentColor : nil
             ) {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
@@ -180,7 +180,7 @@ struct TerminalTabsView: View {
             }
             PanelIconButton(
                 symbol: "sidebar.right",
-                help: "服务器信息(⌘I)",
+                help: String(localized: "服务器信息(⌘I)"),
                 tint: sessionManager.isInspectorVisible ? ThemeStore.shared.current.accentColor : nil
             ) {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
@@ -476,7 +476,7 @@ struct TerminalPaneView: View {
         case .disconnected(let reason):
             bannerBody(color: reason == .userInitiated ? .gray : .red) {
                 Image(systemName: "bolt.slash")
-                Text(reason.message ?? "连接已断开")
+                Text(reason.message ?? String(localized: "连接已断开"))
                     .lineLimit(2)
                 if session.isAutoReconnectScheduled {
                     Text("自动重连中(第 \(session.reconnectAttempt) 次)")

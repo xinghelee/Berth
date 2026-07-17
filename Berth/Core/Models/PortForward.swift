@@ -9,9 +9,9 @@ enum PortForwardKind: String, Codable, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .local: return "本地 (-L)"
-        case .remote: return "远程 (-R)"
-        case .dynamic: return "动态 SOCKS5 (-D)"
+        case .local: return String(localized: "本地 (-L)")
+        case .remote: return String(localized: "远程 (-R)")
+        case .dynamic: return String(localized: "动态 SOCKS5 (-D)")
         }
     }
 }
@@ -61,7 +61,7 @@ final class PortForward {
         case .local:
             return "\(bindHost):\(bindPort) → \(targetHost):\(targetPort)"
         case .remote:
-            return "远端 \(bindHost):\(bindPort) → \(targetHost):\(targetPort)"
+            return String(localized: "远端 \(bindHost):\(bindPort) → \(targetHost):\(targetPort)")
         case .dynamic:
             return "SOCKS5 \(bindHost):\(bindPort)"
         }

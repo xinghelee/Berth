@@ -12,11 +12,11 @@ enum KeychainStore {
         var errorDescription: String? {
             switch self {
             case .unexpectedStatus(errSecAuthFailed):
-                return "无法读取钥匙串中保存的密码(应用签名与保存时不一致,常见于开发构建更新后)。"
-                    + "请编辑该主机并重新输入密码,保存后即可恢复。"
+                return String(localized: "无法读取钥匙串中保存的密码(应用签名与保存时不一致,常见于开发构建更新后)。")
+                    + String(localized: "请编辑该主机并重新输入密码,保存后即可恢复。")
             case .unexpectedStatus(let status):
                 let detail = SecCopyErrorMessageString(status, nil) as String? ?? "OSStatus \(status)"
-                return "Keychain 操作失败:\(detail)"
+                return String(localized: "Keychain 操作失败:\(detail)")
             }
         }
     }

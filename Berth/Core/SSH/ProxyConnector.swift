@@ -109,7 +109,7 @@ final class ProxyHandshakeHandler: ChannelInboundHandler, RemovableChannelHandle
 
     func channelInactive(context: ChannelHandlerContext) {
         if state != .done {
-            completion.fail(ProxyError(message: "代理连接被关闭"))
+            completion.fail(ProxyError(message: String(localized: "代理连接被关闭")))
         }
         context.fireChannelInactive()
     }
@@ -137,7 +137,7 @@ final class ProxyHandshakeHandler: ChannelInboundHandler, RemovableChannelHandle
         let statusOK = header.hasPrefix("HTTP/1.1 200") || header.hasPrefix("HTTP/1.0 200")
         guard statusOK else {
             let firstLine = header.split(separator: "\r\n").first.map(String.init) ?? header
-            throw ProxyError(message: "HTTP 代理拒绝:\(firstLine)")
+            throw ProxyError(message: String(localized: "HTTP 代理拒绝:\(firstLine)"))
         }
         accumulator.moveReaderIndex(forwardBy: range + 4)
         complete(context: context)
@@ -160,17 +160,17 @@ final class ProxyHandshakeHandler: ChannelInboundHandler, RemovableChannelHandle
         guard accumulator.readableBytes >= 2 else { return }
         let ver = accumulator.readInteger(as: UInt8.self)!
         let method = accumulator.readInteger(as: UInt8.self)!
-        guard ver == 5 else { throw ProxyError(message: "SOCKS 版本不符") }
+        guard ver == 5 else { throw ProxyError(message: String(localized: "SOCKS 版本不符")) }
         switch method {
         case 0x00:
             sendSOCKSConnect(context: context)
         case 0x02:
-            guard password != nil else { throw ProxyError(message: "代理要求认证但未提供密码") }
+            guard password != nil else { throw ProxyError(message: String(localized: "代理要求认证但未提供密码")) }
             sendSOCKSAuth(context: context)
         case 0xFF:
-            throw ProxyError(message: "SOCKS 代理无可接受的认证方式")
+            throw ProxyError(message: String(localized: "SOCKS 代理无可接受的认证方式"))
         default:
-            throw ProxyError(message: "SOCKS 代理选择了不支持的认证方式")
+            throw ProxyError(message: String(localized: "SOCKS 代理选择了不支持的认证方式"))
         }
     }
 
@@ -189,7 +189,7 @@ final class ProxyHandshakeHandler: ChannelInboundHandler, RemovableChannelHandle
         guard accumulator.readableBytes >= 2 else { return }
         _ = accumulator.readInteger(as: UInt8.self) // ver
         let status = accumulator.readInteger(as: UInt8.self)!
-        guard status == 0 else { throw ProxyError(message: "SOCKS 代理认证失败") }
+        guard status == 0 else { throw ProxyError(message: String(localized: "SOCKS 代理认证失败")) }
         sendSOCKSConnect(context: context)
     }
 
@@ -206,8 +206,8 @@ final class ProxyHandshakeHandler: ChannelInboundHandler, RemovableChannelHandle
     private func handleSOCKSReply(context: ChannelHandlerContext) throws {
         guard accumulator.readableBytes >= 4 else { return }
         let bytes = accumulator.getBytes(at: accumulator.readerIndex, length: 4) ?? [0, 0, 0, 0]
-        guard bytes[0] == 5 else { throw ProxyError(message: "SOCKS 回复版本不符") }
-        guard bytes[1] == 0 else { throw ProxyError(message: "SOCKS 代理连接失败(code \(bytes[1]))") }
+        guard bytes[0] == 5 else { throw ProxyError(message: String(localized: "SOCKS 回复版本不符")) }
+        guard bytes[1] == 0 else { throw ProxyError(message: String(localized: "SOCKS 代理连接失败(code \(bytes[1]))")) }
         let atyp = bytes[3]
         let addrLen: Int
         switch atyp {
@@ -216,7 +216,7 @@ final class ProxyHandshakeHandler: ChannelInboundHandler, RemovableChannelHandle
         case 0x03:
             guard accumulator.readableBytes >= 5 else { return }
             addrLen = 1 + Int(accumulator.getInteger(at: accumulator.readerIndex + 4, as: UInt8.self) ?? 0)
-        default: throw ProxyError(message: "SOCKS 回复地址类型不支持")
+        default: throw ProxyError(message: String(localized: "SOCKS 回复地址类型不支持"))
         }
         let total = 4 + addrLen + 2
         guard accumulator.readableBytes >= total else { return }

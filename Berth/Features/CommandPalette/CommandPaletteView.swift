@@ -44,34 +44,34 @@ struct CommandPaletteView: View {
             PaletteCommand(id: "split-v", title: "上下分屏", subtitle: "⌘⇧D", icon: "rectangle.split.1x2", isEnabled: hasSession) {
                 m.splitFocused(axis: .vertical)
             },
-            PaletteCommand(id: "close-pane", title: "关闭当前分屏", subtitle: "⌘W", icon: "xmark.rectangle", isEnabled: hasSession) {
+            PaletteCommand(id: "close-pane", title: String(localized: "关闭当前分屏"), subtitle: "⌘W", icon: "xmark.rectangle", isEnabled: hasSession) {
                 m.requestCloseCurrent()
             },
             PaletteCommand(
                 id: "broadcast",
-                title: m.isBroadcasting ? "停止广播输入" : "广播输入到所有分屏",
+                title: m.isBroadcasting ? String(localized: "停止广播输入") : "广播输入到所有分屏",
                 subtitle: "⌘⌥B",
                 icon: "dot.radiowaves.left.and.right",
                 isEnabled: (m.selectedTab?.root.leafIDs().count ?? 0) > 1
             ) {
                 m.toggleBroadcast()
             },
-            PaletteCommand(id: "dup", title: "复制当前连接为新标签", subtitle: "⌘T", icon: "plus.square.on.square", isEnabled: hasSession) {
+            PaletteCommand(id: "dup", title: String(localized: "复制当前连接为新标签"), subtitle: "⌘T", icon: "plus.square.on.square", isEnabled: hasSession) {
                 m.duplicateCurrent()
             },
-            PaletteCommand(id: "sftp", title: m.isSFTPVisible ? "关闭 SFTP 文件面板" : "打开 SFTP 文件面板", subtitle: "⌘⇧F", icon: "folder", isEnabled: hasSession) {
+            PaletteCommand(id: "sftp", title: m.isSFTPVisible ? String(localized: "关闭 SFTP 文件面板") : String(localized: "打开 SFTP 文件面板"), subtitle: "⌘⇧F", icon: "folder", isEnabled: hasSession) {
                 m.isSFTPVisible.toggle()
             },
-            PaletteCommand(id: "inspector", title: m.isInspectorVisible ? "关闭服务器信息面板" : "打开服务器信息面板", subtitle: "⌘I", icon: "sidebar.right", isEnabled: hasSession) {
+            PaletteCommand(id: "inspector", title: m.isInspectorVisible ? String(localized: "关闭服务器信息面板") : String(localized: "打开服务器信息面板"), subtitle: "⌘I", icon: "sidebar.right", isEnabled: hasSession) {
                 m.isInspectorVisible.toggle()
             },
             PaletteCommand(id: "find", title: "在终端中查找", subtitle: "⌘F", icon: "magnifyingglass", isEnabled: hasSession) {
                 m.requestSearch()
             },
-            PaletteCommand(id: "keys", title: "密钥管理", icon: "key") {
+            PaletteCommand(id: "keys", title: String(localized: "密钥管理"), icon: "key") {
                 openWindow(id: "keys")
             },
-            PaletteCommand(id: "snippets", title: "管理命令片段", icon: "text.badge.plus") {
+            PaletteCommand(id: "snippets", title: String(localized: "管理命令片段"), icon: "text.badge.plus") {
                 openWindow(id: "snippets")
             },
         ]
@@ -79,8 +79,8 @@ struct CommandPaletteView: View {
         for theme in TerminalTheme.builtIn {
             list.append(PaletteCommand(
                 id: "theme." + theme.id,
-                title: "主题:\(theme.name)",
-                subtitle: themeStore.current.id == theme.id ? "当前" : nil,
+                title: String(localized: "主题:\(theme.name)"),
+                subtitle: themeStore.current.id == theme.id ? String(localized: "当前") : nil,
                 icon: "paintpalette"
             ) {
                 themeStore.select(id: theme.id)

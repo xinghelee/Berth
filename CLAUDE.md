@@ -63,6 +63,10 @@ BERTH_M1_AUTOTEST=1 BERTH_TRANSIENT_STORE=1 \
 - 密码/passphrase 只进 Keychain,任何情况下不落盘明文
 - 快捷键不得占用 Ctrl 组合键(透传给 shell)
 - 发布形态:Developer ID 签名 + 公证 DMG,不走 App Store(沙盒限制 ~/.ssh 读取)
+- 本地化:zh-Hans 基准 + en,`Berth/Resources/Localizable.xcstrings`。新增 UI 文案后:构建 →
+  从 DerivedData 的 `Berth.build/**/*.stringsdata` 汇总 key → 给缺失 key 补 en 翻译(SwiftUI
+  字面量自动提取;AppKit/动态拼接字符串需手动 `String(localized:)`)。英文验证:
+  `open -n <app> --args -AppleLanguages "(en)"`
 
 ## 里程碑状态
 
