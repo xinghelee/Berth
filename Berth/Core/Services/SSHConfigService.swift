@@ -82,9 +82,19 @@ final class SSHConfigService {
     }
 
     /// 解析 config 并与库中 sshConfig 镜像对齐
+    /// Git 托管服务的 ssh 别名(git@github.com 等)没有 shell,不作为终端主机导入
+    private static let gitHostingDomains: Set<String> = [
+        "github.com", "ssh.github.com", "gist.github.com",
+        "gitlab.com", "altssh.gitlab.com",
+        "bitbucket.org", "altssh.bitbucket.org",
+        "gitee.com", "codeberg.org", "git.sr.ht",
+        "ssh.dev.azure.com", "vs-ssh.visualstudio.com",
+    ]
+
     func sync() {
         guard let container else { return }
         let parsed = SSHConfigParser.parseFile(at: configPath)
+            .filter { !Self.gitHostingDomains.contains($0.hostname.lowercased()) }
         let context = ModelContext(container)
 
         let descriptor = FetchDescriptor<Host>(
