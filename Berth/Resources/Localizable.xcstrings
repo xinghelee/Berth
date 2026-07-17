@@ -53,6 +53,17 @@
         }
       }
     },
+    "%@@%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@@%@"
+          }
+        }
+      },
+      "shouldTranslate": false
+    },
     "%@@%@:%@": {
       "localizations": {
         "en": {
@@ -3199,6 +3210,16 @@
         }
       }
     },
+    "界面语言": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Interface language"
+          }
+        }
+      }
+    },
     "留空保持不变": {
       "localizations": {
         "en": {
@@ -3345,6 +3366,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Idle"
+          }
+        }
+      }
+    },
+    "立即重启": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restart Now"
           }
         }
       }
@@ -3789,6 +3820,26 @@
         }
       }
     },
+    "语言": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Language"
+          }
+        }
+      }
+    },
+    "语言更改在重启 Berth 后生效": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Language changes take effect after restarting Berth"
+          }
+        }
+      }
+    },
     "请编辑该主机并重新输入密码,保存后即可恢复。": {
       "localizations": {
         "en": {
@@ -3875,6 +3926,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Resources"
+          }
+        }
+      }
+    },
+    "跟随系统": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Follow System"
           }
         }
       }
