@@ -205,6 +205,12 @@ struct TerminalCommands: Commands {
 
             Divider()
 
+            Button(SessionManager.shared.selected?.isLogging == true ? "停止记录会话" : "记录会话到文件…") {
+                SessionManager.shared.toggleSessionLogging()
+            }
+
+            Divider()
+
             Button("会话模板…") {
                 openWindow(id: "workspaces")
             }

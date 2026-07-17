@@ -1171,6 +1171,16 @@
         }
       }
     },
+    "停止记录会话": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop Logging Session"
+          }
+        }
+      }
+    },
     "先打开至少一个会话": {
       "localizations": {
         "en": {
@@ -4091,6 +4101,16 @@
         }
       }
     },
+    "记录会话到文件…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Log Session to File…"
+          }
+        }
+      }
+    },
     "记录当前所有标签页与分屏结构,打开模板时按原布局重新连接。": {
       "localizations": {
         "en": {
@@ -4657,6 +4677,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choose…"
+          }
+        }
+      }
+    },
+    "选择会话录制文件的保存位置": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose where to save the session log"
           }
         }
       }

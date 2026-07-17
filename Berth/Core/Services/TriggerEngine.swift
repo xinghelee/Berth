@@ -19,11 +19,6 @@ final class TriggerEngine {
     private var lastFired: [UUID: Date] = [:]
     private let throttle: TimeInterval = 3
 
-    /// ANSI/OSC 转义序列剥离(匹配纯文本,避免颜色码干扰)
-    private static let ansi = try? NSRegularExpression(
-        pattern: "\u{1B}\\[[0-9;?]*[ -/]*[@-~]|\u{1B}\\][^\u{07}\u{1B}]*(?:\u{07}|\u{1B}\\\\)|[\u{00}-\u{08}\u{0B}\u{0C}\u{0E}-\u{1F}]"
-    )
-
     var hasEnabledTriggers: Bool { !compiled.isEmpty }
 
     func start(container: ModelContainer) {
@@ -47,7 +42,7 @@ final class TriggerEngine {
     /// 对一整行输出做匹配;命中即发通知(节流)。hostLabel 用于通知正文。
     func scan(line rawLine: String, hostLabel: String, now: Date = Date()) {
         guard !compiled.isEmpty else { return }
-        let line = Self.strip(rawLine).trimmingCharacters(in: .whitespaces)
+        let line = ANSI.strip(rawLine).trimmingCharacters(in: .whitespaces)
         guard !line.isEmpty else { return }
         let range = NSRange(line.startIndex..., in: line)
         for trigger in compiled {
@@ -59,11 +54,5 @@ final class TriggerEngine {
                 body: "\(hostLabel) — \(String(line.prefix(120)))"
             )
         }
-    }
-
-    private static func strip(_ text: String) -> String {
-        guard let ansi else { return text }
-        let range = NSRange(text.startIndex..., in: text)
-        return ansi.stringByReplacingMatches(in: text, options: [], range: range, withTemplate: "")
     }
 }

@@ -1,6 +1,8 @@
+import AppKit
 import Foundation
 import Observation
 import SwiftData
+import UniformTypeIdentifiers
 
 /// 全局活跃会话管理:持有所有 TerminalSession(会话池)与标签页(每个标签是一棵可无限嵌套的分屏树)。
 /// 关闭窗口不等于断开连接 —— 会话生命周期跟随本对象(App 级单例),不跟随视图。
@@ -236,6 +238,23 @@ final class SessionManager {
     func requestSearch() {
         guard selected != nil else { return }
         searchRequestToken += 1
+    }
+
+    /// 记录/停止记录当前会话到文件(记录时弹保存面板选路径)
+    func toggleSessionLogging() {
+        guard let session = selected else { return }
+        if session.isLogging {
+            session.stopLogging()
+            return
+        }
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.plainText, .log]
+        let stamp = Date().formatted(.iso8601.year().month().day().dateSeparator(.dash))
+        panel.nameFieldStringValue = "\(session.spec.label)-\(stamp).log"
+        panel.message = String(localized: "选择会话录制文件的保存位置")
+        if panel.runModal() == .OK, let url = panel.url {
+            session.startLogging(to: url)
+        }
     }
 
     // MARK: - 广播输入

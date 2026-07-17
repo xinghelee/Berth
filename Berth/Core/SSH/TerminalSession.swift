@@ -123,6 +123,11 @@ final class TerminalSession: Identifiable {
     @ObservationIgnored private var lastNotifiedAt: Date?
     /// 触发器匹配用的未完成行缓冲(按 \n 切分,剥离转义)
     @ObservationIgnored private var triggerLineBuffer = ""
+    /// 会话录制:输出剥离转义后追加到此文件
+    @ObservationIgnored private var logHandle: FileHandle?
+    /// 当前正在录制到的文件 URL(nil = 未录制)
+    private(set) var logURL: URL?
+    var isLogging: Bool { logURL != nil }
 
     private enum StdinEvent {
         case bytes([UInt8])
@@ -191,6 +196,7 @@ final class TerminalSession: Identifiable {
             }
             state = .disconnected(disconnectReason)
             stopPortForwards()
+            stopLogging()
             stdinWriter?.finish()
             stdinWriter = nil
             let releasing = self.connection
@@ -310,6 +316,33 @@ final class TerminalSession: Identifiable {
     }
 
     /// 记录一个提示符行(scroll-invariant),供命令间跳转
+    // MARK: - 会话录制
+
+    /// 开始把输出录制到文件(剥离颜色码,追加写)。写入头部一行元信息。
+    @discardableResult
+    func startLogging(to url: URL) -> Bool {
+        stopLogging()
+        FileManager.default.createFile(atPath: url.path, contents: nil)
+        guard let handle = try? FileHandle(forWritingTo: url) else { return false }
+        handle.seekToEndOfFile()
+        let header = "# Berth session log · \(spec.username)@\(spec.hostname):\(spec.port) · \(Date().formatted())\n"
+        handle.write(Data(header.utf8))
+        logHandle = handle
+        logURL = url
+        return true
+    }
+
+    func stopLogging() {
+        try? logHandle?.close()
+        logHandle = nil
+        logURL = nil
+    }
+
+    private func appendToLog(_ text: String) {
+        guard let logHandle else { return }
+        logHandle.write(Data(ANSI.strip(text).utf8))
+    }
+
     /// 触发器:把输出按行喂给引擎(引擎无启用项时几乎零成本)
     private func matchTriggers(bytes: [UInt8]) {
         guard TriggerEngine.shared.hasEnabledTriggers else { triggerLineBuffer = ""; return }
@@ -815,6 +848,9 @@ final class TerminalSession: Identifiable {
                         self.terminalView.feed(byteArray: bytes[fed...])
                     }
                     self.matchTriggers(bytes: bytes)
+                    if self.logHandle != nil, let text = String(bytes: bytes, encoding: .utf8) {
+                        self.appendToLog(text)
+                    }
                 }
             }
         }
