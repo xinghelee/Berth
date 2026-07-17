@@ -446,7 +446,9 @@ struct TerminalPaneView: View {
                 banner
 
                 disconnectCard
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.top, 10)
+                    .animation(.spring(response: 0.38, dampingFraction: 0.82), value: session.state)
 
             if isSearchActive {
                 HStack {
@@ -572,7 +574,7 @@ struct TerminalPaneView: View {
             .background(RoundedRectangle(cornerRadius: 12).fill(theme.elevatedBackground))
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(theme.borderColor, lineWidth: 1))
             .shadow(color: .black.opacity(0.35), radius: 18, y: 6)
-            .transition(.opacity.combined(with: .scale(scale: 0.97)))
+            .transition(.move(edge: .top).combined(with: .opacity))
         }
     }
 
