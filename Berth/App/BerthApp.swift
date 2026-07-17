@@ -158,6 +158,11 @@ struct TerminalCommands: Commands {
                 SessionManager.shared.selected?.jumpToNextCommand()
             }
             .keyboardShortcut(.downArrow, modifiers: .command)
+
+            Button("复制上条命令输出") {
+                SessionManager.shared.selected?.copyLastCommandOutput()
+            }
+            .keyboardShortcut("c", modifiers: [.command, .shift])
         }
 
         CommandMenu("终端") {

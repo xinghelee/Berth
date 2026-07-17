@@ -42,12 +42,26 @@ final class BerthTerminalView: SwiftTerm.TerminalView {
 
         menu.addItem(.separator())
 
+        // 复制上条命令输出(需命令集成;无输出时禁用)
+        let copyOutputItem = NSMenuItem(title: String(localized: "复制上条命令输出"), action: #selector(berthCopyLastOutput), keyEquivalent: "")
+        copyOutputItem.target = self
+        copyOutputItem.image = NSImage(systemSymbolName: "text.viewfinder", accessibilityDescription: nil)
+        menu.addItem(copyOutputItem)
+
         let findItem = NSMenuItem(title: String(localized: "查找…"), action: #selector(berthFind), keyEquivalent: "f")
         findItem.target = self
         menu.addItem(findItem)
 
         menu.items.forEach { $0.isEnabled = true }
+        // 无可复制输出时禁用该项
+        MainActor.assumeIsolated {
+            copyOutputItem.isEnabled = SessionManager.shared.selected?.hasCommandOutput ?? false
+        }
         return menu
+    }
+
+    @objc private func berthCopyLastOutput() {
+        MainActor.assumeIsolated { _ = SessionManager.shared.selected?.copyLastCommandOutput() }
     }
 
     @objc private func berthSplitHorizontal() {

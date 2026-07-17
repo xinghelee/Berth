@@ -1830,6 +1830,16 @@
         }
       }
     },
+    "复制上条命令输出": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy Last Command Output"
+          }
+        }
+      }
+    },
     "复制公钥": {
       "localizations": {
         "en": {

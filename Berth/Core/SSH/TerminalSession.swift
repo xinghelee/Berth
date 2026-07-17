@@ -77,6 +77,11 @@ final class TerminalSession: Identifiable {
     @ObservationIgnored private var commandStartedAt: Date?
     /// 提示符位置标记(scroll-invariant 行号),⌘↑/⌘↓ 在命令间跳转
     @ObservationIgnored private var commandMarks: [Int] = []
+    /// 每条命令的输出区间(SI 行号 [start, end) + 退出码),供"复制上条命令输出"
+    @ObservationIgnored private var commandOutputs: [(start: Int, end: Int, code: Int?)] = []
+    @ObservationIgnored private var pendingOutputStart: Int?
+    /// 是否有可复制的命令输出(驱动菜单/状态栏可用态)
+    private(set) var hasCommandOutput = false
     /// scroll-invariant 行号的已知边界(增量探测,避免每个提示符全量扫描)
     @ObservationIgnored private var siLower = 0
     @ObservationIgnored private var siUpper = 0
@@ -303,15 +308,50 @@ final class TerminalSession: Identifiable {
     }
 
     /// 记录一个提示符行(scroll-invariant),供命令间跳转
-    private func recordCommandMark() {
+    /// 光标当前所在的 scroll-invariant 行号
+    private func currentScrollInvariantRow() -> Int {
         refreshScrollInvariantBounds()
         let terminal = terminalView.getTerminal()
         let viewportTop = max(siLower, siUpper - terminal.rows)
-        let row = viewportTop + terminal.buffer.y
+        return viewportTop + terminal.buffer.y
+    }
+
+    private func recordCommandMark() {
+        let row = currentScrollInvariantRow()
         if commandMarks.last != row {
             commandMarks.append(row)
             if commandMarks.count > 1000 { commandMarks.removeFirst(commandMarks.count - 1000) }
         }
+    }
+
+    /// 命令结束(OSC 133 D):记录本条命令的输出区间
+    private func recordCommandOutput(code: Int?) {
+        guard let start = pendingOutputStart else { return }
+        pendingOutputStart = nil
+        let end = currentScrollInvariantRow()
+        guard end > start else { return }
+        commandOutputs.append((start: start, end: end, code: code))
+        if commandOutputs.count > 200 { commandOutputs.removeFirst(commandOutputs.count - 200) }
+        hasCommandOutput = true
+    }
+
+    /// 复制上一条命令的完整输出到剪贴板;返回是否成功
+    @discardableResult
+    func copyLastCommandOutput() -> Bool {
+        guard let last = commandOutputs.last else { return false }
+        let terminal = terminalView.getTerminal()
+        var lines: [String] = []
+        for row in last.start..<last.end {
+            guard let line = terminal.getScrollInvariantLine(row: row) else { continue }
+            lines.append(line.translateToString(trimRight: true))
+        }
+        // 去掉尾部空行
+        while lines.last?.isEmpty == true { lines.removeLast() }
+        guard !lines.isEmpty else { return false }
+        let text = lines.joined(separator: "\n")
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        return true
     }
 
     /// ⌘↑:跳到当前视口上方最近的提示符
@@ -728,24 +768,34 @@ final class TerminalSession: Identifiable {
                 let bytes = Array(buffer.readableBytesView)
                 await MainActor.run {
                     self.noteOutputForNotification()
-                    // 先解析 OSC 133 命令边界/退出码(SwiftTerm 不识别,会自行忽略这些序列)
-                    for event in self.osc133.scan(bytes[...]) {
+                    // OSC 133 命令边界/退出码。必须先把标记之前的字节喂进终端,
+                    // 再读光标行,才能拿到与标记对齐的 scroll-invariant 位置(否则记到旧位置)。
+                    var fed = 0
+                    for (event, offset) in self.osc133.scan(bytes[...]) {
+                        if offset > fed {
+                            self.terminalView.feed(byteArray: bytes[fed..<offset])
+                            fed = offset
+                        }
                         switch event {
                         case .commandStart:
                             self.runningCommand = true
                         case .outputStart:
                             self.runningCommand = true
                             self.commandStartedAt = Date()
+                            self.pendingOutputStart = self.currentScrollInvariantRow()
                         case .commandEnd(let code):
                             self.runningCommand = false
                             self.lastExitCode = code
                             self.lastCommandDuration = self.commandStartedAt.map { Date().timeIntervalSince($0) }
                             self.commandStartedAt = nil
+                            self.recordCommandOutput(code: code)
                         case .promptStart:
                             self.recordCommandMark()
                         }
                     }
-                    self.terminalView.feed(byteArray: bytes[...])
+                    if fed < bytes.count {
+                        self.terminalView.feed(byteArray: bytes[fed...])
+                    }
                 }
             }
         }

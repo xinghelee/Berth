@@ -19,17 +19,19 @@ struct OSC133Scanner {
 
     private static let prefix: [UInt8] = [0x1b, 0x5d, 0x31, 0x33, 0x33] // ESC ] 1 3 3
 
-    mutating func scan(_ bytes: ArraySlice<UInt8>) -> [Event] {
-        var events: [Event] = []
-        for b in bytes {
+    /// 返回事件及其在本次 bytes 里的 0-based 结束偏移(终止符之后一位),
+    /// 便于调用方"喂到标记处再读光标",拿到与标记对齐的终端状态。
+    mutating func scan(_ bytes: ArraySlice<UInt8>) -> [(event: Event, offset: Int)] {
+        var events: [(Event, Int)] = []
+        for (index, b) in bytes.enumerated() {
             if capturing {
                 // 序列终止:BEL 或 ESC \\
                 if b == 0x07 {
-                    if let e = parse(buffer) { events.append(e) }
+                    if let e = parse(buffer) { events.append((e, index + 1)) }
                     capturing = false; buffer = []
                 } else if b == 0x5c, buffer.last == 0x1b {
                     buffer.removeLast()
-                    if let e = parse(buffer) { events.append(e) }
+                    if let e = parse(buffer) { events.append((e, index + 1)) }
                     capturing = false; buffer = []
                 } else {
                     buffer.append(b)
