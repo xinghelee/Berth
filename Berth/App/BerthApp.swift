@@ -151,7 +151,12 @@ struct TerminalCommands: Commands {
             Divider()
 
             Button("命令片段…") {
-                openWindow(id: "snippets")
+                // 有会话时切换右侧面板;无会话时打开管理窗口
+                if SessionManager.shared.selected != nil {
+                    SessionManager.shared.isSnippetsPanelVisible.toggle()
+                } else {
+                    openWindow(id: "snippets")
+                }
             }
             .keyboardShortcut("s", modifiers: [.command, .shift])
         }

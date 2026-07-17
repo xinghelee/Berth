@@ -36,7 +36,7 @@ struct TerminalScreen: View {
                         .background(.red.opacity(0.2), in: Capsule())
                         .foregroundStyle(.red)
                 }
-                Button { showSnippets = true } label: { Image(systemName: "text.badge.plus") }
+                Button { showSnippets = true } label: { Image(systemName: "curlybraces") }
                 Button { showServerInfo = true } label: { Image(systemName: "info.circle") }
             }
         }

@@ -71,7 +71,7 @@ struct CommandPaletteView: View {
             PaletteCommand(id: "keys", title: String(localized: "密钥管理"), icon: "key") {
                 openWindow(id: "keys")
             },
-            PaletteCommand(id: "snippets", title: String(localized: "管理命令片段"), icon: "text.badge.plus") {
+            PaletteCommand(id: "snippets", title: String(localized: "管理命令片段"), icon: "curlybraces") {
                 openWindow(id: "snippets")
             },
         ]
@@ -191,7 +191,7 @@ struct CommandPaletteView: View {
                 Spacer()
                 Text("连接").font(.caption2).foregroundStyle(.tertiary)
             case .snippet(let snip):
-                Image(systemName: "text.badge.plus").frame(width: 18).foregroundStyle(.secondary)
+                Image(systemName: "curlybraces").frame(width: 18).foregroundStyle(.secondary)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(snip.title)
                     Text(snip.command).font(.caption.monospaced()).foregroundStyle(.secondary).lineLimit(1)

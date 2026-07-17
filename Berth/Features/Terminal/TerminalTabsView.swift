@@ -40,6 +40,13 @@ struct TerminalTabsView: View {
                             }
                             .transition(.move(edge: .trailing).combined(with: .opacity))
                         }
+                        if sessionManager.isSnippetsPanelVisible {
+                            Divider().overlay(ThemeStore.shared.current.borderColor)
+                            SnippetsPanelView {
+                                sessionManager.isSnippetsPanelVisible = false
+                            }
+                            .transition(.move(edge: .trailing).combined(with: .opacity))
+                        }
                     }
                 }
                 if let session = sessionManager.selected {
@@ -171,10 +178,13 @@ struct TerminalTabsView: View {
     private var panelButtons: some View {
         HStack(spacing: 2) {
             PanelIconButton(
-                symbol: "text.badge.plus",
-                help: String(localized: "命令片段(⌘⇧S)")
+                symbol: "curlybraces",
+                help: String(localized: "命令片段(⌘⇧S)"),
+                tint: sessionManager.isSnippetsPanelVisible ? ThemeStore.shared.current.accentColor : nil
             ) {
-                openWindow(id: "snippets")
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+                    sessionManager.isSnippetsPanelVisible.toggle()
+                }
             }
             PanelIconButton(
                 symbol: "folder",

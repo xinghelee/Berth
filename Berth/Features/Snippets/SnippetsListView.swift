@@ -28,7 +28,7 @@ struct SnippetsListView: View {
             if snippets.isEmpty {
                 VStack(spacing: 10) {
                     Spacer()
-                    Image(systemName: "text.badge.plus").font(.system(size: 30)).foregroundStyle(.tertiary)
+                    Image(systemName: "curlybraces").font(.system(size: 30)).foregroundStyle(.tertiary)
                     Text("还没有片段").foregroundStyle(.secondary)
                     Button("新建片段") { isCreating = true }.buttonStyle(.borderedProminent)
                     Text("命令里用 {{变量}} 可在发送时填值").font(.caption).foregroundStyle(.tertiary)

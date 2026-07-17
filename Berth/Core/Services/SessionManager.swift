@@ -23,6 +23,7 @@ final class SessionManager {
     var searchRequestToken = 0
     var isInspectorVisible = false
     var isSFTPVisible = false
+    var isSnippetsPanelVisible = false
 
     var selectedTab: PaneTab? { tabs.first { $0.id == selectedTabID } }
 

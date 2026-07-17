@@ -42,7 +42,7 @@ struct HostListView: View {
                     Button { isCreating = true } label: { Image(systemName: "plus") }
                     Menu {
                         Button { showKeys = true } label: { Label(String(localized: "密钥"), systemImage: "key") }
-                        Button { showSnippets = true } label: { Label(String(localized: "命令片段"), systemImage: "text.badge.plus") }
+                        Button { showSnippets = true } label: { Label(String(localized: "命令片段"), systemImage: "curlybraces") }
                         Button { showSettings = true } label: { Label(String(localized: "设置"), systemImage: "gearshape") }
                     } label: {
                         Image(systemName: "ellipsis.circle")

@@ -26,7 +26,7 @@ struct SnippetsViewIOS: View {
             Group {
                 if snippets.isEmpty {
                     ContentUnavailableView {
-                        Label(String(localized: "还没有片段"), systemImage: "text.badge.plus")
+                        Label(String(localized: "还没有片段"), systemImage: "curlybraces")
                     } description: {
                         Text(String(localized: "命令里用 {{变量}} 可在发送时填值"))
                     } actions: {
