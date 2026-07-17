@@ -1020,6 +1020,16 @@
         }
       }
     },
+    "保存并连接": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save & Connect"
+          }
+        }
+      }
+    },
     "信任并连接": {
       "localizations": {
         "en": {

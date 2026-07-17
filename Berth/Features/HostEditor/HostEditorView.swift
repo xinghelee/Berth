@@ -7,6 +7,8 @@ import UniformTypeIdentifiers
 struct HostEditorView: View {
     let host: Host?
     let defaultGroupID: UUID?
+    /// 「保存并连接」的自定义连接动作(如断线卡片:关掉失败会话再连);nil = 新开标签页连接
+    var onConnect: ((Host) -> Void)? = nil
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -205,6 +207,7 @@ struct HostEditorView: View {
                     .keyboardShortcut(.cancelAction)
                 Spacer()
                 Button(isEditing ? "保存" : "创建") { save() }
+                Button("保存并连接") { save(andConnect: true) }
                     .keyboardShortcut(.defaultAction)
                     .buttonStyle(.borderedProminent)
             }
@@ -294,7 +297,7 @@ struct HostEditorView: View {
         return false
     }
 
-    private func save() {
+    private func save(andConnect: Bool = false) {
         let trimmedHostname = hostname.trimmingCharacters(in: .whitespaces)
         let trimmedUsername = username.trimmingCharacters(in: .whitespaces)
         guard !trimmedHostname.isEmpty, !trimmedUsername.isEmpty else {
@@ -369,6 +372,14 @@ struct HostEditorView: View {
         }
 
         dismiss()
+        if andConnect {
+            if let onConnect {
+                onConnect(target)
+            } else {
+                target.lastConnectedAt = Date()
+                _ = SessionManager.shared.open(spec: HostSpec.resolve(target, in: allHosts))
+            }
+        }
     }
 
     private func pickPrivateKey() {

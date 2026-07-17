@@ -476,7 +476,13 @@ struct TerminalPaneView: View {
             HostKeyPromptSheet(prompt: prompt, session: session)
         }
         .sheet(item: $editingHost) { host in
-            HostEditorView(host: host, defaultGroupID: nil)
+            HostEditorView(host: host, defaultGroupID: nil, onConnect: { updated in
+                // 用新配置重连:关掉失败的会话,重新解析 spec 开新会话(旧 spec 冻结了改动前的认证方式)
+                sessionManager.closePane(session)
+                let all = (try? modelContext.fetch(FetchDescriptor<Host>())) ?? [updated]
+                updated.lastConnectedAt = Date()
+                _ = sessionManager.open(spec: HostSpec.resolve(updated, in: all))
+            })
         }
     }
 
