@@ -1539,12 +1539,12 @@
         }
       }
     },
-    "命令片段(独立窗口)": {
+    "命令片段(⌘⇧S)": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Snippets (separate window)"
+            "value": "Snippets (⌘⇧S)"
           }
         }
       }

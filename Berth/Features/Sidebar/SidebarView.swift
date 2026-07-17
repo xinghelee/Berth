@@ -214,7 +214,6 @@ struct SidebarView: View {
 
             Spacer()
 
-            PanelIconButton(symbol: "text.badge.plus", help: String(localized: "命令片段(独立窗口)")) { openWindow(id: "snippets") }
             PanelIconButton(symbol: "paintpalette", help: String(localized: "终端配色")) { isThemePanelPresented.toggle() }
                 .popover(isPresented: $isThemePanelPresented, arrowEdge: .top) {
                     ThemePanelView()

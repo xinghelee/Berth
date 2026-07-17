@@ -3,6 +3,7 @@ import SwiftUI
 /// 右侧终端区:标签条 + 当前会话终端 + 断线横幅。
 struct TerminalTabsView: View {
     @Environment(SessionManager.self) private var sessionManager
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         @Bindable var manager = sessionManager
@@ -169,6 +170,12 @@ struct TerminalTabsView: View {
     /// Safari 式按钮组(标题栏右侧):一个大胶囊容器,内含各个圆形悬停按钮
     private var panelButtons: some View {
         HStack(spacing: 2) {
+            PanelIconButton(
+                symbol: "text.badge.plus",
+                help: String(localized: "命令片段(⌘⇧S)")
+            ) {
+                openWindow(id: "snippets")
+            }
             PanelIconButton(
                 symbol: "folder",
                 help: String(localized: "SFTP 文件(⌘⇧F)"),
