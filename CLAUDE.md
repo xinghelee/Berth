@@ -79,6 +79,12 @@ BERTH_M1_AUTOTEST=1 BERTH_TRANSIENT_STORE=1 \
   - [x] SFTP 侧边文件面板 + 拖拽上传下载(复用会话连接;`BERTH_SFTP_AUTOTEST` 真机跑通往返)
   - [ ] CloudKit 同步(last-write-wins + 删除墓碑)—— 需 iCloud entitlement/容器 + 签名构建才能验证,暂缓
   - [ ] 本地回显(predictive echo)完整版 —— 触及 SwiftTerm 渲染,需交互测延迟,暂缓
+- [~] M6 — iOS 版(`BerthiOS` target,`xcodegen generate` 后用
+  `xcodebuildmcp simulator build-and-run --project-path Berth.xcodeproj --scheme BerthiOS --simulator-name "iPhone 17 Pro Max"`):
+  - [x] 共享核心:Models/Storage/Parsing/SSH 层(HostSpec、KnownHosts、ProxyConnector、PortForwardService、KeyStore、TerminalTheme 已跨平台化,iOS 上 `typealias NSColor = UIColor`)
+  - [x] 已具备:主机列表(分组/标签色/生产警戒)、完整主机编辑器(密码/密钥库认证、跳板机、HTTP/SOCKS5 代理、端口转发、启动命令)、SwiftTerm 终端(含按键条)、known_hosts 指纹确认、⚡ 快速连接(ssh 命令解析)、密钥管理(生成/导入)、Snippets({{变量}})、服务器信息面板、20 套主题、中英本地化
+  - [x] 模拟器真机验收:连 127.0.0.1:2222 test sshd,建主机→指纹信任→shell 命令回显→信息面板全通
+  - [ ] 待补:SFTP 面板、自动重连、私钥文件导入(Files app)、TestFlight 分发签名
 - [x] M5 — 布局与体验大改(已并入 main):
   - 布局:双栏(统一平铺主机列表侧栏 + 全宽终端),标题栏会话胶囊 + 标签 chips + 面板按钮组一行;应用图标(系缆桩)
   - 连接稳定性:分屏/⌘T **连接复用**(引用计数 SSHConnection,不新建 TCP);Citadel 补丁 #4(握手失败关 channel);频率惩罚(PerSourcePenalties)人话化;Keychain 稳定签名修复

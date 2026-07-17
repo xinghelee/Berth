@@ -32,6 +32,17 @@
         }
       }
     },
+    "%@:%@ · %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@:%@ · %@"
+          }
+        }
+      },
+      "shouldTranslate": false
+    },
     "%@:%@ 返回的主机密钥与 known_hosts 中的记录不一致。这可能意味着中间人攻击,也可能是服务器重装或更换了密钥。请先向服务器管理员核实,再决定是否继续。": {
       "localizations": {
         "en": {
@@ -41,6 +52,17 @@
           }
         }
       }
+    },
+    "%@@%@:%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@@%@:%@"
+          }
+        }
+      },
+      "shouldTranslate": false
     },
     "%lld": {
       "localizations": {
@@ -250,6 +272,17 @@
         }
       }
     },
+    "HTTP": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HTTP"
+          }
+        }
+      },
+      "shouldTranslate": false
+    },
     "HTTP 代理拒绝:%@": {
       "localizations": {
         "en": {
@@ -431,6 +464,17 @@
         }
       }
     },
+    "SOCKS5": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SOCKS5"
+          }
+        }
+      },
+      "shouldTranslate": false
+    },
     "SSH_AUTH_SOCK 路径过长": {
       "localizations": {
         "en": {
@@ -522,6 +566,16 @@
         }
       }
     },
+    "iOS 版暂不支持「%@」认证方式": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The iOS version doesn't support “%@” authentication yet"
+          }
+        }
+      }
+    },
     "ssh-agent 签名失败。": {
       "localizations": {
         "en": {
@@ -538,6 +592,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "No usable keys in ssh-agent (try ssh-add)."
+          }
+        }
+      }
+    },
+    "user@host:port 或 ssh 命令": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "user@host:port or an ssh command"
           }
         }
       }
@@ -559,6 +623,17 @@
           "stringUnit": {
             "state": "translated",
             "value": "·"
+          }
+        }
+      },
+      "shouldTranslate": false
+    },
+    "→": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "→"
           }
         }
       },
@@ -1774,6 +1849,16 @@
         }
       }
     },
+    "密码(可选)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Password (optional)"
+          }
+        }
+      }
+    },
     "密码(可选,留空保持不变)": {
       "localizations": {
         "en": {
@@ -1810,6 +1895,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Key library is empty"
+          }
+        }
+      }
+    },
+    "密钥库是空的,先到「密钥」页生成或导入。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Key library is empty. Generate or import one on the Keys page first."
           }
         }
       }
@@ -1910,6 +2005,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Import Existing Key…"
+          }
+        }
+      }
+    },
+    "导入的密钥": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Imported key"
           }
         }
       }
@@ -2150,6 +2255,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Quick Create"
+          }
+        }
+      }
+    },
+    "快速连接": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quick Connect"
           }
         }
       }
@@ -2924,6 +3039,16 @@
         }
       }
     },
+    "点右上角 + 新建主机,或 ⚡ 快速连接": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap + to add a host, or ⚡ to quick-connect"
+          }
+        }
+      }
+    },
     "点按输入路径(支持 ~ 与相对路径)": {
       "localizations": {
         "en": {
@@ -3324,12 +3449,32 @@
         }
       }
     },
+    "类型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Type"
+          }
+        }
+      }
+    },
     "粘贴": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Paste"
+          }
+        }
+      }
+    },
+    "粘贴 OpenSSH 私钥内容(-----BEGIN OPENSSH PRIVATE KEY-----)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paste OpenSSH private key content (-----BEGIN OPENSSH PRIVATE KEY-----)"
           }
         }
       }
@@ -3490,6 +3635,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Editing — saving uploads automatically"
+          }
+        }
+      }
+    },
+    "编辑主机": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit Host"
           }
         }
       }
@@ -3700,6 +3855,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Jump Hosts"
+          }
+        }
+      }
+    },
+    "跳板机与代理": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jump Hosts & Proxy"
           }
         }
       }
@@ -3940,6 +4105,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Connection closed by the server"
+          }
+        }
+      }
+    },
+    "连接建立后按顺序自动发送(各自动补回车)。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sent in order once connected (Return appended to each)."
           }
         }
       }

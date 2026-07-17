@@ -58,6 +58,51 @@ targets:
         DEAD_CODE_STRIPPING: true
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
 
+  # iOS 版:复用 AppKit-free 的 Core(模型/存储/解析/SSH 层),UI 在 BerthiOS/ 重写
+  BerthiOS:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: BerthiOS
+      - path: Berth/Core/Models
+      - path: Berth/Core/Storage
+      - path: Berth/Core/Parsing
+      - path: Berth/Core/SSH/HostSpec.swift
+      - path: Berth/Core/SSH/SSHErrorMapper.swift
+      - path: Berth/Core/SSH/KnownHostsStore.swift
+      - path: Berth/Core/SSH/HostKeyValidation.swift
+      - path: Berth/Core/SSH/OpenSSHFormat.swift
+      - path: Berth/Core/SSH/SSHConnection.swift
+      - path: Berth/Core/SSH/PortForwardService.swift
+      - path: Berth/Core/SSH/ProxyConnector.swift
+      - path: Berth/Core/SSH/SOCKS5.swift
+      - path: Berth/Core/SSH/ServerInfo.swift
+      - path: Berth/Core/Services/KeyStore.swift
+      - path: Berth/Core/Terminal/TerminalTheme.swift
+      - path: Berth/Features/Settings/SettingsKeys.swift
+      - path: Berth/Resources
+    dependencies:
+      - package: Citadel
+      - package: SwiftTerm
+    info:
+      path: BerthiOS/Info.plist
+      properties:
+        CFBundleDisplayName: Berth
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.berthssh.Berth.ios
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: "Apple Development"
+        DEVELOPMENT_TEAM: 99LYH6FNPS
+
   BerthTests:
     type: bundle.unit-test
     platform: macOS

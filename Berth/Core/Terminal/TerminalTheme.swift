@@ -1,7 +1,22 @@
+#if canImport(AppKit)
 import AppKit
+#else
+import UIKit
+/// iOS 上由 UIColor 充当同名角色,主题代码两端共用
+typealias NSColor = UIColor
+#endif
 import Observation
 import SwiftTerm
 import SwiftUI
+
+/// NSColor/UIColor → SwiftUI.Color(两平台初始化器名不同)
+private func swiftUIColor(_ color: NSColor) -> SwiftUI.Color {
+    #if canImport(AppKit)
+    SwiftUI.Color(nsColor: color)
+    #else
+    SwiftUI.Color(uiColor: color)
+    #endif
+}
 
 /// 配色主题:既驱动终端 ANSI 配色,也驱动整个窗口的界面(侧栏/列表/标签)配色,
 /// 让全局观感统一。内置若干套,深色为默认;iTerm2 导入在二期。
@@ -27,24 +42,26 @@ struct TerminalTheme: Identifiable, Equatable, Codable {
     var foregroundNSColor: NSColor { NSColor(hex: foreground) }
 
     // MARK: 界面色(由背景/强调色派生,保证与终端同源)
-    var accentColor: SwiftUI.Color { SwiftUI.Color(nsColor: NSColor(hex: accent)) }
+    var accentColor: SwiftUI.Color { swiftUIColor(NSColor(hex: accent)) }
     /// 窗口/终端区底色
-    var chromeBackground: SwiftUI.Color { SwiftUI.Color(nsColor: backgroundNSColor) }
+    var chromeBackground: SwiftUI.Color { swiftUIColor(backgroundNSColor) }
     /// 侧栏底色:深色比背景更深一档、浅色略压灰,拉开与终端区的层次
-    var sidebarBackground: SwiftUI.Color { SwiftUI.Color(nsColor: backgroundNSColor.mixed(with: .black, ratio: isDark ? 0.35 : 0.05)) }
+    var sidebarBackground: SwiftUI.Color { swiftUIColor(backgroundNSColor.mixed(with: .black, ratio: isDark ? 0.35 : 0.05)) }
     /// 主机列表/面板底色:比背景略亮
-    var panelBackground: SwiftUI.Color { SwiftUI.Color(nsColor: backgroundNSColor.mixed(with: isDark ? .white : .black, ratio: 0.03)) }
+    var panelBackground: SwiftUI.Color { swiftUIColor(backgroundNSColor.mixed(with: isDark ? .white : .black, ratio: 0.03)) }
     /// 悬浮/标签条材质底色
-    var elevatedBackground: SwiftUI.Color { SwiftUI.Color(nsColor: backgroundNSColor.mixed(with: isDark ? .white : .black, ratio: 0.06)) }
+    var elevatedBackground: SwiftUI.Color { swiftUIColor(backgroundNSColor.mixed(with: isDark ? .white : .black, ratio: 0.06)) }
     /// 细分隔线/描边
-    var borderColor: SwiftUI.Color { SwiftUI.Color(nsColor: (isDark ? NSColor.white : NSColor.black).withAlphaComponent(0.08)) }
+    var borderColor: SwiftUI.Color { swiftUIColor((isDark ? NSColor.white : NSColor.black).withAlphaComponent(0.08)) }
     /// 次要文字
-    var secondaryText: SwiftUI.Color { SwiftUI.Color(nsColor: foregroundNSColor.withAlphaComponent(0.55)) }
+    var secondaryText: SwiftUI.Color { swiftUIColor(foregroundNSColor.withAlphaComponent(0.55)) }
     /// 强调色低透明填充(选中行)
     var accentSoft: SwiftUI.Color { accentColor.opacity(0.16) }
 
+    #if os(macOS)
     /// 窗口应使用的外观(强制,以免深色主题在浅色系统里露出灰边)
     var appearanceName: NSAppearance.Name { isDark ? .darkAqua : .aqua }
+    #endif
 }
 
 extension TerminalTheme {
@@ -393,22 +410,28 @@ final class ThemeStore {
         guard let theme = TerminalTheme.builtIn.first(where: { $0.id == id }) else { return }
         current = theme
         UserDefaults.standard.set(theme.id, forKey: SettingsKeys.terminalTheme)
+        #if os(macOS)
         for session in SessionManager.shared.sessions {
             apply(to: session.terminalView)
         }
         applyWindowChrome()
+        #endif
     }
 
+    #if os(macOS)
     /// 强制整个 app(含工具栏/标题栏/未着色区域)跟随主题深浅,不受系统浅色模式影响
     func applyWindowChrome() {
         NSApplication.shared.appearance = NSAppearance(named: current.appearanceName)
     }
+    #endif
 
     func apply(to view: SwiftTerm.TerminalView) {
         view.nativeBackgroundColor = current.backgroundNSColor
         view.nativeForegroundColor = current.foregroundNSColor
         view.caretColor = NSColor(hex: current.cursor)
+        #if os(macOS)
         view.selectedTextBackgroundColor = NSColor(hex: current.selection)
+        #endif
         view.installColors(current.ansi.map { SwiftTerm.Color(hex: $0) })
     }
 }
@@ -418,20 +441,32 @@ final class ThemeStore {
 extension NSColor {
     convenience init(hex: String) {
         let (r, g, b) = hexComponents(hex)
+        #if canImport(AppKit)
         self.init(srgbRed: CGFloat(r) / 255, green: CGFloat(g) / 255, blue: CGFloat(b) / 255, alpha: 1)
+        #else
+        self.init(red: CGFloat(r) / 255, green: CGFloat(g) / 255, blue: CGFloat(b) / 255, alpha: 1)
+        #endif
     }
 
     /// 在 sRGB 空间与另一色按比例混合(0 = 自身,1 = other)
     func mixed(with other: NSColor, ratio: CGFloat) -> NSColor {
+        let t = max(0, min(1, ratio))
+        #if canImport(AppKit)
         let a = usingColorSpace(.sRGB) ?? self
         let b = other.usingColorSpace(.sRGB) ?? other
-        let t = max(0, min(1, ratio))
         return NSColor(
             srgbRed: a.redComponent + (b.redComponent - a.redComponent) * t,
             green: a.greenComponent + (b.greenComponent - a.greenComponent) * t,
             blue: a.blueComponent + (b.blueComponent - a.blueComponent) * t,
             alpha: 1
         )
+        #else
+        var ar: CGFloat = 0, ag: CGFloat = 0, ab: CGFloat = 0, aa: CGFloat = 0
+        var br: CGFloat = 0, bg: CGFloat = 0, bb: CGFloat = 0, ba: CGFloat = 0
+        getRed(&ar, green: &ag, blue: &ab, alpha: &aa)
+        other.getRed(&br, green: &bg, blue: &bb, alpha: &ba)
+        return NSColor(red: ar + (br - ar) * t, green: ag + (bg - ag) * t, blue: ab + (bb - ab) * t, alpha: 1)
+        #endif
     }
 }
 
