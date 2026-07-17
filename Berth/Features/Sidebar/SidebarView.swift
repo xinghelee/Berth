@@ -337,6 +337,7 @@ private struct HostRow: View {
 
     var body: some View {
         HStack(spacing: 8) {
+            OSBadge(osName: host.osName)
             RoundedRectangle(cornerRadius: 1.5)
                 .fill(dotColor)
                 .frame(width: 3, height: 26)
@@ -349,7 +350,6 @@ private struct HostRow: View {
                     }(),
                     radius: 3
                 )
-            OSBadge(osName: host.osName)
             VStack(alignment: .leading, spacing: 2) {
                 Text(host.label)
                     .font(.system(size: 13.5, weight: .medium))
