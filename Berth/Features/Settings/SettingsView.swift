@@ -18,6 +18,7 @@ struct SettingsView: View {
     @AppStorage(SettingsKeys.restoreWorkingDir) private var restoreWorkingDir = true
     @State private var themeStore = ThemeStore.shared
     @State private var dataMessage: String?
+    @State private var showAcknowledgements = false
     @Environment(\.modelContext) private var modelContext
 
     var body: some View {
@@ -83,8 +84,19 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+            Section("关于") {
+                if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
+                    LabeledContent("版本", value: version)
+                }
+                LabeledContent("第三方开源库") {
+                    Button("查看协议…") { showAcknowledgements = true }
+                }
+            }
         }
         .formStyle(.grouped)
+        .sheet(isPresented: $showAcknowledgements) {
+            AcknowledgementsView()
+        }
         // 跟随主题:系统表单底色会被壁纸渗色(desktop tinting),与主窗口主题不搭
         .scrollContentBackground(.hidden)
         .background(themeStore.current.panelBackground)
