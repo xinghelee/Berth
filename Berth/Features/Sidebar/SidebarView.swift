@@ -331,7 +331,7 @@ private struct HostRow: View {
         switch sessionManager.liveState(for: host.id) {
         case .connected: return .green
         case .connecting: return .yellow
-        case .none: return host.tagColor == .none ? Color.gray.opacity(0.4) : host.tagColor.color
+        case .none: return host.tagColor == .none ? Color.gray.opacity(0.18) : host.tagColor.color.opacity(0.45)
         }
     }
 
