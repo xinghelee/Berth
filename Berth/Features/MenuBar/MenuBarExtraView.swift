@@ -16,7 +16,8 @@ struct MenuBarExtraView: View {
                         NSApp.activate(ignoringOtherApps: true)
                         sessionManager.focusPane(session.id)
                     } label: {
-                        Label(session.spec.label, systemImage: stateSymbol(session))
+                        // 菜单会把模板符号强制单色,彩色状态点用 emoji
+                        Text("\(stateDot(session)) \(session.spec.label)")
                     }
                 }
             }
@@ -53,11 +54,11 @@ struct MenuBarExtraView: View {
         }
     }
 
-    private func stateSymbol(_ session: TerminalSession) -> String {
+    private func stateDot(_ session: TerminalSession) -> String {
         switch session.state {
-        case .connected: return "circle.fill"
-        case .connecting: return "circle.dotted"
-        case .idle, .disconnected: return "circle"
+        case .connected: return "🟢"
+        case .connecting: return "🟡"
+        case .idle, .disconnected: return "⚪️"
         }
     }
 
