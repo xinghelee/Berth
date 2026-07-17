@@ -1,0 +1,18 @@
+{
+  "name": "berth-site",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Berth 官网 + 许可后端",
+  "type": "module",
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.7",
+    "hono": "^4.6.14"
+  }
+}

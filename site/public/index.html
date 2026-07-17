@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Berth — Mac 原生 SSH 客户端</title>
+<meta name="description" content="Berth 是为 macOS 打造的原生 SSH 客户端:Swift 编写,Metal 渲染,连接复用与无限分屏。密码只进 Keychain,数据全在本地。">
+<link rel="icon" type="image/svg+xml" href="/assets/icon.svg">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<nav class="nav">
+  <a class="nav-brand" href="/">
+    <img src="/assets/icon.svg" alt="" width="28" height="28">
+    <span class="brand-name">Berth</span>
+    <span class="brand-cn">泊</span>
+  </a>
+  <div class="nav-links">
+    <a href="#features">功能</a>
+    <a href="#security">安全</a>
+    <a href="#pricing">定价</a>
+    <a href="#faq">常见问题</a>
+  </div>
+  <a class="btn btn-ghost nav-cta" href="/download" data-download>下载</a>
+</nav>
+
+<header class="hero">
+  <div class="hero-copy">
+    <p class="eyebrow">MAC 原生 SSH 客户端 · macOS 15+</p>
+    <h1>每一次连接,<br>稳稳靠泊<span class="cursor" aria-hidden="true"></span></h1>
+    <p class="hero-sub">
+      Swift 写就的原生体验:Metal 渲染、连接复用、无限分屏。<br>
+      密码与私钥只进 Keychain,任何数据不离开你的 Mac。
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="/download" data-download>下载 Berth</a>
+      <a class="btn btn-ghost" href="#pricing">了解定价</a>
+    </div>
+    <p class="hero-note" data-release-note>Apple Silicon &amp; Intel · Developer ID 签名与公证</p>
+  </div>
+
+  <!-- 签名元素:还原 Berth 真实窗口(标题栏胶囊 / 标签 / 分屏 / 状态栏) -->
+  <div class="app-window" role="img" aria-label="Berth 应用窗口演示:连接服务器并执行命令">
+    <div class="titlebar">
+      <div class="traffic"><i></i><i></i><i></i></div>
+      <div class="session-capsule">
+        <span class="dot dot-green"></span>
+        daowei-prod <span class="capsule-sub">zc@35.221.177.137</span>
+      </div>
+      <div class="tab-chips">
+        <span class="chip chip-active">daowei-prod</span>
+        <span class="chip">pve</span>
+        <span class="chip chip-plus">+</span>
+      </div>
+    </div>
+    <div class="panes">
+      <div class="pane pane-main">
+        <div class="term" id="term-live"></div>
+      </div>
+      <div class="pane pane-side" aria-hidden="true">
+        <div class="term term-dim">
+<span class="t-line"><span class="t-prompt">zc@pve:~ ❯</span> htop</span>
+<span class="t-line t-muted">CPU [|||·······] 31%</span>
+<span class="t-line t-muted">Mem [||||||····] 3.1G</span>
+<span class="t-line t-muted">Load 0.42 0.38 0.31</span>
+<span class="t-line t-muted">&nbsp;</span>
+<span class="t-line t-muted"> PID USER CPU% CMD</span>
+<span class="t-line t-muted"> 812 root  2.1 dockerd</span>
+<span class="t-line t-muted">1204 zc    1.4 node</span>
+        </div>
+      </div>
+    </div>
+    <div class="statusbar">
+      <span>CPU 12%</span><span>内存 3.1G</span><span>磁盘 41%</span>
+      <span class="statusbar-right"><span class="ok-mark">✓ 0</span> 09:41</span>
+    </div>
+  </div>
+</header>
+
+<div class="rope-divider" aria-hidden="true"></div>
+
+<main>
+<section class="features" id="features">
+  <p class="eyebrow">FEATURES</p>
+  <h2>终端老手需要的,都在原生里</h2>
+  <div class="feature-grid">
+    <article class="card">
+      <h3>连接复用与无限分屏</h3>
+      <p>⌘T 新标签、⌘D 分屏共享同一条 SSH 通道,不再重新握手。分屏可无限嵌套,<code>exit</code> 即收起。</p>
+    </article>
+    <article class="card">
+      <h3>跳板机与端口转发</h3>
+      <p>链式跳板一路到底;本地 / 远程 / 动态 SOCKS5 转发,支持 HTTP 与 SOCKS5 代理出站。</p>
+    </article>
+    <article class="card">
+      <h3>密钥与 Touch ID</h3>
+      <p>生成、导入密钥,使用私钥前 Touch ID 验证。known_hosts 指纹确认,变更即警告。</p>
+    </article>
+    <article class="card">
+      <h3>SFTP 文件面板</h3>
+      <p>复用会话连接,拖拽上传下载。远端文件用本地编辑器打开,保存自动回传;chmod、书签、文本预览。</p>
+    </article>
+    <article class="card">
+      <h3>断线不慌</h3>
+      <p>指数退避自动重连,重连后回到原工作目录(OSC 7);命令退出码直接标在终端里(OSC 133)。</p>
+    </article>
+    <article class="card">
+      <h3>生产环境警戒</h3>
+      <p>按主机警戒配色,一眼分清测试与生产。广播输入同时操作多台;Snippets 片段库带 {{变量}}。</p>
+    </article>
+  </div>
+</section>
+
+<section class="shortcuts">
+  <p class="eyebrow">KEYBOARD FIRST</p>
+  <h2>手不离键盘</h2>
+  <div class="kbd-strip">
+    <span><kbd>⌘K</kbd> 快速连接</span>
+    <span><kbd>⌘P</kbd> 命令面板</span>
+    <span><kbd>⌘D</kbd> 分屏</span>
+    <span><kbd>⌘⌥B</kbd> 广播输入</span>
+    <span><kbd>⌘I</kbd> 服务器信息</span>
+    <span><kbd>⌘F</kbd> 终端搜索</span>
+  </div>
+  <p class="shortcuts-note">Ctrl 组合键全部透传给 shell,你的 Emacs / readline 习惯原样保留。</p>
+</section>
+
+<section class="security" id="security">
+  <p class="eyebrow">SECURITY</p>
+  <h2>三条底线,写进架构</h2>
+  <ul class="security-list">
+    <li>
+      <h3>机密只进 Keychain</h3>
+      <p>密码、passphrase、私钥存 macOS Keychain,任何情况不落盘明文。JSON 备份只含主机结构,不含机密。</p>
+    </li>
+    <li>
+      <h3>数据全在本地</h3>
+      <p>没有账号,没有云端。主机列表在你的 Mac 上,ssh_config 双向同步,随时整体带走。</p>
+    </li>
+    <li>
+      <h3>签名与公证</h3>
+      <p>Developer ID 签名 + Apple 公证分发,不上 App Store——沙盒会挡住 ~/.ssh,我们不做阉割版。</p>
+    </li>
+  </ul>
+</section>
+
+<section class="pricing" id="pricing">
+  <p class="eyebrow">PRICING</p>
+  <h2>一次买断,不订阅</h2>
+  <div class="price-card">
+    <p class="price-line"><span class="price-soon">早鸟价即将公布</span></p>
+    <ul class="price-perks">
+      <li>一台 Mac 的所有功能,永久使用</li>
+      <li>大版本内免费更新</li>
+      <li>支付开放前下载即可完整试用</li>
+    </ul>
+    <form class="waitlist" id="waitlist">
+      <label class="waitlist-label" for="wl-email">留下邮箱,支付开放与新版本发布时通知你:</label>
+      <div class="waitlist-row">
+        <input id="wl-email" type="email" name="email" required maxlength="254"
+               placeholder="you@example.com" autocomplete="email">
+        <button class="btn btn-primary" type="submit">加入通知</button>
+      </div>
+      <p class="waitlist-msg" role="status" aria-live="polite"></p>
+    </form>
+  </div>
+</section>
+
+<section class="faq" id="faq">
+  <p class="eyebrow">FAQ</p>
+  <h2>常见问题</h2>
+  <dl class="faq-list">
+    <div>
+      <dt>支持哪些系统?</dt>
+      <dd>macOS 15 Sequoia 及以上,Apple Silicon 与 Intel 均支持。</dd>
+    </div>
+    <div>
+      <dt>为什么不上 App Store?</dt>
+      <dd>App Store 沙盒无法读取 ~/.ssh 目录,做不了 ssh_config 同步和密钥导入。Berth 走 Developer ID 签名 + Apple 公证的 DMG 分发,安全性同样有保障。</dd>
+    </div>
+    <div>
+      <dt>我的密码存在哪里?</dt>
+      <dd>只存 macOS Keychain,由系统加密管理。Berth 没有服务器,也就无从上传。</dd>
+    </div>
+    <div>
+      <dt>会有多设备同步吗?</dt>
+      <dd>CloudKit 同步在路线图上——依然不经过我们的服务器,数据只在你的 iCloud 里。</dd>
+    </div>
+  </dl>
+</section>
+</main>
+
+<footer class="footer">
+  <div class="footer-brand">
+    <img src="/assets/icon.svg" alt="" width="22" height="22">
+    <span>Berth · 系好每一条连接</span>
+  </div>
+  <div class="footer-links">
+    <a href="mailto:hi@xinghelee.com">联系</a>
+    <a href="#faq">常见问题</a>
+  </div>
+  <p class="footer-fine">© 2026 Berth. macOS 是 Apple Inc. 的商标。</p>
+</footer>
+
+<script src="/app.js"></script>
+</body>
+</html>
