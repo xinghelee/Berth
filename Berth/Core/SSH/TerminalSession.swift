@@ -283,6 +283,15 @@ final class TerminalSession: Identifiable {
         stdinWriter?.yield(.bytes(Array(text.utf8)))
     }
 
+    /// 连接后异步探测系统名并回写 Host(驱动侧栏系统徽章),失败静默
+    private func captureServerOS() {
+        Task { [weak self] in
+            guard let self, let info = await self.fetchServerInfo() else { return }
+            let os = info.os.isEmpty ? info.kernel : info.os
+            SessionManager.shared.recordServerOS(hostID: self.spec.hostID, os: os)
+        }
+    }
+
     /// inspector 用:在同一连接上另开通道跑一条命令取服务器信息(不影响 PTY)。
     /// 命令保证 exit 0 且不写 stderr,避免 Citadel executeCommand 抛错。
     func fetchServerInfo() async -> ServerInfo? {
@@ -615,7 +624,10 @@ final class TerminalSession: Identifiable {
                 self.reconnectAttempt = 0
                 self.focusTerminal()
                 // 端口转发绑在连接层:仅拥有者建立,借用会话复用同一连接不重复绑定
-                if !self.isBorrower { self.startPortForwards() }
+                if !self.isBorrower {
+                    self.startPortForwards()
+                    self.captureServerOS()
+                }
             }
 
             // 重连恢复工作目录:先 cd 回上次目录

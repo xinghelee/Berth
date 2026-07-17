@@ -9,6 +9,7 @@ struct BerthApp: App {
     init() {
         // 启动即强制整个 app 跟随主题深浅,避免打开时先闪一下系统浅色
         ThemeStore.shared.applyWindowChrome()
+        SessionManager.shared.modelContainer = container
     }
 
     var body: some Scene {

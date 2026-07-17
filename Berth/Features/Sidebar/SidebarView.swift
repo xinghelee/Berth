@@ -337,14 +337,19 @@ private struct HostRow: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Circle()
+            RoundedRectangle(cornerRadius: 1.5)
                 .fill(dotColor)
-                .frame(width: 7, height: 7)
-                .overlay {
-                    if case .connected = sessionManager.liveState(for: host.id) {
-                        Circle().stroke(Color.green.opacity(0.35), lineWidth: 2.5)
-                    }
-                }
+                .frame(width: 3, height: 26)
+                .shadow(
+                    color: {
+                        if case .connected = sessionManager.liveState(for: host.id) {
+                            return Color.green.opacity(0.6)
+                        }
+                        return .clear
+                    }(),
+                    radius: 3
+                )
+            OSBadge(osName: host.osName)
             VStack(alignment: .leading, spacing: 2) {
                 Text(host.label)
                     .font(.system(size: 13.5, weight: .medium))
@@ -374,6 +379,64 @@ private struct HostRow: View {
         .animation(.easeOut(duration: 0.12), value: hovering)
         .onHover { hovering = $0 }
         .help("\(host.address)\(host.lastConnectedAt.map { String(localized: " · 最近连接 ") + $0.formatted(.relative(presentation: .named)) } ?? "")")
+    }
+}
+
+/// 服务器系统徽章:按探测到的发行版显示品牌色缩写块(自绘,不含商标素材);
+/// macOS 用  符号,未探测/未知显示通用服务器图标。连接一次后自动出现。
+private struct OSBadge: View {
+    let osName: String
+
+    private static let distros: [(needle: String, abbrev: String, hex: String)] = [
+        ("ubuntu", "UB", "#E95420"),
+        ("debian", "DE", "#A81D33"),
+        ("raspbian", "RP", "#C51A4A"),
+        ("alpine", "AL", "#0D597F"),
+        ("centos", "CE", "#932279"),
+        ("fedora", "FE", "#51A2DA"),
+        ("arch", "AR", "#1793D1"),
+        ("manjaro", "MJ", "#35BF5C"),
+        ("rocky", "RK", "#10B981"),
+        ("alma", "AM", "#0F4266"),
+        ("suse", "SU", "#73BA25"),
+        ("red hat", "RH", "#EE0000"),
+        ("rhel", "RH", "#EE0000"),
+        ("amazon", "AZ", "#FF9900"),
+        ("kali", "KA", "#557C94"),
+        ("gentoo", "GE", "#54487A"),
+        ("nixos", "NX", "#5277C3"),
+        ("openwrt", "WR", "#00B5E2"),
+    ]
+
+    var body: some View {
+        let lower = osName.lowercased()
+        if lower.contains("macos") || lower.contains("darwin") {
+            Image(systemName: "apple.logo")
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(.secondary)
+                .frame(width: 18, height: 18)
+                .background(RoundedRectangle(cornerRadius: 5).fill(Color.primary.opacity(0.08)))
+        } else if let distro = Self.distros.first(where: { lower.contains($0.needle) }) {
+            Text(distro.abbrev)
+                .font(.system(size: 8.5, weight: .bold, design: .rounded))
+                .foregroundStyle(.white)
+                .frame(width: 18, height: 18)
+                .background(RoundedRectangle(cornerRadius: 5).fill(Color(nsColor: NSColor(hex: distro.hex))))
+                .help(osName)
+        } else if lower.contains("linux") {
+            Text("LX")
+                .font(.system(size: 8.5, weight: .bold, design: .rounded))
+                .foregroundStyle(.white)
+                .frame(width: 18, height: 18)
+                .background(RoundedRectangle(cornerRadius: 5).fill(Color(nsColor: NSColor(hex: "#F5BF3B"))))
+                .help(osName)
+        } else {
+            Image(systemName: "server.rack")
+                .font(.system(size: 9))
+                .foregroundStyle(.tertiary)
+                .frame(width: 18, height: 18)
+                .background(RoundedRectangle(cornerRadius: 5).fill(Color.primary.opacity(0.06)))
+        }
     }
 }
 

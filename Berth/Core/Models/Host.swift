@@ -52,6 +52,8 @@ final class Host {
     var isProduction: Bool = false
     /// 连接建立后自动执行的命令(每行一条,自动补回车)
     var startupCommands: String = ""
+    /// 连接后探测到的系统名(/etc/os-release PRETTY_NAME),驱动侧栏系统徽章;空 = 未探测
+    var osName: String = ""
     @Relationship(deleteRule: .cascade, inverse: \PortForward.host) var portForwards: [PortForward] = []
 
     init(

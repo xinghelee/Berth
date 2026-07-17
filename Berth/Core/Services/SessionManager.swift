@@ -25,6 +25,21 @@ final class SessionManager {
     var isSFTPVisible = false
     var isSnippetsPanelVisible = false
 
+    /// 由 App 启动时注入,用于连接后回写主机的探测信息(系统名等)
+    @ObservationIgnored var modelContainer: ModelContainer?
+
+    /// 连接成功后记录服务器系统名(侧栏徽章数据源)
+    func recordServerOS(hostID: UUID, os: String) {
+        guard !os.isEmpty, let modelContainer else { return }
+        let context = modelContainer.mainContext
+        let descriptor = FetchDescriptor<Host>(predicate: #Predicate { $0.id == hostID })
+        guard let host = try? context.fetch(descriptor).first else { return }
+        if host.osName != os {
+            host.osName = os
+            try? context.save()
+        }
+    }
+
     var selectedTab: PaneTab? { tabs.first { $0.id == selectedTabID } }
 
     /// 当前聚焦会话
