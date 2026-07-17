@@ -12,7 +12,6 @@ struct CommandPaletteView: View {
     @State private var query = ""
     @State private var selectionIndex = 0
     @State private var themeStore = ThemeStore.shared
-    @FocusState private var isFieldFocused: Bool
 
     private let controller = CommandPaletteController.shared
 
@@ -123,11 +122,15 @@ struct CommandPaletteView: View {
             HStack(spacing: 8) {
                 Image(systemName: "command")
                     .foregroundStyle(.secondary)
-                TextField("搜索命令或主机…", text: $query)
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 16))
-                    .focused($isFieldFocused)
-                    .onSubmit { activate() }
+                PaletteTextField(
+                    text: $query,
+                    placeholder: String(localized: "搜索命令或主机…"),
+                    onMoveUp: { selectionIndex = max(selectionIndex - 1, 0) },
+                    onMoveDown: { selectionIndex = min(selectionIndex + 1, max(rows.count - 1, 0)) },
+                    onSubmit: { activate() },
+                    onCancel: { controller.dismiss() }
+                )
+                .frame(height: 22)
             }
             .padding(14)
 
@@ -159,12 +162,8 @@ struct CommandPaletteView: View {
                 .shadow(color: .black.opacity(0.35), radius: 24, y: 8)
         )
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.primary.opacity(0.1), lineWidth: 1))
-        .onAppear { query = ""; selectionIndex = 0; isFieldFocused = true }
+        .onAppear { query = ""; selectionIndex = 0 }
         .onChange(of: query) { _, _ in selectionIndex = 0 }
-        .onKeyPress(.downArrow) { selectionIndex = min(selectionIndex + 1, max(rows.count - 1, 0)); return .handled }
-        .onKeyPress(.upArrow) { selectionIndex = max(selectionIndex - 1, 0); return .handled }
-        .onKeyPress(.escape) { controller.dismiss(); return .handled }
-        .onExitCommand { controller.dismiss() }
     }
 
     @ViewBuilder
@@ -200,9 +199,9 @@ struct CommandPaletteView: View {
                 Text(sessionManager.selected == nil ? "无终端" : "发送").font(.caption2).foregroundStyle(.tertiary)
             }
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 7)
-        .background(RoundedRectangle(cornerRadius: 7).fill(isSelected ? Color.accentColor.opacity(0.22) : .clear))
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(Capsule().fill(isSelected ? Color.accentColor.opacity(0.22) : .clear))
         .contentShape(Rectangle())
     }
 

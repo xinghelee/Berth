@@ -10,7 +10,6 @@ struct QuickConnectPanel: View {
 
     @State private var query = ""
     @State private var selectionIndex = 0
-    @FocusState private var isFieldFocused: Bool
 
     private let controller = QuickConnectController.shared
 
@@ -59,11 +58,15 @@ struct QuickConnectPanel: View {
             HStack(spacing: 8) {
                 Image(systemName: "bolt.fill")
                     .foregroundStyle(.secondary)
-                TextField("搜索主机,或输入 user@host 直连", text: $query)
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 16))
-                    .focused($isFieldFocused)
-                    .onSubmit { activateSelection() }
+                PaletteTextField(
+                    text: $query,
+                    placeholder: String(localized: "搜索主机,或输入 user@host 直连"),
+                    onMoveUp: { selectionIndex = max(selectionIndex - 1, 0) },
+                    onMoveDown: { selectionIndex = min(selectionIndex + 1, max(rows.count - 1, 0)) },
+                    onSubmit: { activateSelection() },
+                    onCancel: { controller.dismiss() }
+                )
+                .frame(height: 22)
             }
             .padding(14)
 
@@ -98,22 +101,8 @@ struct QuickConnectPanel: View {
         .onAppear {
             query = ""
             selectionIndex = 0
-            isFieldFocused = true
         }
         .onChange(of: query) { _, _ in selectionIndex = 0 }
-        .onKeyPress(.downArrow) {
-            selectionIndex = min(selectionIndex + 1, max(rows.count - 1, 0))
-            return .handled
-        }
-        .onKeyPress(.upArrow) {
-            selectionIndex = max(selectionIndex - 1, 0)
-            return .handled
-        }
-        .onKeyPress(.escape) {
-            controller.dismiss()
-            return .handled
-        }
-        .onExitCommand { controller.dismiss() }
     }
 
     @ViewBuilder
@@ -150,10 +139,10 @@ struct QuickConnectPanel: View {
                     .foregroundStyle(.tertiary)
             }
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 7)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
         .background(
-            RoundedRectangle(cornerRadius: 7)
+            Capsule()
                 .fill(isSelected ? Color.accentColor.opacity(0.22) : .clear)
         )
         .contentShape(Rectangle())
