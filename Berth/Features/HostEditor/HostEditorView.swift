@@ -36,6 +36,7 @@ struct HostEditorView: View {
     @State private var isProduction = false
     @State private var startupCommands = ""
     @State private var note = ""
+    @State private var macAddress = ""
     @State private var validationMessage: String?
     @State private var quickFill = ""
 
@@ -176,6 +177,8 @@ struct HostEditorView: View {
                                 .font(.caption).foregroundStyle(.secondary)
                         }
                     }
+                    TextField("MAC 地址(Wake-on-LAN)", text: $macAddress, prompt: Text("AA:BB:CC:11:22:33").foregroundStyle(.quaternary))
+                        .autocorrectionDisabled()
                     TextField("备注", text: $note, axis: .vertical)
                         .lineLimit(2...4)
                 }
@@ -250,6 +253,7 @@ struct HostEditorView: View {
         isProduction = host.isProduction
         startupCommands = host.startupCommands
         note = host.note
+        macAddress = host.macAddress
     }
 
     private var forwards: [PortForward] {
@@ -370,6 +374,7 @@ struct HostEditorView: View {
         target.isProduction = isProduction
         target.startupCommands = startupCommands
         target.note = note
+        target.macAddress = macAddress.trimmingCharacters(in: .whitespaces)
 
         do {
             if authMethod == .password {

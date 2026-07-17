@@ -54,6 +54,8 @@ final class Host {
     var startupCommands: String = ""
     /// 连接后探测到的系统名(/etc/os-release PRETTY_NAME),驱动侧栏系统徽章;空 = 未探测
     var osName: String = ""
+    /// MAC 地址(用于 Wake-on-LAN,局域网唤醒);空 = 未设置
+    var macAddress: String = ""
     @Relationship(deleteRule: .cascade, inverse: \PortForward.host) var portForwards: [PortForward] = []
 
     init(

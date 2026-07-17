@@ -200,6 +200,17 @@
       },
       "shouldTranslate": false
     },
+    "AA:BB:CC:11:22:33": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AA:BB:CC:11:22:33"
+          }
+        }
+      },
+      "shouldTranslate": false
+    },
     "Aa": {
       "localizations": {
         "en": {
@@ -340,6 +351,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Keychain operation failed: %@"
+          }
+        }
+      }
+    },
+    "MAC 地址(Wake-on-LAN)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MAC address (Wake-on-LAN)"
+          }
+        }
+      }
+    },
+    "MAC 地址格式不正确(应为 6 组十六进制,如 AA:BB:CC:11:22:33)。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invalid MAC address (expected six hex groups, e.g. AA:BB:CC:11:22:33)."
           }
         }
       }
@@ -3886,6 +3917,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Edit Snippet"
+          }
+        }
+      }
+    },
+    "网络唤醒(Wake-on-LAN)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wake on LAN"
           }
         }
       }

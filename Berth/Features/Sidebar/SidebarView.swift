@@ -181,6 +181,9 @@ struct SidebarView: View {
         Button("连接") { connect(host) }
         Button("复制 IP") { copyToPasteboard(host.hostname) }
         Button("复制 ssh 命令") { copyToPasteboard(sshCommand(for: host)) }
+        if !host.macAddress.isEmpty {
+            Button("网络唤醒(Wake-on-LAN)") { wake(host) }
+        }
         Divider()
         if host.source == .sshConfig {
             Button("转为托管主机…") { convertToManaged(host) }
@@ -255,6 +258,15 @@ struct SidebarView: View {
         selectedHostID = host.id
         host.lastConnectedAt = Date()
         sessionManager.open(spec: HostSpec.resolve(host, in: allHosts))
+    }
+
+    /// 网络唤醒:向本机所在子网 + 全局广播发 magic packet
+    private func wake(_ host: Host) {
+        var broadcasts = ["255.255.255.255"]
+        if let subnet = WakeOnLAN.subnetBroadcast(for: host.hostname) {
+            broadcasts.insert(subnet, at: 0)
+        }
+        try? WakeOnLAN.wake(mac: host.macAddress, broadcasts: broadcasts)
     }
 
     /// 把直连主机(无跳板/无代理)喂给可达性探测
