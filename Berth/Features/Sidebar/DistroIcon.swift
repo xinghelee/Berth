@@ -44,42 +44,69 @@ enum Distro: CaseIterable {
         return table.first { lower.contains($0.0) }?.1
     }
 
-    var color: Color {
+    var baseNSColor: NSColor {
         switch self {
-        case .ubuntu: return Color(nsColor: NSColor(hex: "#E95420"))
-        case .debian: return Color(nsColor: NSColor(hex: "#A81D33"))
-        case .alpine: return Color(nsColor: NSColor(hex: "#0D597F"))
-        case .arch: return Color(nsColor: NSColor(hex: "#1793D1"))
-        case .manjaro: return Color(nsColor: NSColor(hex: "#35BF5C"))
-        case .centos: return Color(nsColor: NSColor(hex: "#932279"))
-        case .fedora: return Color(nsColor: NSColor(hex: "#51A2DA"))
-        case .rhel: return Color(nsColor: NSColor(hex: "#EE0000"))
-        case .rocky: return Color(nsColor: NSColor(hex: "#10B981"))
-        case .alma: return Color(nsColor: NSColor(hex: "#2C4A78"))
-        case .suse: return Color(nsColor: NSColor(hex: "#73BA25"))
-        case .amazon: return Color(nsColor: NSColor(hex: "#FF9900"))
-        case .kali: return Color(nsColor: NSColor(hex: "#557C94"))
-        case .gentoo: return Color(nsColor: NSColor(hex: "#54487A"))
-        case .nixos: return Color(nsColor: NSColor(hex: "#5277C3"))
-        case .openwrt: return Color(nsColor: NSColor(hex: "#00B5E2"))
-        case .raspbian: return Color(nsColor: NSColor(hex: "#C51A4A"))
-        case .tux: return Color(nsColor: NSColor(hex: "#3A3F4A"))
+        case .ubuntu: return NSColor(hex: "#E95420")
+        case .debian: return NSColor(hex: "#A81D33")
+        case .alpine: return NSColor(hex: "#0D597F")
+        case .arch: return NSColor(hex: "#1793D1")
+        case .manjaro: return NSColor(hex: "#35BF5C")
+        case .centos: return NSColor(hex: "#932279")
+        case .fedora: return NSColor(hex: "#51A2DA")
+        case .rhel: return NSColor(hex: "#E93A3A")
+        case .rocky: return NSColor(hex: "#10B981")
+        case .alma: return NSColor(hex: "#2C4A78")
+        case .suse: return NSColor(hex: "#73BA25")
+        case .amazon: return NSColor(hex: "#FF9900")
+        case .kali: return NSColor(hex: "#557C94")
+        case .gentoo: return NSColor(hex: "#54487A")
+        case .nixos: return NSColor(hex: "#5277C3")
+        case .openwrt: return NSColor(hex: "#00B5E2")
+        case .raspbian: return NSColor(hex: "#C51A4A")
+        case .tux: return NSColor(hex: "#3A3F4A")
         }
     }
+
+    var color: Color { Color(nsColor: baseNSColor) }
 }
 
-/// 单个徽章:色块 + Canvas 矢量白标
+/// 单个徽章:品牌色渐变底块 + 高光描边 + Canvas 矢量白标(带微投影)
 struct DistroIcon: View {
     let distro: Distro
     var size: CGFloat = 18
 
     var body: some View {
+        let radius = size * 0.28
+        let top = Color(nsColor: distro.baseNSColor.mixed(with: .white, ratio: 0.16))
+        let bottom = Color(nsColor: distro.baseNSColor.mixed(with: .black, ratio: 0.18))
         Canvas { context, canvasSize in
             let rect = CGRect(origin: .zero, size: canvasSize)
+            // 图形微投影,增加层次
+            context.addFilter(.shadow(
+                color: .black.opacity(0.28),
+                radius: canvasSize.width * 0.035,
+                x: 0,
+                y: canvasSize.width * 0.03
+            ))
             DistroIcon.draw(distro, in: rect, context: &context)
         }
         .frame(width: size, height: size)
-        .background(RoundedRectangle(cornerRadius: size * 0.28).fill(distro.color))
+        .background(
+            RoundedRectangle(cornerRadius: radius)
+                .fill(LinearGradient(colors: [top, bottom], startPoint: .top, endPoint: .bottom))
+        )
+        .overlay(
+            // 顶亮底暗的一圈内描边,模拟打光
+            RoundedRectangle(cornerRadius: radius)
+                .strokeBorder(
+                    LinearGradient(
+                        colors: [.white.opacity(0.32), .white.opacity(0.04)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    ),
+                    lineWidth: max(0.5, size / 30)
+                )
+        )
     }
 
     // MARK: - 绘制(单位坐标 0-1,白色图形)
@@ -235,13 +262,16 @@ struct DistroIcon: View {
             context.fill(circle(0.5, 0.5, 0.08), with: white)
 
         case .suse:
-            // 变色龙曲线 + 眼点
-            var wave = Path()
-            wave.move(to: point(0.14, 0.62))
-            wave.addCurve(to: point(0.52, 0.5), control1: point(0.26, 0.78), control2: point(0.4, 0.42))
-            wave.addCurve(to: point(0.86, 0.42), control1: point(0.64, 0.58), control2: point(0.76, 0.3))
-            stroke(wave, 0.11)
-            context.fill(circle(0.78, 0.36, 0.05), with: white)
+            // 变色龙:圆头(镂空眼)+ 卷尾曲线
+            context.fill(circle(0.7, 0.36, 0.12), with: white)
+            var tail = Path()
+            tail.move(to: point(0.63, 0.46))
+            tail.addQuadCurve(to: point(0.4, 0.54), control: point(0.52, 0.68))
+            tail.addQuadCurve(to: point(0.16, 0.6), control: point(0.28, 0.4))
+            stroke(tail, 0.1)
+            context.blendMode = .destinationOut
+            context.fill(circle(0.73, 0.33, 0.04), with: .color(.black))
+            context.blendMode = .normal
 
         case .amazon:
             // 立方体线框(等距)
@@ -271,11 +301,11 @@ struct DistroIcon: View {
             stroke(glyph, 0.11)
 
         case .gentoo:
-            // 卵石 G:月牙开口 + 内点
+            // 勾玉 G:右下开口的月牙 + 上部内点
             var pebble = Path()
-            pebble.addArc(center: point(0.5, 0.5), radius: 0.32 * rect.width, startAngle: .degrees(300), endAngle: .degrees(210), clockwise: false)
-            stroke(pebble, 0.12)
-            context.fill(circle(0.56, 0.42, 0.07), with: white)
+            pebble.addArc(center: point(0.5, 0.5), radius: 0.3 * rect.width, startAngle: .degrees(320), endAngle: .degrees(240), clockwise: false)
+            stroke(pebble, 0.13)
+            context.fill(circle(0.58, 0.4, 0.075), with: white)
 
         case .nixos:
             // 六向雪花(短臂折线)
@@ -319,24 +349,33 @@ struct DistroIcon: View {
             context.fill(leaf2, with: white)
 
         case .tux:
-            // 企鹅剪影:头 + 蛋身,肚皮镂空
-            context.fill(circle(0.5, 0.28, 0.16), with: white)
-            var body = Path()
-            body.addEllipse(in: CGRect(
-                x: rect.minX + 0.24 * rect.width,
-                y: rect.minY + 0.3 * rect.height,
-                width: 0.52 * rect.width,
-                height: 0.58 * rect.height
+            // 企鹅:头身一体剪影,肚皮向下开口镂空,双眼镂空
+            var silhouette = Path()
+            silhouette.addEllipse(in: CGRect(
+                x: rect.minX + 0.34 * rect.width,
+                y: rect.minY + 0.1 * rect.height,
+                width: 0.32 * rect.width,
+                height: 0.32 * rect.height
             ))
-            context.fill(body, with: white)
+            silhouette.addEllipse(in: CGRect(
+                x: rect.minX + 0.22 * rect.width,
+                y: rect.minY + 0.28 * rect.height,
+                width: 0.56 * rect.width,
+                height: 0.64 * rect.height
+            ))
+            context.fill(silhouette, with: white)
+            context.blendMode = .destinationOut
             var belly = Path()
             belly.addEllipse(in: CGRect(
                 x: rect.minX + 0.36 * rect.width,
-                y: rect.minY + 0.5 * rect.height,
+                y: rect.minY + 0.54 * rect.height,
                 width: 0.28 * rect.width,
-                height: 0.32 * rect.height
+                height: 0.44 * rect.height
             ))
-            context.fill(belly, with: .color(Distro.tux.color))
+            context.fill(belly, with: .color(.black))
+            context.fill(circle(0.45, 0.23, 0.035), with: .color(.black))
+            context.fill(circle(0.55, 0.23, 0.035), with: .color(.black))
+            context.blendMode = .normal
         }
     }
 }
