@@ -2530,6 +2530,16 @@
         }
       }
     },
+    "探测主机是否在线(侧栏状态条着色)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Probe hosts for reachability (tints sidebar status bars)"
+          }
+        }
+      }
+    },
     "搜索主机": {
       "localizations": {
         "en": {
@@ -2950,12 +2960,12 @@
         }
       }
     },
-    "本地 %@:%lld → %@:%lld": {
+    "本地 %@:%@ → %@:%@": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Local %@:%lld → %@:%lld"
+            "value": "Local %@:%@ → %@:%@"
           }
         }
       }
@@ -3130,22 +3140,22 @@
         }
       }
     },
-    "正在连接 %@:%lld…": {
+    "正在连接 %@:%@…": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Connecting to %@:%lld…"
+            "value": "Connecting to %@:%@…"
           }
         }
       }
     },
-    "正在连接跳板机 %@:%lld…": {
+    "正在连接跳板机 %@:%@…": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Connecting to jump host %@:%lld…"
+            "value": "Connecting to jump host %@:%@…"
           }
         }
       }
@@ -3156,6 +3166,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Command highlighting is enabled on this host"
+          }
+        }
+      }
+    },
+    "每 30 秒对直连主机做一次 TCP 测活;跳板机/代理主机不探测。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TCP-probes direct hosts every 30s; jump-host and proxy hosts are skipped."
           }
         }
       }
@@ -3780,22 +3800,22 @@
         }
       }
     },
-    "经代理 %@:%lld 连接 %@:%lld…": {
+    "经代理 %@:%@ 连接 %@:%@…": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Via proxy %@:%lld, connecting to %@:%lld…"
+            "value": "Via proxy %@:%@, connecting to %@:%@…"
           }
         }
       }
     },
-    "经跳板机 → %@:%lld…": {
+    "经跳板机 → %@:%@…": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Via jump host → %@:%lld…"
+            "value": "Via jump host → %@:%@…"
           }
         }
       }
@@ -3970,12 +3990,12 @@
         }
       }
     },
-    "该主机已存在:「%@」(%@@%@:%lld),不能重复添加。": {
+    "该主机已存在:「%@」(%@@%@:%@),不能重复添加。": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "This host already exists: “%@” (%@@%@:%lld). It was not added again."
+            "value": "This host already exists: “%@” (%@@%@:%@). It was not added again."
           }
         }
       }
@@ -4200,12 +4220,12 @@
         }
       }
     },
-    "运行中 · 端口 %lld": {
+    "运行中 · 端口 %@": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Running · port %lld"
+            "value": "Running · port %@"
           }
         }
       }
@@ -4250,12 +4270,12 @@
         }
       }
     },
-    "远程 %@:%lld → %@:%lld": {
+    "远程 %@:%@ → %@:%@": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Remote %@:%lld → %@:%lld"
+            "value": "Remote %@:%@ → %@:%@"
           }
         }
       }
@@ -4270,12 +4290,12 @@
         }
       }
     },
-    "远端 %@:%lld → %@:%lld": {
+    "远端 %@:%@ → %@:%@": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Remote %@:%lld → %@:%lld"
+            "value": "Remote %@:%@ → %@:%@"
           }
         }
       }
@@ -4290,22 +4310,22 @@
         }
       }
     },
-    "连不上 %@:%lld:连接被拒绝,检查端口号和 sshd 是否在运行。": {
+    "连不上 %@:%@:连接被拒绝,检查端口号和 sshd 是否在运行。": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Can't reach %@:%lld — connection refused. Check the port and whether sshd is running."
+            "value": "Can't reach %@:%@ — connection refused. Check the port and whether sshd is running."
           }
         }
       }
     },
-    "连不上 %@:%lld:连接超时,检查地址、防火墙或网络。": {
+    "连不上 %@:%@:连接超时,检查地址、防火墙或网络。": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Can't reach %@:%lld — connection timed out. Check the address, firewall or network."
+            "value": "Can't reach %@:%@ — connection timed out. Check the address, firewall or network."
           }
         }
       }

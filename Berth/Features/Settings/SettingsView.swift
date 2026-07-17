@@ -18,6 +18,7 @@ struct SettingsView: View {
     @AppStorage(SettingsKeys.restoreWorkingDir) private var restoreWorkingDir = true
     @AppStorage(SettingsKeys.appLanguage) private var appLanguage = "system"
     @AppStorage(SettingsKeys.menuBarExtra) private var menuBarExtraEnabled = true
+    @AppStorage(SettingsKeys.probeReachability) private var probeReachability = false
     @State private var themeStore = ThemeStore.shared
     @State private var dataMessage: String?
     @State private var showAcknowledgements = false
@@ -89,6 +90,11 @@ struct SettingsView: View {
             }
             Section("通用") {
                 Toggle("在菜单栏显示图标(会话切换 / 快速连接)", isOn: $menuBarExtraEnabled)
+                Toggle("探测主机是否在线(侧栏状态条着色)", isOn: $probeReachability)
+                    .onChange(of: probeReachability) { _, _ in HostReachability.shared.settingsChanged() }
+                Text("每 30 秒对直连主机做一次 TCP 测活;跳板机/代理主机不探测。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
             Section("语言") {
                 Picker("界面语言", selection: $appLanguage) {

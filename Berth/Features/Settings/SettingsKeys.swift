@@ -19,4 +19,6 @@ enum SettingsKeys {
     static let appLanguage = "app.language"
     /// 菜单栏常驻图标
     static let menuBarExtra = "app.menuBarExtra"
+    /// 侧栏主机可达性探测(TCP 测活,默认关)
+    static let probeReachability = "app.probeReachability"
 }

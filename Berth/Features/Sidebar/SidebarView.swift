@@ -52,6 +52,7 @@ struct SidebarView: View {
             keysRow
         }
         .background(theme.sidebarBackground)
+        .task(id: allHosts.count) { updateReachabilityTargets() }
         .sheet(isPresented: $isCreatingHost) {
             HostEditorView(host: nil, defaultGroupID: nil)
         }
@@ -256,6 +257,15 @@ struct SidebarView: View {
         sessionManager.open(spec: HostSpec.resolve(host, in: allHosts))
     }
 
+    /// 把直连主机(无跳板/无代理)喂给可达性探测
+    private func updateReachabilityTargets() {
+        let targets = allHosts.map { host in
+            (id: host.id, host: host.hostname, port: host.port,
+             direct: host.jumpHostID == nil && host.proxy.kind == .none)
+        }
+        HostReachability.shared.updateTargets(targets)
+    }
+
     /// 回车:有选中连选中,否则连第一个可见结果(搜索场景)
     private func connectSelectionOrFirst() {
         let rows = visibleHosts
@@ -335,12 +345,20 @@ private struct HostRow: View {
     @Environment(SessionManager.self) private var sessionManager
 
     @State private var hovering = false
+    @State private var reachability = HostReachability.shared
 
     private var dotColor: Color {
         switch sessionManager.liveState(for: host.id) {
         case .connected: return .green
         case .connecting: return .yellow
-        case .none: return host.tagColor == .none ? Color.gray.opacity(0.18) : host.tagColor.color.opacity(0.45)
+        case .none:
+            // 未连接时:若开启探测且有结果,用可达性着色;否则回落标签色/灰
+            switch reachability.statuses[host.id] {
+            case .reachable: return Color.green.opacity(0.5)
+            case .unreachable: return Color.red.opacity(0.4)
+            case .unknown, nil:
+                return host.tagColor == .none ? Color.gray.opacity(0.18) : host.tagColor.color.opacity(0.45)
+            }
         }
     }
 
