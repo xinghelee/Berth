@@ -32,14 +32,28 @@ struct OSBadge: View {
 enum Distro: CaseIterable {
     case ubuntu, debian, alpine, arch, manjaro, centos, fedora, rhel, rocky, alma
     case suse, amazon, kali, gentoo, nixos, openwrt, raspbian, tux
+    // 虚拟化 / 软路由 / NAS
+    case proxmox, immortalwrt, istoreos, ikuai, routeros, pfsense, opnsense
+    case freebsd, synology, truenas, unraid, vmware
 
     static func match(_ lower: String) -> Distro? {
+        // 顺序即优先级:PVE 的 os-release 是 Debian、TrueNAS 基于 FreeBSD/Debian,
+        // 专有系统必须排在通用发行版之前
         let table: [(String, Distro)] = [
+            ("proxmox", .proxmox), ("pve", .proxmox),
+            ("immortalwrt", .immortalwrt), ("istoreos", .istoreos), ("ikuai", .ikuai), ("爱快", .ikuai),
+            ("routeros", .routeros), ("mikrotik", .routeros),
+            ("pfsense", .pfsense), ("opnsense", .opnsense),
+            ("truenas", .truenas), ("unraid", .unraid),
+            ("synology", .synology), ("dsm", .synology),
+            ("vmware", .vmware), ("esxi", .vmware),
+            ("openwrt", .openwrt), ("lede", .openwrt),
+            ("freebsd", .freebsd),
             ("ubuntu", .ubuntu), ("debian", .debian), ("raspbian", .raspbian), ("raspberry", .raspbian),
             ("alpine", .alpine), ("arch", .arch), ("manjaro", .manjaro), ("centos", .centos),
             ("fedora", .fedora), ("red hat", .rhel), ("rhel", .rhel), ("rocky", .rocky),
             ("alma", .alma), ("suse", .suse), ("amazon", .amazon), ("kali", .kali),
-            ("gentoo", .gentoo), ("nixos", .nixos), ("openwrt", .openwrt),
+            ("gentoo", .gentoo), ("nixos", .nixos),
         ]
         return table.first { lower.contains($0.0) }?.1
     }
@@ -64,6 +78,18 @@ enum Distro: CaseIterable {
         case .openwrt: return NSColor(hex: "#00B5E2")
         case .raspbian: return NSColor(hex: "#C51A4A")
         case .tux: return NSColor(hex: "#3A3F4A")
+        case .proxmox: return NSColor(hex: "#E57000")
+        case .immortalwrt: return NSColor(hex: "#1F6FB2")
+        case .istoreos: return NSColor(hex: "#0AA1DD")
+        case .ikuai: return NSColor(hex: "#2A6BE9")
+        case .routeros: return NSColor(hex: "#5A6B77")
+        case .pfsense: return NSColor(hex: "#1475CF")
+        case .opnsense: return NSColor(hex: "#D94F00")
+        case .freebsd: return NSColor(hex: "#AB2B28")
+        case .synology: return NSColor(hex: "#37474F")
+        case .truenas: return NSColor(hex: "#0095D5")
+        case .unraid: return NSColor(hex: "#F15A2C")
+        case .vmware: return NSColor(hex: "#607078")
         }
     }
 
@@ -376,6 +402,189 @@ struct DistroIcon: View {
             context.fill(circle(0.45, 0.23, 0.035), with: .color(.black))
             context.fill(circle(0.55, 0.23, 0.035), with: .color(.black))
             context.blendMode = .normal
+
+        case .proxmox:
+            // 虚拟化 2×2 方块格
+            for (cx, cy) in [(0.34, 0.34), (0.66, 0.34), (0.34, 0.66), (0.66, 0.66)] {
+                let square = Path(roundedRect: CGRect(
+                    x: rect.minX + (cx - 0.13) * rect.width,
+                    y: rect.minY + (cy - 0.13) * rect.height,
+                    width: 0.26 * rect.width,
+                    height: 0.26 * rect.height
+                ), cornerRadius: 0.05 * rect.width)
+                context.fill(square, with: white)
+            }
+
+        case .immortalwrt:
+            // 无限环 ∞
+            var loop = Path()
+            loop.addEllipse(in: CGRect(
+                x: rect.minX + 0.14 * rect.width, y: rect.minY + 0.36 * rect.height,
+                width: 0.32 * rect.width, height: 0.28 * rect.height
+            ))
+            loop.addEllipse(in: CGRect(
+                x: rect.minX + 0.54 * rect.width, y: rect.minY + 0.36 * rect.height,
+                width: 0.32 * rect.width, height: 0.28 * rect.height
+            ))
+            stroke(loop, 0.09)
+
+        case .istoreos:
+            // 店面:扇贝雨棚 + 门脸
+            for (index, cx) in [0.32, 0.5, 0.68].enumerated() {
+                _ = index
+                context.fill(circle(cx, 0.34, 0.1), with: white)
+            }
+            let facade = Path(roundedRect: CGRect(
+                x: rect.minX + 0.24 * rect.width,
+                y: rect.minY + 0.34 * rect.height,
+                width: 0.52 * rect.width,
+                height: 0.42 * rect.height
+            ), cornerRadius: 0.04 * rect.width)
+            context.fill(facade, with: white)
+            context.blendMode = .destinationOut
+            let door = Path(roundedRect: CGRect(
+                x: rect.minX + 0.42 * rect.width,
+                y: rect.minY + 0.52 * rect.height,
+                width: 0.16 * rect.width,
+                height: 0.24 * rect.height
+            ), cornerRadius: 0.03 * rect.width)
+            context.fill(door, with: .color(.black))
+            context.blendMode = .normal
+
+        case .ikuai:
+            // 仪表盘:半弧 + 指针(快)
+            var dial = Path()
+            dial.addArc(center: point(0.5, 0.64), radius: 0.32 * rect.width, startAngle: .degrees(180), endAngle: .degrees(360), clockwise: false)
+            stroke(dial, 0.09)
+            var needle = Path()
+            needle.move(to: point(0.5, 0.64))
+            needle.addLine(to: point(0.7, 0.4))
+            stroke(needle, 0.08)
+            context.fill(circle(0.5, 0.64, 0.06), with: white)
+
+        case .routeros:
+            // 路由器:机身 + 双天线
+            let chassis = Path(roundedRect: CGRect(
+                x: rect.minX + 0.18 * rect.width,
+                y: rect.minY + 0.52 * rect.height,
+                width: 0.64 * rect.width,
+                height: 0.26 * rect.height
+            ), cornerRadius: 0.06 * rect.width)
+            context.fill(chassis, with: white)
+            var antennas = Path()
+            antennas.move(to: point(0.34, 0.52))
+            antennas.addLine(to: point(0.26, 0.22))
+            antennas.move(to: point(0.66, 0.52))
+            antennas.addLine(to: point(0.74, 0.22))
+            stroke(antennas, 0.07)
+            context.fill(circle(0.26, 0.2, 0.045), with: white)
+            context.fill(circle(0.74, 0.2, 0.045), with: white)
+
+        case .pfsense:
+            // 盾牌描边 + 芯点
+            var shield = Path()
+            shield.move(to: point(0.5, 0.12))
+            shield.addLine(to: point(0.82, 0.26))
+            shield.addLine(to: point(0.78, 0.58))
+            shield.addLine(to: point(0.5, 0.88))
+            shield.addLine(to: point(0.22, 0.58))
+            shield.addLine(to: point(0.18, 0.26))
+            shield.closeSubpath()
+            stroke(shield, 0.08)
+            context.fill(circle(0.5, 0.44, 0.08), with: white)
+
+        case .opnsense:
+            // 实心盾牌 + 镂空斜杠
+            var shield = Path()
+            shield.move(to: point(0.5, 0.12))
+            shield.addLine(to: point(0.82, 0.26))
+            shield.addLine(to: point(0.78, 0.58))
+            shield.addLine(to: point(0.5, 0.88))
+            shield.addLine(to: point(0.22, 0.58))
+            shield.addLine(to: point(0.18, 0.26))
+            shield.closeSubpath()
+            context.fill(shield, with: white)
+            context.blendMode = .destinationOut
+            var slash = Path()
+            slash.move(to: point(0.32, 0.6))
+            slash.addLine(to: point(0.66, 0.3))
+            context.stroke(slash, with: .color(.black), style: StrokeStyle(lineWidth: 0.1 * rect.width, lineCap: .round))
+            context.blendMode = .normal
+
+        case .freebsd:
+            // 三叉戟
+            var trident = Path()
+            trident.move(to: point(0.32, 0.16))
+            trident.addLine(to: point(0.32, 0.38))
+            trident.move(to: point(0.5, 0.12))
+            trident.addLine(to: point(0.5, 0.42))
+            trident.move(to: point(0.68, 0.16))
+            trident.addLine(to: point(0.68, 0.38))
+            trident.move(to: point(0.32, 0.38))
+            trident.addQuadCurve(to: point(0.68, 0.38), control: point(0.5, 0.52))
+            trident.move(to: point(0.5, 0.46))
+            trident.addLine(to: point(0.5, 0.86))
+            stroke(trident, 0.08)
+
+        case .synology:
+            // NAS 机箱:外框 + 两道盘位 + 指示灯
+            let chassis = Path(roundedRect: CGRect(
+                x: rect.minX + 0.24 * rect.width,
+                y: rect.minY + 0.18 * rect.height,
+                width: 0.52 * rect.width,
+                height: 0.64 * rect.height
+            ), cornerRadius: 0.06 * rect.width)
+            stroke(chassis, 0.07)
+            var slots = Path()
+            slots.move(to: point(0.34, 0.36))
+            slots.addLine(to: point(0.66, 0.36))
+            slots.move(to: point(0.34, 0.5))
+            slots.addLine(to: point(0.66, 0.5))
+            stroke(slots, 0.06)
+            context.fill(circle(0.6, 0.68, 0.045), with: white)
+
+        case .truenas:
+            // 双波浪(存储之海)
+            for y in [0.42, 0.62] {
+                var wave = Path()
+                wave.move(to: point(0.16, y))
+                wave.addCurve(to: point(0.5, y), control1: point(0.27, y - 0.14), control2: point(0.39, y + 0.14))
+                wave.addCurve(to: point(0.84, y), control1: point(0.61, y - 0.14), control2: point(0.73, y + 0.14))
+                stroke(wave, 0.08)
+            }
+
+        case .unraid:
+            // 错落竖条(中高旁低)
+            for (index, (height, offset)) in [(0.3, 0.35), (0.56, 0.22), (0.3, 0.35)].enumerated() {
+                let x = 0.3 + CGFloat(index) * 0.17
+                let bar = Path(roundedRect: CGRect(
+                    x: rect.minX + (x - 0.05) * rect.width,
+                    y: rect.minY + offset * rect.height,
+                    width: 0.1 * rect.width,
+                    height: height * rect.height
+                ), cornerRadius: 0.04 * rect.width)
+                context.fill(bar, with: white)
+            }
+
+        case .vmware:
+            // 双层虚拟机:两个错位方框
+            let back = Path(roundedRect: CGRect(
+                x: rect.minX + 0.3 * rect.width,
+                y: rect.minY + 0.18 * rect.height,
+                width: 0.5 * rect.width,
+                height: 0.5 * rect.height
+            ), cornerRadius: 0.06 * rect.width)
+            stroke(back, 0.07)
+            let front = Path(roundedRect: CGRect(
+                x: rect.minX + 0.18 * rect.width,
+                y: rect.minY + 0.34 * rect.height,
+                width: 0.5 * rect.width,
+                height: 0.5 * rect.height
+            ), cornerRadius: 0.06 * rect.width)
+            context.blendMode = .destinationOut
+            context.fill(front, with: .color(.black))
+            context.blendMode = .normal
+            stroke(front, 0.07)
         }
     }
 }
