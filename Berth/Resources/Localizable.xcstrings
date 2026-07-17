@@ -107,6 +107,16 @@
         }
       }
     },
+    "%lld 个标签页 · %lld 个会话": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld tabs · %lld sessions"
+          }
+        }
+      }
+    },
     "%lld 台主机": {
       "localizations": {
         "en": {
@@ -960,6 +970,26 @@
         }
       }
     },
+    "会话模板": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Workspaces"
+          }
+        }
+      }
+    },
+    "会话模板…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Workspaces…"
+          }
+        }
+      }
+    },
     "使用私钥连接 %@": {
       "localizations": {
         "en": {
@@ -1050,6 +1080,16 @@
         }
       }
     },
+    "保存当前布局": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save Current Layout"
+          }
+        }
+      }
+    },
     "信任并连接": {
       "localizations": {
         "en": {
@@ -1096,6 +1136,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Stop Editing (cancel auto-upload)"
+          }
+        }
+      }
+    },
+    "先打开至少一个会话": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open at least one session first"
           }
         }
       }
@@ -2160,6 +2210,16 @@
         }
       }
     },
+    "已保存「%@」": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved “%@”"
+          }
+        }
+      }
+    },
     "已取消连接:你没有信任该服务器的主机密钥。": {
       "localizations": {
         "en": {
@@ -2450,6 +2510,16 @@
         }
       }
     },
+    "把当前所有标签和分屏保存为模板": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save all current tabs and splits as a workspace"
+          }
+        }
+      }
+    },
     "指纹": {
       "localizations": {
         "en": {
@@ -2486,6 +2556,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Search commands or hosts…"
+          }
+        }
+      }
+    },
+    "摆好标签和分屏后,点右上角「保存当前布局」": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrange your tabs and splits, then tap “Save Current Layout”"
           }
         }
       }
@@ -2810,6 +2890,16 @@
         }
       }
     },
+    "未命名模板": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Untitled Workspace"
+          }
+        }
+      }
+    },
     "未识别的包管理器,无法自动安装 zsh": {
       "localizations": {
         "en": {
@@ -3016,6 +3106,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Root partition used/total: %@"
+          }
+        }
+      }
+    },
+    "模板名称": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Workspace name"
           }
         }
       }
@@ -3840,6 +3940,16 @@
         }
       }
     },
+    "记录当前所有标签页与分屏结构,打开模板时按原布局重新连接。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Records all current tabs and split layout; opening the workspace reconnects in the same arrangement."
+          }
+        }
+      }
+    },
     "设置": {
       "localizations": {
         "en": {
@@ -4116,6 +4226,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "No hosts yet"
+          }
+        }
+      }
+    },
+    "还没有会话模板": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No workspaces yet"
           }
         }
       }

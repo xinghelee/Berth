@@ -257,6 +257,77 @@ final class SessionManager {
 
     var isBroadcasting: Bool { selectedTab?.isBroadcasting ?? false }
 
+    // MARK: - 会话模板
+
+    /// 捕获当前所有标签的布局(叶子 → 主机 id)
+    func captureWorkspaceLayout() -> WorkspaceLayout {
+        WorkspaceLayout(tabs: tabs.compactMap { encodeNode($0.root) })
+    }
+
+    private func encodeNode(_ node: PaneNode) -> WorkspaceLayout.Node? {
+        switch node {
+        case .leaf(let sessionID):
+            guard let spec = session(sessionID)?.spec else { return nil }
+            return .leaf(hostID: spec.hostID)
+        case .branch(_, let axis, let a, let b):
+            switch (encodeNode(a), encodeNode(b)) {
+            case (nil, nil): return nil
+            case (let x?, nil), (nil, let x?): return x
+            case (let x?, let y?): return .split(axis: axis == .horizontal ? "h" : "v", first: x, second: y)
+            }
+        }
+    }
+
+    /// 打开模板:逐标签恢复分屏布局并连接;找不到的主机(已删除)跳过
+    func openWorkspace(_ layout: WorkspaceLayout, hosts: [Host]) {
+        for tabNode in layout.tabs {
+            openWorkspaceTab(tabNode, hosts: hosts)
+        }
+    }
+
+    private func openWorkspaceTab(_ node: WorkspaceLayout.Node, hosts: [Host]) {
+        guard let firstHost = firstResolvableHost(node, hosts: hosts) else { return }
+        firstHost.lastConnectedAt = Date()
+        let first = open(spec: HostSpec.resolve(firstHost, in: hosts))
+        guard let tab = tabs.last, tab.root.leafIDs() == [first.id] else { return }
+        buildSplits(node, existingLeaf: first.id, in: tab, hosts: hosts)
+        tab.focusedID = first.id
+    }
+
+    private func firstResolvableHost(_ node: WorkspaceLayout.Node, hosts: [Host]) -> Host? {
+        switch node {
+        case .leaf(let hostID):
+            return hosts.first { $0.id == hostID }
+        case .split(_, let a, let b):
+            return firstResolvableHost(a, hosts: hosts) ?? firstResolvableHost(b, hosts: hosts)
+        }
+    }
+
+    /// 递归补分屏:existingLeaf 代表 node 的 first-leaf 位置已存在的会话
+    private func buildSplits(_ node: WorkspaceLayout.Node, existingLeaf: UUID, in tab: PaneTab, hosts: [Host]) {
+        guard case .split(let axisRaw, let a, let b) = node else { return }
+        guard let bHost = firstResolvableHost(b, hosts: hosts) else {
+            buildSplits(a, existingLeaf: existingLeaf, in: tab, hosts: hosts)
+            return
+        }
+        guard firstResolvableHost(a, hosts: hosts) != nil else {
+            // a 侧整体不可解析:b 顶替 existingLeaf 的位置继续
+            buildSplits(b, existingLeaf: existingLeaf, in: tab, hosts: hosts)
+            return
+        }
+        let axis: SplitAxis = axisRaw == "h" ? .horizontal : .vertical
+        let secondary = TerminalSession(spec: HostSpec.resolve(bHost, in: hosts))
+        secondary.onShellExit = { [weak self, weak secondary] in
+            guard let self, let secondary else { return }
+            self.closePane(secondary)
+        }
+        sessions.append(secondary)
+        tab.root = tab.root.splitting(leaf: existingLeaf, into: secondary.id, axis: axis, branchID: UUID())
+        secondary.connect()
+        buildSplits(a, existingLeaf: existingLeaf, in: tab, hosts: hosts)
+        buildSplits(b, existingLeaf: secondary.id, in: tab, hosts: hosts)
+    }
+
     // MARK: - 会话恢复
 
     private static let openTabsKey = "session.openTabs"

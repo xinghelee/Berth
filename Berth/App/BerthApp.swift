@@ -55,6 +55,19 @@ struct BerthApp: App {
         .windowResizability(.contentSize)
         .modelContainer(container)
 
+        // 会话模板:保存/恢复整套标签+分屏布局
+        Window("会话模板", id: "workspaces") {
+            WorkspacesListView()
+                .environment(sessionManager)
+                .frame(minWidth: 420, idealWidth: 460, minHeight: 320, idealHeight: 420)
+                .background(WindowConfigurator(
+                    appearanceName: ThemeStore.shared.current.appearanceName,
+                    backgroundColor: ThemeStore.shared.current.backgroundNSColor,
+                    keepsTitle: true
+                ))
+        }
+        .modelContainer(container)
+
         // 命令片段管理
         Window("命令片段", id: "snippets") {
             SnippetsListView()
@@ -174,6 +187,10 @@ struct TerminalCommands: Commands {
             .keyboardShortcut("b", modifiers: [.command, .option])
 
             Divider()
+
+            Button("会话模板…") {
+                openWindow(id: "workspaces")
+            }
 
             Button("命令片段…") {
                 // 有会话时切换右侧面板;无会话时打开管理窗口
