@@ -15,4 +15,6 @@ enum SettingsKeys {
     static let copyOnSelect = "terminal.copyOnSelect"
     static let middleClickPaste = "terminal.middleClickPaste"
     static let restoreWorkingDir = "session.restoreWorkingDir"
+    /// 界面语言:system / zh-Hans / en(写 AppleLanguages 覆盖,重启生效)
+    static let appLanguage = "app.language"
 }

@@ -16,9 +16,11 @@ struct SettingsView: View {
     @AppStorage(SettingsKeys.notifyLongCommand) private var notifyLongCommand = true
     @AppStorage(SettingsKeys.restoreSessions) private var restoreSessions = true
     @AppStorage(SettingsKeys.restoreWorkingDir) private var restoreWorkingDir = true
+    @AppStorage(SettingsKeys.appLanguage) private var appLanguage = "system"
     @State private var themeStore = ThemeStore.shared
     @State private var dataMessage: String?
     @State private var showAcknowledgements = false
+    @State private var languageChanged = false
     @Environment(\.modelContext) private var modelContext
 
     var body: some View {
@@ -84,6 +86,31 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+            Section("语言") {
+                Picker("界面语言", selection: $appLanguage) {
+                    Text("跟随系统").tag("system")
+                    Text(verbatim: "简体中文").tag("zh-Hans")
+                    Text(verbatim: "English").tag("en")
+                }
+                .onChange(of: appLanguage) { _, newValue in
+                    if newValue == "system" {
+                        UserDefaults.standard.removeObject(forKey: "AppleLanguages")
+                    } else {
+                        UserDefaults.standard.set([newValue], forKey: "AppleLanguages")
+                    }
+                    languageChanged = true
+                }
+                if languageChanged {
+                    HStack {
+                        Text("语言更改在重启 Berth 后生效")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Button("立即重启") { relaunchApp() }
+                            .controlSize(.small)
+                    }
+                }
+            }
             Section("关于") {
                 if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
                     LabeledContent("版本", value: version)
@@ -117,6 +144,16 @@ struct SettingsView: View {
             }
         } catch {
             dataMessage = String(localized: "导出失败:\(error.localizedDescription)")
+        }
+    }
+
+    /// 语言切换后重启:先拉起新实例再退出当前实例
+    private func relaunchApp() {
+        let url = Bundle.main.bundleURL
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.createsNewApplicationInstance = true
+        NSWorkspace.shared.openApplication(at: url, configuration: configuration) { _, _ in
+            DispatchQueue.main.async { NSApp.terminate(nil) }
         }
     }
 

@@ -526,55 +526,52 @@ struct TerminalPaneView: View {
         }
     }
 
-    /// 断线呈现:居中卡片 —— 图标 + 主机 + 完整错误文案 + 操作
+    /// 断线呈现:紧凑居中卡片(原生 alert 布局)—— 图标内联标题,文案左对齐,按钮右对齐
     @ViewBuilder
     private var disconnectCard: some View {
         if case .disconnected(let reason) = session.state {
-            let accent: Color = reason == .userInitiated ? .gray : .red
-            VStack(spacing: 12) {
-                ZStack {
-                    Circle()
-                        .fill(accent.opacity(0.14))
-                        .frame(width: 44, height: 44)
-                    Image(systemName: "bolt.slash")
-                        .font(.system(size: 17, weight: .medium))
+            let accent: Color = reason == .userInitiated ? .secondary : .red
+            let theme = ThemeStore.shared.current
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 8) {
+                    Image(systemName: "bolt.slash.fill")
+                        .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(accent)
-                }
-                VStack(spacing: 3) {
                     Text(session.spec.label)
                         .font(.system(size: 13, weight: .semibold))
                     Text("\(session.spec.username)@\(session.spec.hostname)")
                         .font(.system(size: 11, design: .monospaced))
                         .foregroundStyle(.tertiary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
                 }
                 Text(reason.message ?? String(localized: "连接已断开"))
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
+                    .textSelection(.enabled)
                     .fixedSize(horizontal: false, vertical: true)
-                if session.isAutoReconnectScheduled {
-                    HStack(spacing: 6) {
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                HStack(spacing: 8) {
+                    if session.isAutoReconnectScheduled {
                         ProgressView().controlSize(.mini)
                         Text("自动重连中(第 \(session.reconnectAttempt) 次)")
                             .font(.system(size: 11))
                             .foregroundStyle(.secondary)
                         Button("停止") { session.cancelAutoReconnect() }
-                            .controlSize(.small)
                     }
-                }
-                HStack(spacing: 10) {
+                    Spacer()
                     Button("编辑主机…") { editHost() }
                     Button("立即重连") { session.connect() }
                         .buttonStyle(.borderedProminent)
                 }
                 .controlSize(.small)
-                .padding(.top, 2)
+                .padding(.top, 4)
             }
-            .padding(22)
-            .frame(maxWidth: 340)
-            .background(RoundedRectangle(cornerRadius: 16).fill(.regularMaterial))
-            .overlay(RoundedRectangle(cornerRadius: 16).stroke(accent.opacity(0.35), lineWidth: 1))
-            .shadow(color: .black.opacity(0.3), radius: 24, y: 8)
+            .padding(16)
+            .frame(width: 320)
+            .background(RoundedRectangle(cornerRadius: 12).fill(theme.elevatedBackground))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(theme.borderColor, lineWidth: 1))
+            .shadow(color: .black.opacity(0.35), radius: 18, y: 6)
             .transition(.opacity.combined(with: .scale(scale: 0.97)))
         }
     }
