@@ -432,6 +432,7 @@ struct TerminalPaneView: View {
     @State private var searchModel = TerminalSearchModel()
     @State private var isSearchActive = false
     @State private var editingHost: Host?
+    @State private var confirmingDelete = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -484,25 +485,66 @@ struct TerminalPaneView: View {
                 _ = sessionManager.open(spec: HostSpec.resolve(updated, in: all))
             })
         }
+        .confirmationDialog(
+            "删除主机「\(session.spec.label)」?",
+            isPresented: $confirmingDelete
+        ) {
+            Button("删除", role: .destructive) { deleteHost() }
+            Button("取消", role: .cancel) { confirmingDelete = false }
+        } message: {
+            Text(deleteWarning)
+        }
     }
 
-    /// 断线横幅的编辑入口:托管主机直接编辑;config 镜像复制为托管主机再编辑(同侧栏)
+    private var deleteWarning: String {
+        let hostID = session.spec.hostID
+        let all = (try? modelContext.fetch(FetchDescriptor<Host>())) ?? []
+        if all.first(where: { $0.id == hostID })?.source == .sshConfig {
+            return String(localized: "会修改你的 ~/.ssh/config 文件(自动备份为 config.berth-backup),系统 ssh 也会随之生效。")
+        }
+        return String(localized: "Keychain 中保存的凭据会一并删除,此操作不可撤销。")
+    }
+
+    /// 删除主机并关闭该会话;config 镜像从 ~/.ssh/config 移除(自动备份)
+    private func deleteHost() {
+        let hostID = session.spec.hostID
+        let all = (try? modelContext.fetch(FetchDescriptor<Host>())) ?? []
+        if let host = all.first(where: { $0.id == hostID }) {
+            if host.source == .sshConfig {
+                SSHConfigService.shared.removeHostFromConfig(alias: host.label)
+            } else {
+                KeychainStore.deleteSecrets(for: host.id)
+                modelContext.delete(host)
+            }
+        }
+        sessionManager.closePane(session)
+    }
+
+    /// 断线横幅的编辑入口:托管主机直接编辑;config 镜像优先复用已转换的托管主机,
+    /// 否则给一份未入库的副本(保存时才入库,取消不留脏数据)
     private func editHost() {
         let hostID = session.spec.hostID
-        let descriptor = FetchDescriptor<Host>(predicate: #Predicate { $0.id == hostID })
-        guard let host = try? modelContext.fetch(descriptor).first else { return }
+        let all = (try? modelContext.fetch(FetchDescriptor<Host>())) ?? []
+        guard let host = all.first(where: { $0.id == hostID }) else { return }
         if host.source == .sshConfig {
-            let copy = Host(
-                label: host.label,
-                hostname: host.hostname,
-                port: host.port,
-                username: host.username,
-                authMethod: host.authMethod,
-                privateKeyPath: host.privateKeyPath,
-                note: host.note
-            )
-            modelContext.insert(copy)
-            editingHost = copy
+            if let existing = all.first(where: {
+                $0.source != .sshConfig
+                    && $0.hostname == host.hostname
+                    && $0.port == host.port
+                    && $0.username == host.username
+            }) {
+                editingHost = existing
+            } else {
+                editingHost = Host(
+                    label: host.label,
+                    hostname: host.hostname,
+                    port: host.port,
+                    username: host.username,
+                    authMethod: host.authMethod,
+                    privateKeyPath: host.privateKeyPath,
+                    note: host.note
+                )
+            }
         } else {
             editingHost = host
         }
@@ -572,6 +614,15 @@ struct TerminalPaneView: View {
                     }
                 }
                 HStack(spacing: 10) {
+                    Button(role: .destructive) {
+                        confirmingDelete = true
+                    } label: {
+                        Text("删除")
+                            .font(.system(size: 13.5))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.red)
                     Button {
                         editHost()
                     } label: {

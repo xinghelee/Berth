@@ -304,7 +304,18 @@ struct SidebarView: View {
 
     /// ssh_config 镜像主机 → 可编辑的托管副本
     private func convertToManaged(_ host: Host) {
-        let copy = Host(
+        // 已转换过 → 直接编辑现有托管主机,不再造副本
+        if let existing = allHosts.first(where: {
+            $0.source != .sshConfig
+                && $0.hostname == host.hostname
+                && $0.port == host.port
+                && $0.username == host.username
+        }) {
+            editingHost = existing
+            return
+        }
+        // 未入库的副本:保存时才入库,取消不留脏数据
+        editingHost = Host(
             label: host.label,
             hostname: host.hostname,
             port: host.port,
@@ -313,8 +324,6 @@ struct SidebarView: View {
             privateKeyPath: host.privateKeyPath,
             note: host.note
         )
-        modelContext.insert(copy)
-        editingHost = copy
     }
 }
 

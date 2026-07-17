@@ -25,4 +25,31 @@ enum Persistence {
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         return directory.appendingPathComponent("Berth.store")
     }
+
+    /// 一次性迁移:清掉历史 bug 产生的完全重复托管主机(同地址+端口+用户名)。
+    /// 保留优先级:Keychain 有密码 > 有转发/分组/备注 > sortOrder 靠前。
+    static func dedupManualHosts(container: ModelContainer) {
+        let flag = "migration.dedupHosts.v1"
+        guard !UserDefaults.standard.bool(forKey: flag) else { return }
+        UserDefaults.standard.set(true, forKey: flag)
+
+        let context = ModelContext(container)
+        let hosts = (try? context.fetch(FetchDescriptor<Host>())) ?? []
+        var buckets: [String: [Host]] = [:]
+        for host in hosts where host.source != .sshConfig {
+            buckets["\(host.hostname)|\(host.port)|\(host.username)", default: []].append(host)
+        }
+        var removed = 0
+        for (_, dupes) in buckets where dupes.count > 1 {
+            let keeper = dupes.first { ((try? KeychainStore.read(account: KeychainStore.passwordAccount(for: $0.id))) ?? nil) != nil }
+                ?? dupes.first { !$0.portForwards.isEmpty || $0.group != nil || !$0.note.isEmpty }
+                ?? dupes.min { $0.sortOrder < $1.sortOrder }!
+            for host in dupes where host.id != keeper.id {
+                KeychainStore.deleteSecrets(for: host.id)
+                context.delete(host)
+                removed += 1
+            }
+        }
+        if removed > 0 { try? context.save() }
+    }
 }

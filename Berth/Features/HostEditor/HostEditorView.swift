@@ -317,12 +317,29 @@ struct HostEditorView: View {
             return
         }
 
+        // 新建/转为托管(尚未入库)时查重:同地址+端口+用户名的主机已存在则提示,不重复添加
+        if host?.modelContext == nil {
+            if let duplicate = allHosts.first(where: {
+                $0.id != host?.id
+                    && $0.hostname == trimmedHostname
+                    && $0.port == portNumber
+                    && $0.username == trimmedUsername
+            }) {
+                validationMessage = String(localized: "该主机已存在:「\(duplicate.label)」(\(duplicate.username)@\(duplicate.hostname):\(duplicate.port)),不能重复添加。")
+                return
+            }
+        }
+
         let displayLabel = label.trimmingCharacters(in: .whitespaces)
         let group = groupID.flatMap { id in groups.first { $0.id == id } }
 
         let target: Host
         if let host {
             target = host
+            // 转为托管主机的副本延迟到保存时才入库,取消编辑不留脏数据
+            if host.modelContext == nil {
+                modelContext.insert(host)
+            }
         } else {
             target = Host(label: "", hostname: "", username: "")
             modelContext.insert(target)

@@ -3810,6 +3810,16 @@
         }
       }
     },
+    "该主机已存在:「%@」(%@@%@:%lld),不能重复添加。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This host already exists: “%@” (%@@%@:%lld). It was not added again."
+          }
+        }
+      }
+    },
     "该分屏有活跃的 SSH 连接。": {
       "localizations": {
         "en": {

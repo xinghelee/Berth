@@ -60,6 +60,7 @@ struct MainWindowView: View {
         }
         .frame(minWidth: 760, minHeight: 520)
         .task {
+            Persistence.dedupManualHosts(container: modelContext.container)
             SSHConfigService.shared.start(container: modelContext.container)
             theme.applyWindowChrome()
         }
