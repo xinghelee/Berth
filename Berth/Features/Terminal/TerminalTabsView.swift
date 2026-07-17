@@ -553,18 +553,24 @@ struct TerminalPaneView: View {
                     .textSelection(.enabled)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                HStack(spacing: 8) {
-                    if session.isAutoReconnectScheduled {
+                if session.isAutoReconnectScheduled {
+                    HStack(spacing: 6) {
                         ProgressView().controlSize(.mini)
                         Text("自动重连中(第 \(session.reconnectAttempt) 次)")
                             .font(.system(size: 11))
                             .foregroundStyle(.secondary)
                         Button("停止") { session.cancelAutoReconnect() }
+                            .controlSize(.small)
+                        Spacer()
                     }
+                }
+                HStack(spacing: 8) {
                     Spacer()
                     Button("编辑主机…") { editHost() }
+                        .fixedSize()
                     Button("立即重连") { session.connect() }
                         .buttonStyle(.borderedProminent)
+                        .fixedSize()
                 }
                 .controlSize(.small)
                 .padding(.top, 4)
