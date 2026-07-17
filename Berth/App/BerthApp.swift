@@ -76,6 +76,8 @@ struct BerthApp: App {
 /// 终端快捷键。遵循规格:绝不占用 Ctrl 组合键,只用 ⌘。
 /// ⌘W 在 File 菜单中先于系统 Close 项匹配,优先关闭标签页;无标签时走系统行为关窗口。
 struct TerminalCommands: Commands {
+    @Environment(\.openWindow) private var openWindow
+
     var body: some Commands {
         CommandGroup(after: .newItem) {
             Button("快速连接…") {
@@ -145,6 +147,13 @@ struct TerminalCommands: Commands {
                 SessionManager.shared.toggleBroadcast()
             }
             .keyboardShortcut("b", modifiers: [.command, .option])
+
+            Divider()
+
+            Button("命令片段…") {
+                openWindow(id: "snippets")
+            }
+            .keyboardShortcut("s", modifiers: [.command, .shift])
         }
     }
 }

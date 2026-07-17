@@ -1539,6 +1539,26 @@
         }
       }
     },
+    "命令片段(独立窗口)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Snippets (separate window)"
+          }
+        }
+      }
+    },
+    "命令片段…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Snippets…"
+          }
+        }
+      }
+    },
     "命令里用 {{变量}} 可在发送时填值": {
       "localizations": {
         "en": {
