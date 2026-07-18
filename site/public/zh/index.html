@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Berth 泊 — Mac 原生 SSH 客户端</title>
+<meta name="description" content="Berth 是为 macOS 打造的原生 SSH 客户端:Swift 编写，Metal 渲染，连接复用与无限分屏。密码只进 Keychain，数据全在你的 Mac 上。">
+<link rel="icon" type="image/svg+xml" href="/assets/icon.svg">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<div class="cove">
+<div class="sea" aria-hidden="true"></div>
+
+<nav class="nav">
+  <a class="nav-brand" href="/zh/">
+    <img src="/assets/icon.svg" alt="" width="28" height="28">
+    <span class="brand-name">Berth</span>
+  </a>
+  <div class="nav-links">
+    <a href="#features">功能</a>
+    <a href="#themes">主题</a>
+    <a href="#security">安全</a>
+    <a href="#faq">问答</a>
+  </div>
+  <a class="nav-lang" href="/" data-lang-switch="en">EN</a>
+  <a class="btn btn-primary nav-cta" href="/download" data-download>下载</a>
+</nav>
+
+<header class="hero">
+  <div class="hero-copy">
+    <p class="eyebrow">原生 SSH 客户端 · macOS 15+</p>
+    <h1>SSH，<br>该有 Mac 的样子<span class="cursor" aria-hidden="true"></span></h1>
+    <p class="hero-sub">
+      Swift 原生、Metal 渲染，连接复用与无限分屏。
+      密码与私钥只进 Keychain，任何数据不离开你的 Mac。
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="/download" data-download>下载 Berth</a>
+      <a class="btn btn-ghost" href="#features">看看功能</a>
+    </div>
+    <p class="hero-note" data-release-note>macOS 15+ · Apple Silicon &amp; Intel · Developer ID 签名与公证</p>
+  </div>
+
+  <div class="harbor">
+    <img class="app-shot" src="/assets/shots/hero-terminal.png" width="2600" height="1532"
+         alt="Berth 主窗口:主机侧栏，atlas-prod 会话运行 fastfetch，分屏里 htop 复用同一条连接">
+    <div class="reflection" aria-hidden="true"><i></i><i></i><i></i></div>
+  </div>
+</header>
+</div><!-- /cove -->
+
+<main>
+
+<section class="features" id="features">
+  <p class="eyebrow">功能</p>
+  <h2>终端老手需要的，都在原生里</h2>
+  <div class="feature-grid">
+    <article class="card">
+      <h3>连接复用与无限分屏</h3>
+      <p>⌘T 新标签、⌘D 分屏共享同一条 SSH 通道，不再重新握手。分屏可无限嵌套，<code>exit</code> 即收起。</p>
+    </article>
+    <article class="card">
+      <h3>跳板机与端口转发</h3>
+      <p>链式跳板一路到底;本地 / 远程 / 动态 SOCKS5 转发，支持 HTTP 与 SOCKS5 代理出站。</p>
+    </article>
+    <article class="card">
+      <h3>密钥与 Touch ID</h3>
+      <p>生成、导入密钥，使用私钥前 Touch ID 验证。known_hosts 指纹确认，变更即警告。</p>
+    </article>
+    <article class="card">
+      <h3>SFTP 文件面板</h3>
+      <p>复用会话连接，拖拽上传下载。远端文件用本地编辑器打开，保存自动回传;chmod、书签、文本预览。</p>
+    </article>
+    <article class="card">
+      <h3>断线不慌</h3>
+      <p>指数退避自动重连，重连后回到原工作目录(OSC 7);命令退出码直接标在终端里(OSC 133)。</p>
+    </article>
+    <article class="card">
+      <h3>生产环境警戒</h3>
+      <p>按主机警戒配色，一眼分清测试与生产。广播输入同时操作多台;Snippets 片段库带 {{变量}}。</p>
+    </article>
+  </div>
+</section>
+
+<section class="screens" id="screens">
+  <p class="eyebrow">实景</p>
+  <h2>文件与负载，就在 shell 旁边</h2>
+  <p class="screens-lede">
+    SFTP 面板与服务器信息面板贴着会话打开，复用同一条连接——不用二次登录。
+    文件双向拖拽;内存、磁盘、负载实时刷新。
+  </p>
+  <img class="app-shot" src="/assets/shots/panels.png" width="2600" height="1532" loading="lazy"
+       alt="Berth 终端旁并列打开 SFTP 文件面板与服务器信息面板">
+</section>
+
+<section class="shortcuts">
+  <p class="eyebrow">键盘优先</p>
+  <h2>手不离键盘</h2>
+  <div class="kbd-strip">
+    <span><kbd>⌘K</kbd> 快速连接</span>
+    <span><kbd>⌘P</kbd> 命令面板</span>
+    <span><kbd>⌘D</kbd> 分屏</span>
+    <span><kbd>⌘⌥B</kbd> 广播输入</span>
+    <span><kbd>⌘I</kbd> 服务器信息</span>
+    <span><kbd>⌘F</kbd> 终端搜索</span>
+  </div>
+  <p class="shortcuts-note">Ctrl 组合键全部透传给 shell，你的 Emacs / readline 习惯原样保留。</p>
+</section>
+
+<section class="themes" id="themes">
+  <p class="eyebrow">主题</p>
+  <h2>二十套主题，开箱即用</h2>
+  <p class="themes-lede">Nord、Dracula、Catppuccin、Solarized 尽数内置——上方截图穿的是「祖母绿圣殿」。另有四套 Berth 原创:</p>
+  <div class="theme-grid">
+    <figure class="theme-card" style="--tc-bg:#1E1A17; --tc-fg:#E9E2D7; --tc-ac:#FFC383">
+      <div class="theme-swatch">
+        <span class="ts-prompt">❯</span> make deploy
+        <span class="ts-dots"><i style="background:#D9837A"></i><i style="background:#9DB489"></i><i style="background:#E2B778"></i><i style="background:#8CA7C4"></i><i style="background:#C393B4"></i><i style="background:#8CBBAF"></i></span>
+      </div>
+      <figcaption><b>夜泊琥珀</b><span>整屏只留一盏琥珀灯，深夜靠港</span></figcaption>
+    </figure>
+    <figure class="theme-card" style="--tc-bg:#1B1817; --tc-fg:#E8E1D2; --tc-ac:#D96A54">
+      <div class="theme-swatch">
+        <span class="ts-prompt">❯</span> make deploy
+        <span class="ts-dots"><i style="background:#C75C4E"></i><i style="background:#85A25A"></i><i style="background:#C7A23C"></i><i style="background:#6E9BC8"></i><i style="background:#C4799F"></i><i style="background:#5FAFA3"></i></span>
+      </div>
+      <figcaption><b>松烟墨</b><span>暖炭底，矿物六色，朱砂钤印作唯一高光</span></figcaption>
+    </figure>
+    <figure class="theme-card" style="--tc-bg:#F8F3E6; --tc-fg:#3B342C; --tc-ac:#B4463A">
+      <div class="theme-swatch">
+        <span class="ts-prompt">❯</span> make deploy
+        <span class="ts-dots"><i style="background:#A63D33"></i><i style="background:#5E7233"></i><i style="background:#9A7514"></i><i style="background:#2F5F94"></i><i style="background:#9C3F72"></i><i style="background:#23766C"></i></span>
+      </div>
+      <figcaption><b>玉版宣</b><span>宣纸浅色，与松烟墨互为墨与纸</span></figcaption>
+    </figure>
+    <figure class="theme-card" style="--tc-bg:#0D1712; --tc-fg:#E4F4EA; --tc-ac:#3DE3A0">
+      <div class="theme-swatch">
+        <span class="ts-prompt">❯</span> make deploy
+        <span class="ts-dots"><i style="background:#F16581"></i><i style="background:#52DE74"></i><i style="background:#E5C158"></i><i style="background:#64A8F7"></i><i style="background:#C687F0"></i><i style="background:#38D9C8"></i></span>
+      </div>
+      <figcaption><b>祖母绿圣殿</b><span>宝石六色，全场最强对比度</span></figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="security" id="security">
+  <p class="eyebrow">安全</p>
+  <h2>两条底线，写进架构</h2>
+  <ul class="security-list">
+    <li>
+      <h3>机密只进 Keychain</h3>
+      <p>密码、passphrase、私钥存 macOS Keychain，任何情况不落盘明文。JSON 备份只含主机结构，不含机密。</p>
+    </li>
+    <li>
+      <h3>数据全在本地</h3>
+      <p>没有账号，没有云端。主机列表在你的 Mac 上，ssh_config 双向同步，随时整体带走。</p>
+    </li>
+  </ul>
+</section>
+
+<section class="faq" id="faq">
+  <p class="eyebrow">问答</p>
+  <h2>常见问题</h2>
+  <dl class="faq-list">
+    <div>
+      <dt>支持哪些系统?</dt>
+      <dd>macOS 15 Sequoia 及以上，Apple Silicon 与 Intel 均支持。</dd>
+    </div>
+    <div>
+      <dt>我的密码存在哪里?</dt>
+      <dd>只存 macOS Keychain，由系统加密管理。Berth 没有服务器，也就无从上传。</dd>
+    </div>
+    <div>
+      <dt>会有多设备同步吗?</dt>
+      <dd>CloudKit 同步在路线图上——依然不经过我们的服务器，数据只在你的 iCloud 里。</dd>
+    </div>
+  </dl>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="footer-brand">
+    <img src="/assets/icon.svg" alt="" width="22" height="22">
+    <span>Berth · 系好每一条连接</span>
+  </div>
+  <div class="footer-links">
+    <a href="mailto:hi@xinghelee.com">联系</a>
+    <a href="#faq">常见问题</a>
+  </div>
+  <p class="footer-fine">© 2026 Berth. macOS 是 Apple Inc. 的商标。</p>
+</footer>
+
+<script src="/app.js"></script>
+</body>
+</html>

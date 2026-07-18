@@ -27,7 +27,7 @@ app.get('/api/release', (c) =>
 /// 下载:计数后 302 到真实分发地址
 app.get('/download', (c) => {
   recordEvent('download', { ua: c.req.header('user-agent') ?? '' })
-  if (!DOWNLOAD_URL) return c.redirect('/#waitlist')
+  if (!DOWNLOAD_URL) return c.redirect('/')
   return c.redirect(DOWNLOAD_URL)
 })
 
@@ -47,17 +47,17 @@ function rateLimited(ip) {
 
 app.post('/api/waitlist', async (c) => {
   const ip = c.req.header('x-forwarded-for')?.split(',')[0]?.trim() || 'local'
-  if (rateLimited(ip)) return c.json({ ok: false, error: '请求太频繁,稍后再试' }, 429)
+  if (rateLimited(ip)) return c.json({ ok: false, error: 'Too many requests — try again shortly' }, 429)
 
   let body
   try {
     body = await c.req.json()
   } catch {
-    return c.json({ ok: false, error: '请求格式不正确' }, 400)
+    return c.json({ ok: false, error: 'Invalid request' }, 400)
   }
   const email = String(body?.email ?? '').trim().toLowerCase()
   if (!EMAIL_RE.test(email) || email.length > 254) {
-    return c.json({ ok: false, error: '邮箱格式不正确' }, 400)
+    return c.json({ ok: false, error: 'Invalid email address' }, 400)
   }
   const added = addToWaitlist(email, String(body?.source ?? 'landing').slice(0, 32))
   return c.json({ ok: true, already: !added })
@@ -79,7 +79,7 @@ app.get('/api/license/verify', (c) => {
 // ---------- 支付占位(接入 Stripe/Paddle 时替换) ----------
 
 app.post('/api/checkout', (c) =>
-  c.json({ ok: false, error: '支付尚未开放,请先加入邮件通知' }, 501)
+  c.json({ ok: false, error: 'Payments are not open yet — join the email list instead' }, 501)
 )
 
 app.post('/api/webhooks/payment', (c) => c.json({ ok: false, error: 'not implemented' }, 501))
