@@ -4,12 +4,12 @@ import SwiftData
 /// 会话模板:一组标签页的分屏布局(叶子 = 主机),一键恢复整套工作现场。
 @Model
 final class Workspace {
-    @Attribute(.unique) var id: UUID
-    var name: String
-    var sortOrder: Int
-    var createdAt: Date
+    var id: UUID = UUID()
+    var name: String = ""
+    var sortOrder: Int = 0
+    var createdAt: Date = Date()
     /// WorkspaceLayout 的 JSON 编码
-    var layoutJSON: String
+    var layoutJSON: String = "{}"
 
     init(id: UUID = UUID(), name: String, layoutJSON: String, sortOrder: Int = 0) {
         self.id = id

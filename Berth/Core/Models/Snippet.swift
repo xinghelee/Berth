@@ -4,14 +4,14 @@ import SwiftData
 /// 命令片段:一键发送到当前终端。支持 {{变量}} 占位(发送前提示填值)。
 @Model
 final class Snippet {
-    @Attribute(.unique) var id: UUID
-    var title: String
-    var command: String
-    var note: String
-    var sortOrder: Int
-    var createdAt: Date
+    var id: UUID = UUID()
+    var title: String = ""
+    var command: String = ""
+    var note: String = ""
+    var sortOrder: Int = 0
+    var createdAt: Date = Date()
     /// 使用次数(用于排序常用)
-    var useCount: Int
+    var useCount: Int = 0
 
     init(
         id: UUID = UUID(),

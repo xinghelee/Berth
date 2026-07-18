@@ -5,15 +5,15 @@ import SwiftData
 /// 全局生效于所有会话;匹配同一触发器有节流,避免刷屏。
 @Model
 final class Trigger {
-    @Attribute(.unique) var id: UUID
-    var name: String
+    var id: UUID = UUID()
+    var name: String = ""
     /// 正则表达式(NSRegularExpression 语法)
-    var pattern: String
-    var isEnabled: Bool
+    var pattern: String = ""
+    var isEnabled: Bool = true
     /// 命中时是否附带系统响铃声
-    var playSound: Bool
-    var sortOrder: Int
-    var createdAt: Date
+    var playSound: Bool = true
+    var sortOrder: Int = 0
+    var createdAt: Date = Date()
 
     init(
         id: UUID = UUID(),
