@@ -7,10 +7,13 @@ enum Persistence {
         let schema = Schema([Host.self, HostGroup.self, SSHKeyRecord.self, PortForward.self, Snippet.self, Workspace.self, Trigger.self])
         let transient = ProcessInfo.processInfo.environment["BERTH_TRANSIENT_STORE"] == "1"
         let configuration: ModelConfiguration
+        // cloudKitDatabase 显式 .none:app 已带 iCloud entitlement,SwiftData 默认会
+        // 自动开 CloudKit 集成并要求所有属性 optional/有默认值(现有模型不满足)。
+        // CloudKit 同步在专门的里程碑里完成模型适配后再开启。
         if transient {
-            configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+            configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none)
         } else {
-            configuration = ModelConfiguration(schema: schema, url: storeURL())
+            configuration = ModelConfiguration(schema: schema, url: storeURL(), cloudKitDatabase: .none)
         }
         do {
             return try ModelContainer(for: schema, configurations: [configuration])
