@@ -23,6 +23,7 @@ struct SettingsView: View {
     @State private var themeStore = ThemeStore.shared
     @State private var dataMessage: String?
     @State private var syncAccountStatus: CKAccountStatus?
+    @State private var syncMonitor = CloudSyncMonitor.shared
     @State private var showAcknowledgements = false
     @State private var languageChanged = false
     @Environment(\.modelContext) private var modelContext
@@ -102,10 +103,20 @@ struct SettingsView: View {
                 HStack {
                     Text("状态")
                     Spacer()
-                    Text(syncStatusLabel)
-                        .foregroundStyle(.secondary)
+                    if syncMonitor.phase == .syncing {
+                        ProgressView().controlSize(.small)
+                        Text("同步中…").foregroundStyle(.secondary)
+                    } else {
+                        Text(syncStatusLabel).foregroundStyle(.secondary)
+                    }
                 }
-                Text("主机、分组、端口转发、片段、模板与触发器经 iCloud 私有库自动同步;密码与私钥只在本机钥匙串,永不上传。")
+                HStack {
+                    Text("上次同步")
+                    Spacer()
+                    Text(lastSyncLabel).foregroundStyle(.secondary)
+                }
+                Button("立即同步") { syncNow() }
+                Text("主机、分组、端口转发、片段、模板与触发器经 iCloud 私有库自动同步;密码与私钥只在本机钥匙串,永不上传。「立即同步」推送本地改动;云端改动由系统自动拉取。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -170,9 +181,20 @@ struct SettingsView: View {
         }
     }
 
+    private var lastSyncLabel: String {
+        guard let date = syncMonitor.lastSyncDate else { return String(localized: "尚无记录") }
+        return date.formatted(date: .omitted, time: .shortened)
+    }
+
     private func refreshSyncStatus() async {
         let container = CKContainer(identifier: "iCloud.com.berthssh.app")
         syncAccountStatus = (try? await container.accountStatus()) ?? .couldNotDetermine
+    }
+
+    /// 推送本地待同步改动(flush 到 CloudKit 导出队列)并刷新账号状态
+    private func syncNow() {
+        try? modelContext.save()
+        Task { await refreshSyncStatus() }
     }
 
     private func exportBackup() {

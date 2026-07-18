@@ -9,6 +9,8 @@ struct BerthApp: App {
     init() {
         // 旧机密一次性搬入共享访问组的 iCloud 钥匙串,供两端直连
         KeychainStore.migrateToSharedGroupIfNeeded()
+        // 尽早订阅 CloudKit 同步事件
+        _ = CloudSyncMonitor.shared
         // 启动即强制整个 app 跟随主题深浅,避免打开时先闪一下系统浅色
         ThemeStore.shared.applyWindowChrome()
         SessionManager.shared.modelContainer = container

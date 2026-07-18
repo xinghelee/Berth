@@ -8,6 +8,7 @@ struct BerthiOSApp: App {
 
     init() {
         KeychainStore.migrateToSharedGroupIfNeeded()
+        _ = CloudSyncMonitor.shared
     }
 
     var body: some Scene {

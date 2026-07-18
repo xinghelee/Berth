@@ -5020,6 +5020,56 @@
           }
         }
       }
+    },
+    "同步中…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Syncing…"
+          }
+        }
+      }
+    },
+    "上次同步": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last synced"
+          }
+        }
+      }
+    },
+    "尚无记录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No record yet"
+          }
+        }
+      }
+    },
+    "立即同步": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sync now"
+          }
+        }
+      }
+    },
+    "主机、分组、端口转发、片段、模板与触发器经 iCloud 私有库自动同步;密码与私钥只在本机钥匙串,永不上传。「立即同步」推送本地改动;云端改动由系统自动拉取。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hosts, groups, port forwards, snippets, workspaces and triggers sync automatically through your private iCloud database. Passwords and private keys stay in the local Keychain and are never uploaded. “Sync now” pushes local changes; incoming changes are pulled by the system automatically."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

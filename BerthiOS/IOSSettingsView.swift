@@ -4,8 +4,10 @@ import SwiftUI
 /// iOS 设置:主题(与 Mac 版共用 20 套)+ iCloud 同步 + 关于。
 struct IOSSettingsView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     @State private var theme = ThemeStore.shared
     @State private var syncAccountStatus: CKAccountStatus?
+    @State private var syncMonitor = CloudSyncMonitor.shared
 
     var body: some View {
         NavigationStack {
@@ -27,10 +29,20 @@ struct IOSSettingsView: View {
                     HStack {
                         Text(String(localized: "状态"))
                         Spacer()
-                        Text(syncStatusLabel)
-                            .foregroundStyle(theme.current.secondaryText)
+                        if syncMonitor.phase == .syncing {
+                            ProgressView().controlSize(.small)
+                            Text(String(localized: "同步中…")).foregroundStyle(theme.current.secondaryText)
+                        } else {
+                            Text(syncStatusLabel).foregroundStyle(theme.current.secondaryText)
+                        }
                     }
-                    Text(String(localized: "主机、分组、端口转发、片段、模板与触发器经 iCloud 私有库自动同步;密码与私钥只在本机钥匙串,永不上传。"))
+                    HStack {
+                        Text(String(localized: "上次同步"))
+                        Spacer()
+                        Text(lastSyncLabel).foregroundStyle(theme.current.secondaryText)
+                    }
+                    Button(String(localized: "立即同步")) { syncNow() }
+                    Text(String(localized: "主机、分组、端口转发、片段、模板与触发器经 iCloud 私有库自动同步;密码与私钥只在本机钥匙串,永不上传。「立即同步」推送本地改动;云端改动由系统自动拉取。"))
                         .font(.caption)
                         .foregroundStyle(theme.current.secondaryText)
                 }
@@ -71,9 +83,19 @@ struct IOSSettingsView: View {
         }
     }
 
+    private var lastSyncLabel: String {
+        guard let date = syncMonitor.lastSyncDate else { return String(localized: "尚无记录") }
+        return date.formatted(date: .omitted, time: .shortened)
+    }
+
     private func refreshSyncStatus() async {
         let container = CKContainer(identifier: "iCloud.com.berthssh.app")
         syncAccountStatus = (try? await container.accountStatus()) ?? .couldNotDetermine
+    }
+
+    private func syncNow() {
+        try? modelContext.save()
+        Task { await refreshSyncStatus() }
     }
 }
 
