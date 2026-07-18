@@ -12,6 +12,8 @@ import Security
 /// 3. **可同步** `kSecAttrSynchronizable`:经 iCloud 钥匙串端到端加密同步。Berth 无自有服务器。
 enum KeychainStore {
     static let service = "com.berthssh.app"
+    /// bundle 改名(com.berthssh.Berth → com.berthssh)前存机密用的旧 service,迁移时一并回收
+    static let legacyService = "com.berthssh.Berth"
     /// 与 project.yml 里两端 entitlement 的 `$(AppIdentifierPrefix)com.berthssh.shared` 一致
     static let accessGroup = "99LYH6FNPS.com.berthssh.shared"
 
@@ -91,45 +93,68 @@ enum KeychainStore {
         }
     }
 
-    /// 一次性迁移:把默认访问组/老式文件钥匙串里的机密,搬进共享组的数据保护钥匙串并可同步。
-    /// 之后同一 Apple ID 的两端可直连。出错(钥匙串被锁等)时不打完成标记,下次启动重试。
+    /// 一次性迁移:把旧位置(新旧 service 名 × 文件/数据保护钥匙串)里的机密,
+    /// 搬进共享组的数据保护钥匙串并可同步。之后同一 Apple ID 的两端可直连。
+    /// 出错(钥匙串被锁等)时不打完成标记,下次启动重试。
     static func migrateToSharedGroupIfNeeded() {
-        let flag = "migration.keychainSharedGroup.v1"
+        let flag = "migration.keychainSharedGroup.v2"
         guard !UserDefaults.standard.bool(forKey: flag) else { return }
 
         var collected: [String: String] = [:]
 
-        /// 从旧位置收集(不指定访问组 = 搜 app 有权的默认组);macOS 需分别扫文件库与数据保护库
-        func harvest(dataProtection: Bool) -> Bool {
+        /// 单条取密文(旧项 ACL 绑在老签名上,首次读可能触发钥匙串授权弹窗,选"始终允许"即可)
+        func readLegacy(account: String, service svc: String, dataProtection: Bool) -> String? {
+            var q: [String: Any] = [
+                kSecClass as String: kSecClassGenericPassword,
+                kSecAttrService as String: svc,
+                kSecAttrAccount as String: account,
+                kSecAttrSynchronizable as String: kSecAttrSynchronizableAny,
+                kSecReturnData as String: true,
+                kSecMatchLimit as String: kSecMatchLimitOne,
+            ]
+            q[kSecUseDataProtectionKeychain as String] = dataProtection
+            var result: CFTypeRef?
+            guard SecItemCopyMatching(q as CFDictionary, &result) == errSecSuccess,
+                  let data = result as? Data else { return nil }
+            return String(data: data, encoding: .utf8)
+        }
+
+        /// 两段式:文件钥匙串不支持 MatchLimitAll+返回 data,先取账户名再逐条读密文
+        func harvest(service svc: String, dataProtection: Bool) -> Bool {
             var query: [String: Any] = [
                 kSecClass as String: kSecClassGenericPassword,
-                kSecAttrService as String: service,
+                kSecAttrService as String: svc,
                 kSecAttrSynchronizable as String: kSecAttrSynchronizableAny,
                 kSecReturnAttributes as String: true,
-                kSecReturnData as String: true,
                 kSecMatchLimit as String: kSecMatchLimitAll,
             ]
             query[kSecUseDataProtectionKeychain as String] = dataProtection
             var result: CFTypeRef?
             let status = SecItemCopyMatching(query as CFDictionary, &result)
-            if status == errSecSuccess, let items = result as? [[String: Any]] {
-                for item in items {
-                    if let account = item[kSecAttrAccount as String] as? String,
-                       let data = item[kSecValueData as String] as? Data,
-                       let secret = String(data: data, encoding: .utf8) {
-                        collected[account] = secret
-                    }
-                }
-                return true
+            guard status == errSecSuccess, let items = result as? [[String: Any]] else {
+                return status == errSecItemNotFound
             }
-            return status == errSecItemNotFound
+            for item in items {
+                // 只搬 Berth 约定账户:host.<uuid>.* 密码 / key.<uuid>.* 私钥口令
+                guard let account = item[kSecAttrAccount as String] as? String,
+                      account.hasPrefix("host.") || account.hasPrefix("key."),
+                      collected[account] == nil,
+                      let secret = readLegacy(account: account, service: svc, dataProtection: dataProtection)
+                else { continue }
+                collected[account] = secret
+            }
+            return true
         }
 
-        #if os(macOS)
-        let ok = harvest(dataProtection: false) && harvest(dataProtection: true)
-        #else
-        let ok = harvest(dataProtection: true)
-        #endif
+        var ok = true
+        for svc in [service, legacyService] {
+            #if os(macOS)
+            ok = harvest(service: svc, dataProtection: false) && ok
+            ok = harvest(service: svc, dataProtection: true) && ok
+            #else
+            ok = harvest(service: svc, dataProtection: true) && ok
+            #endif
+        }
 
         for (account, secret) in collected {
             try? save(secret, account: account)
