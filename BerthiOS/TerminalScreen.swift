@@ -62,40 +62,58 @@ struct TerminalScreen: View {
         }
     }
 
+    /// 连接态覆盖层:指纹确认优先;否则按会话状态显示进度/失败卡片。
+    /// 全部包在同一个居中容器里,由 modalScrim 铺满屏幕并压暗终端,避免弹窗浮在文字上错位。
     @ViewBuilder
     private func overlay(for session: IOSTerminalSession) -> some View {
-        switch session.state {
-        case .connecting(let detail):
-            VStack(spacing: 10) {
-                ProgressView()
-                Text(detail)
-                    .font(.footnote)
-                    .foregroundStyle(theme.current.secondaryText)
-            }
-            .padding(20)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
-
-        case .failed(let message):
-            VStack(spacing: 12) {
-                Image(systemName: "bolt.horizontal.circle")
-                    .font(.largeTitle)
-                    .foregroundStyle(theme.current.secondaryText)
-                Text(message)
-                    .font(.footnote)
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(theme.current.secondaryText)
-                Button(String(localized: "关闭")) { dismiss() }
-                    .buttonStyle(.bordered)
-            }
-            .padding(24)
-            .frame(maxWidth: 320)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
-
-        case .idle, .connected, .closed:
-            EmptyView()
-        }
         if let prompt = session.hostKeyPrompt {
-            hostKeySheet(prompt, session: session)
+            modalScrim { hostKeySheet(prompt, session: session) }
+        } else {
+            switch session.state {
+            case .connecting(let detail):
+                modalScrim {
+                    VStack(spacing: 10) {
+                        ProgressView()
+                        Text(detail)
+                            .font(.footnote)
+                            .foregroundStyle(theme.current.secondaryText)
+                    }
+                    .padding(20)
+                    .frame(maxWidth: 340)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+                }
+
+            case .failed(let message):
+                modalScrim {
+                    VStack(spacing: 12) {
+                        Image(systemName: "bolt.horizontal.circle")
+                            .font(.largeTitle)
+                            .foregroundStyle(theme.current.secondaryText)
+                        Text(message)
+                            .font(.footnote)
+                            .multilineTextAlignment(.center)
+                            .foregroundStyle(theme.current.secondaryText)
+                        Button(String(localized: "关闭")) { dismiss() }
+                            .buttonStyle(.bordered)
+                    }
+                    .padding(24)
+                    .frame(maxWidth: 340)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+                }
+
+            case .idle, .connected, .closed:
+                EmptyView()
+            }
+        }
+    }
+
+    /// 全屏压暗遮罩 + 居中卡片,兜住键盘/安全区,让弹窗永远稳居屏幕中央
+    private func modalScrim<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        ZStack {
+            Color.black.opacity(0.45)
+                .ignoresSafeArea()
+            content()
+                .padding(24)
         }
     }
 
@@ -137,7 +155,6 @@ struct TerminalScreen: View {
         .padding(20)
         .frame(maxWidth: 340)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .padding()
     }
 }
 
