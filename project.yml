@@ -51,6 +51,8 @@ targets:
         com.apple.developer.icloud-services: [CloudKit]
         com.apple.developer.icloud-container-identifiers: [iCloud.com.berthssh.app]
         com.apple.developer.aps-environment: development
+        keychain-access-groups:
+          - $(AppIdentifierPrefix)com.berthssh.shared
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.berthssh.app
@@ -108,6 +110,8 @@ targets:
         com.apple.developer.icloud-services: [CloudKit]
         com.apple.developer.icloud-container-identifiers: [iCloud.com.berthssh.app]
         aps-environment: development
+        keychain-access-groups:
+          - $(AppIdentifierPrefix)com.berthssh.shared
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.berthssh.ios

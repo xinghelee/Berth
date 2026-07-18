@@ -7,7 +7,7 @@ struct BerthiOSApp: App {
     @State private var theme = ThemeStore.shared
 
     init() {
-        KeychainStore.migrateToSynchronizableIfNeeded()
+        KeychainStore.migrateToSharedGroupIfNeeded()
     }
 
     var body: some Scene {
