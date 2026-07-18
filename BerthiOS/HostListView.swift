@@ -96,10 +96,10 @@ struct HostListView: View {
 
     private func hostRow(_ host: Host) -> some View {
         HStack(spacing: 10) {
+            OSBadge(osName: host.osName)
             RoundedRectangle(cornerRadius: 1.5)
                 .fill(statusColor(host))
                 .frame(width: 3, height: 26)
-            OSBadge(osName: host.osName)
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
                     Text(host.label)
