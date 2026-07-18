@@ -77,7 +77,7 @@ BERTH_M1_AUTOTEST=1 BERTH_TRANSIENT_STORE=1 \
 - [~] M4 — 二期(部分已并入 main):
   - [x] ~~iTerm2 主题导入~~ 按用户决定移除,改为 20 套内置主题(含 4 套精选:松烟墨/夜泊琥珀/祖母绿/玉版宣);侧栏底部 🎨 配色面板 + ⚙ 设置入口
   - [x] SFTP 侧边文件面板 + 拖拽上传下载(复用会话连接;`BERTH_SFTP_AUTOTEST` 真机跑通往返)
-  - [~] CloudKit 同步(feature/cloudkit-sync):单库镜像 iCloud 私有库(容器 iCloud.com.berthssh.app,Team 99LYH6FNPS)。模型已去 unique/关系 optional 化;ssh_config 镜像主机改内存态(不入库不同步);密码/私钥永不上传;`BERTH_DISABLE_SYNC=1` 调试关闭。Mac 端已验证记录导出成功;待 Mac+iOS 双端联测后并回 main
+  - [x] CloudKit 同步(已并入 main):单库镜像 iCloud 私有库(容器 iCloud.com.berthssh.app,Team 99LYH6FNPS)。模型去 unique/关系 optional 化;ssh_config 镜像主机改内存态(不入库不同步,id 按 alias 决定性派生);机密走 iCloud 钥匙串共享访问组 `<team>.com.berthssh.shared` + 数据保护钥匙串同步(密码/密钥库私钥端到端加密,任一设备录入后两端直连),`kSecUseDataProtectionKeychain`;`BERTH_DISABLE_SYNC=1` 调试关闭。设置页同步状态(CloudSyncMonitor:同步中/上次同步/立即同步)。Mac+iPhone 真机双端验收通过:主机/密码同步直连、指纹确认、缺凭据补录引导、私钥文件主机转密钥库后 iOS 可连。⚠️ bundle id 已改名 com.berthssh.app/.ios(旧 com.berthssh.* 机密一次性迁移,含读旧签名项的钥匙串授权弹窗——仅老开发机一次性)
   - [ ] 本地回显(predictive echo)完整版 —— 触及 SwiftTerm 渲染,需交互测延迟,暂缓
 - [~] M6 — iOS 版(`BerthiOS` target,`xcodegen generate` 后用
   `xcodebuildmcp simulator build-and-run --project-path Berth.xcodeproj --scheme BerthiOS --simulator-name "iPhone 17 Pro Max"`):
