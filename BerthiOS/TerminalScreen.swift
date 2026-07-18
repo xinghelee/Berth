@@ -17,7 +17,7 @@ struct TerminalScreen: View {
         ZStack {
             theme.current.chromeBackground.ignoresSafeArea()
             if let session {
-                TerminalHostingView(session: session)
+                TerminalHostingView(session: session, keyboardActive: keyboardActive(for: session))
                     .ignoresSafeArea(.container, edges: .bottom)
                 overlay(for: session)
             }
@@ -60,6 +60,13 @@ struct TerminalScreen: View {
         .onDisappear {
             session?.close()
         }
+    }
+
+    /// 键盘仅在已连接且无弹窗时显示;连接中/失败/指纹确认期间收起,避免键盘顶着模态框
+    private func keyboardActive(for session: IOSTerminalSession) -> Bool {
+        guard session.hostKeyPrompt == nil else { return false }
+        if case .connected = session.state { return true }
+        return false
     }
 
     /// 连接态覆盖层:指纹确认优先;否则按会话状态显示进度/失败卡片。
@@ -243,6 +250,8 @@ struct ServerInfoSheetIOS: View {
 /// SwiftTerm 的 UIKit TerminalView 封装:主题配色、输出 feed、按键回传、尺寸同步。
 private struct TerminalHostingView: UIViewRepresentable {
     let session: IOSTerminalSession
+    /// 是否让终端持有键盘;弹窗/连接中为 false,连上后为 true
+    let keyboardActive: Bool
 
     func makeUIView(context: Context) -> SwiftTerm.TerminalView {
         let view = SwiftTerm.TerminalView(frame: .zero)
@@ -255,13 +264,17 @@ private struct TerminalHostingView: UIViewRepresentable {
         }
         let term = view.getTerminal()
         session.start(cols: term.cols, rows: term.rows)
-        DispatchQueue.main.async {
-            _ = view.becomeFirstResponder()
-        }
         return view
     }
 
-    func updateUIView(_ uiView: SwiftTerm.TerminalView, context: Context) {}
+    func updateUIView(_ uiView: SwiftTerm.TerminalView, context: Context) {
+        // 连上且无弹窗才抬键盘;否则收起,让模态框独占屏幕
+        if keyboardActive {
+            if !uiView.isFirstResponder { _ = uiView.becomeFirstResponder() }
+        } else {
+            if uiView.isFirstResponder { _ = uiView.resignFirstResponder() }
+        }
+    }
 
     func makeCoordinator() -> Coordinator {
         Coordinator(session: session)
