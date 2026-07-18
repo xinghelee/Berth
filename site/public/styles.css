@@ -249,15 +249,6 @@ section h2 {
 /* 夜色顺入正文,避免 cove 边缘出现接缝 */
 main { background: linear-gradient(180deg, rgba(14, 19, 27, 0.55), transparent 240px); }
 
-/* ---------- In action ---------- */
-
-.screens-lede {
-  font-size: 15px;
-  color: var(--mut);
-  margin: -30px 0 40px;
-  max-width: 56ch;
-}
-
 /* ---------- Features ---------- */
 
 .feature-grid {
