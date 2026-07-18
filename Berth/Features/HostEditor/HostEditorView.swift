@@ -159,12 +159,6 @@ struct HostEditorView: View {
                 }
 
                 Section("整理") {
-                    Picker("分组", selection: $groupID) {
-                        Text("无分组").tag(UUID?.none)
-                        ForEach(groups) { group in
-                            Text(group.name).tag(UUID?.some(group.id))
-                        }
-                    }
                     Picker("标签色", selection: $tagColor) {
                         ForEach(TagColor.allCases) { color in
                             Text(colorName(color)).tag(color)

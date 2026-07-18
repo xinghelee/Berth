@@ -4970,6 +4970,16 @@
           }
         }
       }
+    },
+    "外观": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appearance"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

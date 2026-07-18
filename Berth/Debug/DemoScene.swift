@@ -23,28 +23,22 @@ enum DemoScene {
 
         ThemeStore.shared.select(id: "nord")
 
-        // 侧栏演示主机(除 atlas-prod 外均为摆设,不发起连接)
+        // 侧栏演示主机(除 atlas-01 外均为摆设,不发起连接)
         let context = ModelContext(container)
-        let production = HostGroup(name: "Production", sortOrder: 0)
-        let homelab = HostGroup(name: "Homelab", sortOrder: 1)
-        context.insert(production)
-        context.insert(homelab)
-
-        let real = Host(label: "atlas-01", hostname: hostAddr, port: port, username: user,
-                        group: production, tagColor: .blue)
+        let real = Host(label: "atlas-01", hostname: hostAddr, port: port, username: user, tagColor: .blue)
         real.osName = "Alpine Linux"
         context.insert(real)
 
-        let extras: [(String, String, String, TagColor, HostGroup, String)] = [
-            ("atlas-staging", "staging.internal", "ops", .orange, production, "Ubuntu 24.04"),
-            ("edge-gateway", "edge.internal", "ops", .blue, production, "Debian 12"),
-            ("pve-lab", "pve.lab", "root", .green, homelab, "Proxmox VE"),
-            ("build-runner", "runner.lab", "ci", .purple, homelab, "Ubuntu 24.04"),
+        let extras: [(String, String, String, TagColor, String)] = [
+            ("atlas-staging", "staging.internal", "ops", .orange, "Ubuntu 24.04"),
+            ("edge-gateway", "edge.internal", "ops", .blue, "Debian 12"),
+            ("pve-lab", "pve.lab", "root", .green, "Proxmox VE"),
+            ("build-runner", "runner.lab", "ci", .purple, "Ubuntu 24.04"),
         ]
         for (index, entry) in extras.enumerated() {
             let host = Host(label: entry.0, hostname: entry.1, port: 22, username: entry.2,
-                            group: entry.4, tagColor: entry.3, sortOrder: index + 1)
-            host.osName = entry.5
+                            tagColor: entry.3, sortOrder: index + 1)
+            host.osName = entry.4
             context.insert(host)
         }
 

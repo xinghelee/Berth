@@ -8,24 +8,18 @@ struct IOSSettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section(String(localized: "终端配色")) {
-                    ForEach(TerminalTheme.builtIn) { candidate in
-                        Button {
-                            theme.select(id: candidate.id)
-                        } label: {
-                            HStack(spacing: 10) {
-                                swatch(candidate)
-                                Text(candidate.name)
-                                    .foregroundStyle(.primary)
-                                Spacer()
-                                if candidate.id == theme.current.id {
-                                    Image(systemName: "checkmark")
-                                        .foregroundStyle(theme.current.accentColor)
-                                }
-                            }
+                Section(String(localized: "外观")) {
+                    NavigationLink {
+                        IOSThemePickerView()
+                    } label: {
+                        HStack {
+                            Text(String(localized: "终端配色"))
+                            Spacer()
+                            Text(theme.current.name)
+                                .foregroundStyle(theme.current.secondaryText)
                         }
-                        .listRowBackground(theme.current.panelBackground)
                     }
+                    .listRowBackground(theme.current.panelBackground)
                 }
                 Section(String(localized: "关于")) {
                     if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
@@ -49,6 +43,38 @@ struct IOSSettingsView: View {
         }
         .tint(theme.current.accentColor)
         .preferredColorScheme(theme.current.isDark ? .dark : .light)
+    }
+
+}
+
+/// 主题选择二级页:20 套内置主题列表
+struct IOSThemePickerView: View {
+    @State private var theme = ThemeStore.shared
+
+    var body: some View {
+        Form {
+            ForEach(TerminalTheme.builtIn) { candidate in
+                Button {
+                    theme.select(id: candidate.id)
+                } label: {
+                    HStack(spacing: 10) {
+                        swatch(candidate)
+                        Text(candidate.name)
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        if candidate.id == theme.current.id {
+                            Image(systemName: "checkmark")
+                                .foregroundStyle(theme.current.accentColor)
+                        }
+                    }
+                }
+                .listRowBackground(theme.current.panelBackground)
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .background(theme.current.sidebarBackground)
+        .navigationTitle(String(localized: "终端配色"))
+        .navigationBarTitleDisplayMode(.inline)
     }
 
     private func swatch(_ candidate: TerminalTheme) -> some View {

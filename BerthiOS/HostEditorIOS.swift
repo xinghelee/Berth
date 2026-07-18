@@ -179,12 +179,6 @@ struct HostEditorIOS: View {
 
     private var organizeSection: some View {
         Section(String(localized: "整理")) {
-            Picker(String(localized: "分组"), selection: $groupID) {
-                Text(String(localized: "无分组")).tag(UUID?.none)
-                ForEach(groups) { group in
-                    Text(group.name).tag(UUID?.some(group.id))
-                }
-            }
             Picker(String(localized: "标签色"), selection: $tagColor) {
                 Text(String(localized: "无")).tag(TagColor.none)
                 Text(String(localized: "红(生产)")).tag(TagColor.red)

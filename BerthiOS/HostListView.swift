@@ -1,10 +1,9 @@
 import SwiftData
 import SwiftUI
 
-/// iOS 主界面:主机列表(按分组)+ 快速连接 / 密钥 / 片段 / 设置入口。
+/// iOS 主界面:平铺主机列表 + 快速连接 / 密钥 / 片段 / 设置入口。
 struct HostListView: View {
     @Query(sort: \Host.sortOrder) private var hosts: [Host]
-    @Query(sort: \HostGroup.sortOrder) private var groups: [HostGroup]
     @Environment(\.modelContext) private var modelContext
     @State private var theme = ThemeStore.shared
 
@@ -66,53 +65,25 @@ struct HostListView: View {
 
     private var hostList: some View {
         List {
-            ForEach(groupedSections, id: \.title) { section in
-                Section {
-                    ForEach(section.hosts) { host in
-                        NavigationLink(value: host.id) {
-                            hostRow(host)
-                        }
-                        .listRowBackground(theme.current.panelBackground)
-                        .swipeActions(edge: .trailing) {
-                            Button(role: .destructive) {
-                                delete(host)
-                            } label: {
-                                Label(String(localized: "删除"), systemImage: "trash")
-                            }
-                            Button {
-                                editingHost = host
-                            } label: {
-                                Label(String(localized: "编辑…"), systemImage: "pencil")
-                            }
-                        }
+            ForEach(hosts) { host in
+                NavigationLink(value: host.id) {
+                    hostRow(host)
+                }
+                .listRowBackground(theme.current.panelBackground)
+                .swipeActions(edge: .trailing) {
+                    Button(role: .destructive) {
+                        delete(host)
+                    } label: {
+                        Label(String(localized: "删除"), systemImage: "trash")
                     }
-                } header: {
-                    if !section.title.isEmpty {
-                        Text(section.title).foregroundStyle(theme.current.secondaryText)
+                    Button {
+                        editingHost = host
+                    } label: {
+                        Label(String(localized: "编辑…"), systemImage: "pencil")
                     }
                 }
             }
         }
-    }
-
-    private struct HostSection {
-        let title: String
-        let hosts: [Host]
-    }
-
-    private var groupedSections: [HostSection] {
-        var sections: [HostSection] = []
-        for group in groups {
-            let members = hosts.filter { $0.group?.id == group.id }
-            if !members.isEmpty {
-                sections.append(HostSection(title: group.name, hosts: members))
-            }
-        }
-        let ungrouped = hosts.filter { $0.group == nil }
-        if !ungrouped.isEmpty {
-            sections.append(HostSection(title: sections.isEmpty ? "" : String(localized: "无分组"), hosts: ungrouped))
-        }
-        return sections
     }
 
     private func hostRow(_ host: Host) -> some View {
