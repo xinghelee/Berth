@@ -58,7 +58,8 @@ final class Host {
     var osName: String = ""
     /// MAC 地址(用于 Wake-on-LAN,局域网唤醒);空 = 未设置
     var macAddress: String = ""
-    @Relationship(deleteRule: .cascade, inverse: \PortForward.host) var portForwards: [PortForward] = []
+    // CloudKit 要求关系为 optional;读取端用 `?? []` 兜底
+    @Relationship(deleteRule: .cascade, inverse: \PortForward.host) var portForwards: [PortForward]? = []
 
     init(
         id: UUID = UUID(),
@@ -149,7 +150,7 @@ final class HostGroup {
     var id: UUID = UUID()
     var name: String = ""
     var sortOrder: Int = 0
-    @Relationship(deleteRule: .nullify, inverse: \Host.group) var hosts: [Host] = []
+    @Relationship(deleteRule: .nullify, inverse: \Host.group) var hosts: [Host]? = []
 
     init(id: UUID = UUID(), name: String, sortOrder: Int = 0) {
         self.id = id

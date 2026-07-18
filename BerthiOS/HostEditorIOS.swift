@@ -233,7 +233,7 @@ struct HostEditorIOS: View {
         tagColor = host.tagColor
         isProduction = host.isProduction
         startupCommands = host.startupCommands
-        forwards = host.portForwards.sorted { $0.sortOrder < $1.sortOrder }.map {
+        forwards = (host.portForwards ?? []).sorted { $0.sortOrder < $1.sortOrder }.map {
             ForwardDraft(
                 kind: $0.kind,
                 bindPort: String($0.bindPort),
@@ -296,7 +296,7 @@ struct HostEditorIOS: View {
         target.startupCommands = startupCommands
 
         // 端口转发:重建(草稿保留原 id 以免状态错乱)
-        for existing in target.portForwards {
+        for existing in target.portForwards ?? [] {
             modelContext.delete(existing)
         }
         for (index, draft) in forwards.enumerated() {
