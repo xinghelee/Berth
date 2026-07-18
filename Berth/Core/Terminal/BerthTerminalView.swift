@@ -24,12 +24,12 @@ final class BerthTerminalView: SwiftTerm.TerminalView {
 
         menu.addItem(.separator())
 
-        let hItem = NSMenuItem(title: "左右分屏", action: #selector(berthSplitHorizontal), keyEquivalent: "d")
+        let hItem = NSMenuItem(title: String(localized: "左右分屏"), action: #selector(berthSplitHorizontal), keyEquivalent: "d")
         hItem.target = self
         hItem.image = NSImage(systemSymbolName: "rectangle.split.2x1", accessibilityDescription: nil)
         menu.addItem(hItem)
 
-        let vItem = NSMenuItem(title: "上下分屏", action: #selector(berthSplitVertical), keyEquivalent: "d")
+        let vItem = NSMenuItem(title: String(localized: "上下分屏"), action: #selector(berthSplitVertical), keyEquivalent: "d")
         vItem.keyEquivalentModifierMask = [.command, .shift]
         vItem.target = self
         vItem.image = NSImage(systemSymbolName: "rectangle.split.1x2", accessibilityDescription: nil)
@@ -115,7 +115,7 @@ final class BerthTerminalView: SwiftTerm.TerminalView {
         alert.informativeText = Self.preview(text)
         alert.alertStyle = .warning
         alert.addButton(withTitle: String(localized: "粘贴"))
-        alert.addButton(withTitle: "取消")
+        alert.addButton(withTitle: String(localized: "取消"))
         if alert.runModal() == .alertFirstButtonReturn {
             super.paste(sender)
         }

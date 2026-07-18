@@ -77,10 +77,10 @@ struct SFTPPanelView: View {
 
     private var header: some View {
         PanelHeader(title: String(localized: "文件")) {
-            PanelIconButton(symbol: "folder.badge.plus", help: "新建文件夹") { creatingDir = true }
+            PanelIconButton(symbol: "folder.badge.plus", help: String(localized: "新建文件夹")) { creatingDir = true }
             PanelIconButton(symbol: "square.and.arrow.up", help: String(localized: "上传文件")) { uploadPick() }
             PanelIconButton(symbol: "arrow.clockwise", help: String(localized: "刷新")) { Task { await browser?.refresh() } }
-            PanelIconButton(symbol: "xmark", help: "关闭") { onClose() }
+            PanelIconButton(symbol: "xmark", help: String(localized: "关闭")) { onClose() }
         }
         .alert("新建文件夹", isPresented: $creatingDir) {
             TextField("名称", text: $newDirName)

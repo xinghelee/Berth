@@ -47,16 +47,16 @@ struct ServerInfoInspector: View {
             PanelIconButton(symbol: "arrow.clockwise", help: String(localized: "刷新"), spinning: isLoading) {
                 Task { await refresh() }
             }
-            PanelIconButton(symbol: "xmark", help: "关闭") { onClose() }
+            PanelIconButton(symbol: "xmark", help: String(localized: "关闭")) { onClose() }
         }
     }
 
     private var connectionSection: some View {
-        section("连接") {
+        section(String(localized: "连接")) {
             infoRow(String(localized: "主机"), session.spec.hostname)
-            infoRow("端口", String(session.spec.port))
+            infoRow(String(localized: "端口"), String(session.spec.port))
             infoRow(String(localized: "用户"), session.spec.username)
-            infoRow("认证", authLabel)
+            infoRow(String(localized: "认证"), authLabel)
             if let connectedAt = session.connectedAt, case .connected = session.state {
                 infoRow(String(localized: "已连接"), durationString(from: connectedAt))
             } else {
@@ -69,7 +69,7 @@ struct ServerInfoInspector: View {
     private var forwardsSection: some View {
         // 只连接、无任何转发时不显示整段(仅保留一个入口按钮由标题栏承载)
         if !session.spec.forwards.isEmpty || !session.runtimeForwards.isEmpty || isConnected {
-            section("端口转发") {
+            section(String(localized: "端口转发")) {
                 ForEach(session.spec.forwards) { forward in
                     forwardRow(forward, removable: false)
                 }
@@ -279,9 +279,9 @@ struct ServerInfoInspector: View {
 
     private var authLabel: String {
         switch session.spec.authMethod {
-        case .password: return "密码"
-        case .privateKeyFile: return "私钥文件"
-        case .storedKey: return "密钥库"
+        case .password: return String(localized: "密码")
+        case .privateKeyFile: return String(localized: "私钥文件")
+        case .storedKey: return String(localized: "密钥库")
         case .agent: return "ssh-agent"
         }
     }

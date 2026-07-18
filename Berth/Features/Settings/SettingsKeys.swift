@@ -21,4 +21,6 @@ enum SettingsKeys {
     static let menuBarExtra = "app.menuBarExtra"
     /// 侧栏主机可达性探测(TCP 测活,默认关)
     static let probeReachability = "app.probeReachability"
+    /// 演示模式:主机列表隐藏真实主机,显示内置示例(录屏/截图防泄漏)
+    static let demoMode = "app.demoMode"
 }

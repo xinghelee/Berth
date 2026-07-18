@@ -459,7 +459,7 @@ private struct ForwardRowView: View {
                     Image(systemName: "arrow.right").font(.caption2).foregroundStyle(.tertiary)
                     TextField("目标主机", text: $forward.targetHost)
                         .textFieldStyle(.roundedBorder)
-                    portField("端口", value: $forward.targetPort)
+                    portField(String(localized: "端口"), value: $forward.targetPort)
                 }
             }
         }

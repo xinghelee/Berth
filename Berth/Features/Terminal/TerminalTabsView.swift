@@ -376,7 +376,7 @@ private struct TerminalTabChip: View {
             Circle()
                 .fill(stateColor)
                 .frame(width: 6, height: 6)
-            Text(focusedSession?.spec.label ?? "终端")
+            Text(focusedSession?.spec.label ?? String(localized: "终端"))
                 .font(.system(size: 12))
                 .lineLimit(1)
             if paneCount > 1 {

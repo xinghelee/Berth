@@ -18,6 +18,8 @@ final class SSHConfigService {
 
     func start(container: ModelContainer) {
         guard !started else { return }
+        // 临时库实例(自动化验收/演示场景)保持密闭,不镜像真实 ~/.ssh/config
+        if ProcessInfo.processInfo.environment["BERTH_TRANSIENT_STORE"] == "1" { return }
         started = true
         self.container = container
         sync()

@@ -124,7 +124,7 @@ struct StatusBarView: View {
 
     private func stateText(now: Date) -> String {
         switch session.state {
-        case .idle: return "未连接"
+        case .idle: return String(localized: "未连接")
         case .connecting: return String(localized: "连接中…")
         case .connected:
             guard let start = session.connectedAt else { return String(localized: "已连接") }

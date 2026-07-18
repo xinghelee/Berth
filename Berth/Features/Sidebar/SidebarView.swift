@@ -9,7 +9,11 @@ struct SidebarView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(SessionManager.self) private var sessionManager
     @Environment(\.openWindow) private var openWindow
-    @Query(sort: \Host.sortOrder) private var allHosts: [Host]
+    @Query(sort: \Host.sortOrder) private var storedHosts: [Host]
+    @AppStorage(SettingsKeys.demoMode) private var demoMode = false
+
+    /// 演示模式下用内置示例替换真实主机(防录屏/截图泄漏)
+    private var allHosts: [Host] { demoMode ? DemoMode.samples : storedHosts }
 
     @State private var searchText = ""
     /// 键盘/单击选中的主机行
@@ -130,7 +134,7 @@ struct SidebarView: View {
                     .overlay(Capsule().stroke(theme.borderColor, lineWidth: 1))
             )
 
-            PanelIconButton(symbol: "plus", help: "新建主机") { isCreatingHost = true }
+            PanelIconButton(symbol: "plus", help: String(localized: "新建主机")) { isCreatingHost = true }
         }
         .padding(.horizontal, 10)
         .padding(.top, 8)

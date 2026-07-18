@@ -6,8 +6,12 @@ struct CommandPaletteView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(SessionManager.self) private var sessionManager
     @Environment(\.openWindow) private var openWindow
-    @Query private var hosts: [Host]
+    @Query private var storedHosts: [Host]
     @Query(sort: [SortDescriptor(\Snippet.useCount, order: .reverse)]) private var snippets: [Snippet]
+    @AppStorage(SettingsKeys.demoMode) private var demoMode = false
+
+    /// 演示模式下用内置示例替换真实主机(防录屏/截图泄漏)
+    private var hosts: [Host] { demoMode ? DemoMode.samples : storedHosts }
 
     @State private var query = ""
     @State private var selectionIndex = 0
@@ -34,13 +38,13 @@ struct CommandPaletteView: View {
         let m = sessionManager
         let hasSession = m.selected != nil
         var list: [PaletteCommand] = [
-            PaletteCommand(id: "quickconnect", title: "快速连接…", subtitle: "⌘K", icon: "bolt.fill") {
+            PaletteCommand(id: "quickconnect", title: String(localized: "快速连接…"), subtitle: "⌘K", icon: "bolt.fill") {
                 QuickConnectController.shared.toggle()
             },
-            PaletteCommand(id: "split-h", title: "左右分屏", subtitle: "⌘D", icon: "rectangle.split.2x1", isEnabled: hasSession) {
+            PaletteCommand(id: "split-h", title: String(localized: "左右分屏"), subtitle: "⌘D", icon: "rectangle.split.2x1", isEnabled: hasSession) {
                 m.splitFocused(axis: .horizontal)
             },
-            PaletteCommand(id: "split-v", title: "上下分屏", subtitle: "⌘⇧D", icon: "rectangle.split.1x2", isEnabled: hasSession) {
+            PaletteCommand(id: "split-v", title: String(localized: "上下分屏"), subtitle: "⌘⇧D", icon: "rectangle.split.1x2", isEnabled: hasSession) {
                 m.splitFocused(axis: .vertical)
             },
             PaletteCommand(id: "close-pane", title: String(localized: "关闭当前分屏"), subtitle: "⌘W", icon: "xmark.rectangle", isEnabled: hasSession) {
@@ -48,7 +52,7 @@ struct CommandPaletteView: View {
             },
             PaletteCommand(
                 id: "broadcast",
-                title: m.isBroadcasting ? String(localized: "停止广播输入") : "广播输入到所有分屏",
+                title: m.isBroadcasting ? String(localized: "停止广播输入") : String(localized: "广播输入到所有分屏"),
                 subtitle: "⌘⌥B",
                 icon: "dot.radiowaves.left.and.right",
                 isEnabled: (m.selectedTab?.root.leafIDs().count ?? 0) > 1
@@ -64,7 +68,7 @@ struct CommandPaletteView: View {
             PaletteCommand(id: "inspector", title: m.isInspectorVisible ? String(localized: "关闭服务器信息面板") : String(localized: "打开服务器信息面板"), subtitle: "⌘I", icon: "sidebar.right", isEnabled: hasSession) {
                 m.isInspectorVisible.toggle()
             },
-            PaletteCommand(id: "find", title: "在终端中查找", subtitle: "⌘F", icon: "magnifyingglass", isEnabled: hasSession) {
+            PaletteCommand(id: "find", title: String(localized: "在终端中查找"), subtitle: "⌘F", icon: "magnifyingglass", isEnabled: hasSession) {
                 m.requestSearch()
             },
             PaletteCommand(id: "keys", title: String(localized: "密钥管理"), icon: "key") {

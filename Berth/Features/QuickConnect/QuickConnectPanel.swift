@@ -6,7 +6,11 @@ import SwiftUI
 struct QuickConnectPanel: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(SessionManager.self) private var sessionManager
-    @Query private var hosts: [Host]
+    @Query private var storedHosts: [Host]
+    @AppStorage(SettingsKeys.demoMode) private var demoMode = false
+
+    /// 演示模式下用内置示例替换真实主机(防录屏/截图泄漏)
+    private var hosts: [Host] { demoMode ? DemoMode.samples : storedHosts }
 
     @State private var query = ""
     @State private var selectionIndex = 0

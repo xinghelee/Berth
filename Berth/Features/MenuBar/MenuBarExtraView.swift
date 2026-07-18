@@ -6,7 +6,11 @@ import SwiftUI
 /// 可在设置里关闭(SettingsKeys.menuBarExtra)。
 struct MenuBarExtraView: View {
     @Environment(SessionManager.self) private var sessionManager
-    @Query(sort: \Host.sortOrder) private var hosts: [Host]
+    @Query(sort: \Host.sortOrder) private var storedHosts: [Host]
+    @AppStorage(SettingsKeys.demoMode) private var demoMode = false
+
+    /// 演示模式下用内置示例替换真实主机(防录屏/截图泄漏)
+    private var hosts: [Host] { demoMode ? DemoMode.samples : storedHosts }
 
     var body: some View {
         if !sessionManager.sessions.isEmpty {

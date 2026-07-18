@@ -471,7 +471,7 @@ final class TerminalSession: Identifiable {
     /// 启用命令集成(OSC 133):给 bash 和 zsh 的 rc 各追加一段钩子,在每次执行命令前后
     /// 发出 OSC 133 A/B/C/D 标记,客户端据此感知命令边界与退出码。幂等,重连后生效。
     func enableCommandIntegration() async -> CommandIntegrationResult {
-        guard let client else { return .failed("未连接") }
+        guard let client else { return .failed(String(localized: "未连接")) }
         // ⚠️ bash 钩子必须只在交互 shell 生效:Debian 系 bash 对 ssh 远程命令也会 source
         // .bashrc,无守卫的 DEBUG trap 会把 OSC 133 转义写进非交互会话的 stdout,直接
         // 打断 SFTP/scp 等子系统协议(表现为 "Received message too long")。
@@ -525,7 +525,7 @@ final class TerminalSession: Identifiable {
     /// 一键把默认登录 shell 切到 zsh(装 zsh + chsh),再启用命令高亮。
     /// root 直接 chsh;非 root 走 sudo -n(装了免密 sudo 才行,否则提示手动)。
     func installAndSwitchToZsh() async -> SwitchZshResult {
-        guard let client else { return .failed("未连接") }
+        guard let client else { return .failed(String(localized: "未连接")) }
         let script = #"""
         exec 2>&1
         SUDO=""; [ "$(id -u)" != "0" ] && command -v sudo >/dev/null 2>&1 && SUDO="sudo -n"
@@ -580,7 +580,7 @@ final class TerminalSession: Identifiable {
     /// 幂等追加 source 到 ~/.zshrc。全程一条命令且做了 `exec 2>&1`,不用 set -e(避免误伤),
     /// 不影响当前 PTY。
     func enableShellHighlight() async -> ShellHighlightResult {
-        guard let client else { return .failed("未连接") }
+        guard let client else { return .failed(String(localized: "未连接")) }
         let script = #"""
         exec 2>&1
         # 登录 shell 必须是 zsh,否则高亮脚本会在 bash/sh 里报语法错误
