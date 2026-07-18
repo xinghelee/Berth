@@ -8,6 +8,7 @@ struct IOSSettingsView: View {
     @State private var theme = ThemeStore.shared
     @State private var syncAccountStatus: CKAccountStatus?
     @State private var syncMonitor = CloudSyncMonitor.shared
+    @State private var syncNote: String?
 
     var body: some View {
         NavigationStack {
@@ -41,7 +42,13 @@ struct IOSSettingsView: View {
                         Spacer()
                         Text(lastSyncLabel).foregroundStyle(theme.current.secondaryText)
                     }
-                    Button(String(localized: "立即同步")) { syncNow() }
+                    HStack {
+                        Button(String(localized: "立即同步")) { syncNow() }
+                        Spacer()
+                        if let syncNote {
+                            Text(syncNote).font(.caption).foregroundStyle(theme.current.secondaryText)
+                        }
+                    }
                     Text(String(localized: "主机、分组、端口转发、片段、模板与触发器经 iCloud 私有库自动同步;密码与私钥只在本机钥匙串,永不上传。「立即同步」推送本地改动;云端改动由系统自动拉取。"))
                         .font(.caption)
                         .foregroundStyle(theme.current.secondaryText)
@@ -94,8 +101,14 @@ struct IOSSettingsView: View {
     }
 
     private func syncNow() {
+        let hadChanges = modelContext.hasChanges
         try? modelContext.save()
         Task { await refreshSyncStatus() }
+        syncNote = hadChanges ? String(localized: "已推送本地改动") : String(localized: "本地无待同步改动")
+        Task {
+            try? await Task.sleep(for: .seconds(3))
+            syncNote = nil
+        }
     }
 }
 

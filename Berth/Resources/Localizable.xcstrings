@@ -5070,6 +5070,26 @@
           }
         }
       }
+    },
+    "已推送本地改动": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local changes pushed"
+          }
+        }
+      }
+    },
+    "本地无待同步改动": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No local changes to sync"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
