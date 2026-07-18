@@ -5090,6 +5090,26 @@
           }
         }
       }
+    },
+    "主机列表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Host List"
+          }
+        }
+      }
+    },
+    "探测主机是否在线(列表状态条着色)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Probe host reachability (color the status bar)"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

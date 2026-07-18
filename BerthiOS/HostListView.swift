@@ -6,6 +6,7 @@ struct HostListView: View {
     @Query(sort: \Host.sortOrder) private var hosts: [Host]
     @Environment(\.modelContext) private var modelContext
     @State private var theme = ThemeStore.shared
+    @State private var reachability = HostReachability.shared
 
     @State private var editingHost: Host?
     @State private var isCreating = false
@@ -26,6 +27,7 @@ struct HostListView: View {
             }
             .scrollContentBackground(.hidden)
             .background(theme.current.sidebarBackground)
+            .task(id: hosts.count) { updateReachabilityTargets() }
             .navigationTitle("Berth")
             .navigationDestination(for: UUID.self) { hostID in
                 if let host = hosts.first(where: { $0.id == hostID }) {
@@ -94,9 +96,10 @@ struct HostListView: View {
 
     private func hostRow(_ host: Host) -> some View {
         HStack(spacing: 10) {
-            Circle()
-                .fill(tagColor(host))
-                .frame(width: 8, height: 8)
+            RoundedRectangle(cornerRadius: 1.5)
+                .fill(statusColor(host))
+                .frame(width: 3, height: 26)
+            OSBadge(osName: host.osName)
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
                     Text(host.label)
@@ -119,6 +122,16 @@ struct HostListView: View {
         .padding(.vertical, 2)
     }
 
+    /// 状态条颜色:开启可达性探测且有结果时用在线/离线色;否则回落标签色/灰
+    private func statusColor(_ host: Host) -> Color {
+        switch reachability.statuses[host.id] {
+        case .reachable: return .green.opacity(0.7)
+        case .unreachable: return .red.opacity(0.5)
+        case .unknown, .none:
+            return host.tagColor == .none ? .gray.opacity(0.3) : tagColor(host).opacity(0.55)
+        }
+    }
+
     private func tagColor(_ host: Host) -> Color {
         switch host.tagColor {
         case .none: return .gray.opacity(0.5)
@@ -128,6 +141,15 @@ struct HostListView: View {
         case .blue: return .blue
         case .purple: return .purple
         }
+    }
+
+    /// 把直连主机(无跳板/无代理)交给可达性探测器
+    private func updateReachabilityTargets() {
+        let targets = hosts.map { host in
+            (id: host.id, host: host.hostname, port: host.port,
+             direct: host.jumpHostID == nil && host.proxy.kind == .none)
+        }
+        reachability.updateTargets(targets)
     }
 
     private var emptyState: some View {

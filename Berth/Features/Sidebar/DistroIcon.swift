@@ -1,5 +1,14 @@
 import SwiftUI
 
+/// NSColor/UIColor → SwiftUI.Color(两平台初始化器名不同,Mac 侧栏与 iOS 主机列表共用)
+private func distroColor(_ color: NSColor) -> SwiftUI.Color {
+    #if canImport(AppKit)
+    SwiftUI.Color(nsColor: color)
+    #else
+    SwiftUI.Color(uiColor: color)
+    #endif
+}
+
 /// 发行版徽章:品牌色圆角块 + 原创简化矢量标志(致敬官方 logo 的几何要素,
 /// 不含商标素材)。识别不了的 Linux 用企鹅剪影,macOS 用  符号,未探测用通用图标。
 struct OSBadge: View {
@@ -93,7 +102,7 @@ enum Distro: CaseIterable {
         }
     }
 
-    var color: Color { Color(nsColor: baseNSColor) }
+    var color: Color { distroColor(baseNSColor) }
 }
 
 /// 单个徽章:品牌色渐变底块 + 高光描边 + Canvas 矢量白标(带微投影)
@@ -103,8 +112,8 @@ struct DistroIcon: View {
 
     var body: some View {
         let radius = size * 0.28
-        let top = Color(nsColor: distro.baseNSColor.mixed(with: .white, ratio: 0.16))
-        let bottom = Color(nsColor: distro.baseNSColor.mixed(with: .black, ratio: 0.18))
+        let top = distroColor(distro.baseNSColor.mixed(with: .white, ratio: 0.16))
+        let bottom = distroColor(distro.baseNSColor.mixed(with: .black, ratio: 0.18))
         Canvas { context, canvasSize in
             let rect = CGRect(origin: .zero, size: canvasSize)
             // 图形微投影,增加层次

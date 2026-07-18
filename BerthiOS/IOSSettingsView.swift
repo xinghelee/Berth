@@ -9,6 +9,7 @@ struct IOSSettingsView: View {
     @State private var syncAccountStatus: CKAccountStatus?
     @State private var syncMonitor = CloudSyncMonitor.shared
     @State private var syncNote: String?
+    @AppStorage(SettingsKeys.probeReachability) private var probeReachability = false
 
     var body: some View {
         NavigationStack {
@@ -26,6 +27,14 @@ struct IOSSettingsView: View {
                     }
                     .listRowBackground(theme.current.panelBackground)
                 }
+                Section(String(localized: "主机列表")) {
+                    Toggle(String(localized: "探测主机是否在线(列表状态条着色)"), isOn: $probeReachability)
+                        .onChange(of: probeReachability) { _, _ in HostReachability.shared.settingsChanged() }
+                    Text(String(localized: "每 30 秒对直连主机做一次 TCP 测活;跳板机/代理主机不探测。"))
+                        .font(.caption)
+                        .foregroundStyle(theme.current.secondaryText)
+                }
+                .listRowBackground(theme.current.panelBackground)
                 Section(String(localized: "iCloud 同步")) {
                     HStack {
                         Text(String(localized: "状态"))
