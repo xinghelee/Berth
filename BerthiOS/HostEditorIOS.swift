@@ -179,12 +179,6 @@ struct HostEditorIOS: View {
 
     private var organizeSection: some View {
         Section(String(localized: "整理")) {
-            Picker(String(localized: "分组"), selection: $groupID) {
-                Text(String(localized: "无分组")).tag(UUID?.none)
-                ForEach(groups) { group in
-                    Text(group.name).tag(UUID?.some(group.id))
-                }
-            }
             Picker(String(localized: "标签色"), selection: $tagColor) {
                 Text(String(localized: "无")).tag(TagColor.none)
                 Text(String(localized: "红(生产)")).tag(TagColor.red)
@@ -233,7 +227,7 @@ struct HostEditorIOS: View {
         tagColor = host.tagColor
         isProduction = host.isProduction
         startupCommands = host.startupCommands
-        forwards = host.portForwards.sorted { $0.sortOrder < $1.sortOrder }.map {
+        forwards = (host.portForwards ?? []).sorted { $0.sortOrder < $1.sortOrder }.map {
             ForwardDraft(
                 kind: $0.kind,
                 bindPort: String($0.bindPort),
@@ -296,7 +290,7 @@ struct HostEditorIOS: View {
         target.startupCommands = startupCommands
 
         // 端口转发:重建(草稿保留原 id 以免状态错乱)
-        for existing in target.portForwards {
+        for existing in target.portForwards ?? [] {
             modelContext.delete(existing)
         }
         for (index, draft) in forwards.enumerated() {

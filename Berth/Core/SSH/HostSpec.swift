@@ -106,7 +106,7 @@ struct HostSpec: Equatable, Sendable {
         self.tagColorRaw = host.tagColorRaw
         self.startupCommands = host.startupCommands
         self.jump = []
-        self.forwards = host.portForwards
+        self.forwards = (host.portForwards ?? [])
             .filter(\.enabled)
             .sorted { $0.sortOrder < $1.sortOrder }
             .map(PortForwardSpec.init)

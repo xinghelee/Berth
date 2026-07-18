@@ -480,7 +480,7 @@ struct TerminalPaneView: View {
             HostEditorView(host: host, defaultGroupID: nil, onConnect: { updated in
                 // 用新配置重连:关掉失败的会话,重新解析 spec 开新会话(旧 spec 冻结了改动前的认证方式)
                 sessionManager.closePane(session)
-                let all = (try? modelContext.fetch(FetchDescriptor<Host>())) ?? [updated]
+                let all = ((try? modelContext.fetch(FetchDescriptor<Host>())) ?? [updated]) + SSHConfigService.shared.mirrorHosts
                 updated.lastConnectedAt = Date()
                 _ = sessionManager.open(spec: HostSpec.resolve(updated, in: all))
             })
@@ -498,7 +498,7 @@ struct TerminalPaneView: View {
 
     private var deleteWarning: String {
         let hostID = session.spec.hostID
-        let all = (try? modelContext.fetch(FetchDescriptor<Host>())) ?? []
+        let all = ((try? modelContext.fetch(FetchDescriptor<Host>())) ?? []) + SSHConfigService.shared.mirrorHosts
         if all.first(where: { $0.id == hostID })?.source == .sshConfig {
             return String(localized: "会修改你的 ~/.ssh/config 文件(自动备份为 config.berth-backup),系统 ssh 也会随之生效。")
         }
@@ -508,7 +508,7 @@ struct TerminalPaneView: View {
     /// 删除主机并关闭该会话;config 镜像从 ~/.ssh/config 移除(自动备份)
     private func deleteHost() {
         let hostID = session.spec.hostID
-        let all = (try? modelContext.fetch(FetchDescriptor<Host>())) ?? []
+        let all = ((try? modelContext.fetch(FetchDescriptor<Host>())) ?? []) + SSHConfigService.shared.mirrorHosts
         if let host = all.first(where: { $0.id == hostID }) {
             if host.source == .sshConfig {
                 SSHConfigService.shared.removeHostFromConfig(alias: host.label)
@@ -526,7 +526,7 @@ struct TerminalPaneView: View {
     /// 否则给一份未入库的副本(保存时才入库,取消不留脏数据)
     private func editHost() {
         let hostID = session.spec.hostID
-        let all = (try? modelContext.fetch(FetchDescriptor<Host>())) ?? []
+        let all = ((try? modelContext.fetch(FetchDescriptor<Host>())) ?? []) + SSHConfigService.shared.mirrorHosts
         guard let host = all.first(where: { $0.id == hostID }) else { return }
         if host.source == .sshConfig {
             if let existing = all.first(where: {

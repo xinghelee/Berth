@@ -11,12 +11,12 @@ enum SSHKeyStorageFormat: String, Codable {
 
 @Model
 final class SSHKeyRecord {
-    @Attribute(.unique) var id: UUID
-    var name: String
-    var keyType: String        // ssh-ed25519 / ssh-rsa …
-    var publicKey: String      // openssh 单行公钥
-    var storageFormatRaw: String
-    var createdAt: Date
+    var id: UUID = UUID()
+    var name: String = ""
+    var keyType: String = ""   // ssh-ed25519 / ssh-rsa …
+    var publicKey: String = "" // openssh 单行公钥
+    var storageFormatRaw: String = SSHKeyStorageFormat.opensshPEM.rawValue
+    var createdAt: Date = Date()
 
     init(id: UUID = UUID(), name: String, keyType: String, publicKey: String, storageFormat: SSHKeyStorageFormat) {
         self.id = id

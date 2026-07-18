@@ -7,13 +7,18 @@ enum Persistence {
         let schema = Schema([Host.self, HostGroup.self, SSHKeyRecord.self, PortForward.self, Snippet.self, Workspace.self, Trigger.self])
         let transient = ProcessInfo.processInfo.environment["BERTH_TRANSIENT_STORE"] == "1"
         let configuration: ModelConfiguration
-        // cloudKitDatabase 显式 .none:app 已带 iCloud entitlement,SwiftData 默认会
-        // 自动开 CloudKit 集成并要求所有属性 optional/有默认值(现有模型不满足)。
-        // CloudKit 同步在专门的里程碑里完成模型适配后再开启。
+        // CloudKit 私有库同步:主机/分组/转发/片段/模板/触发器 + 密钥元数据(公钥不是机密,
+        // 记录同步后 keyID 跨设备仍可解析;私钥本体只在各设备 Keychain,永不上传)。
+        // 镜像主机(ssh_config)是内存态,天然不参与同步。
+        // 临时库(自动化/演示)与 BERTH_DISABLE_SYNC=1(调试逃生门)不接 CloudKit。
+        let syncDisabled = ProcessInfo.processInfo.environment["BERTH_DISABLE_SYNC"] == "1"
         if transient {
             configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none)
-        } else {
+        } else if syncDisabled {
             configuration = ModelConfiguration(schema: schema, url: storeURL(), cloudKitDatabase: .none)
+        } else {
+            configuration = ModelConfiguration(schema: schema, url: storeURL(),
+                                               cloudKitDatabase: .private("iCloud.com.berthssh.app"))
         }
         do {
             return try ModelContainer(for: schema, configurations: [configuration])
@@ -45,7 +50,7 @@ enum Persistence {
         var removed = 0
         for (_, dupes) in buckets where dupes.count > 1 {
             let keeper = dupes.first { ((try? KeychainStore.read(account: KeychainStore.passwordAccount(for: $0.id))) ?? nil) != nil }
-                ?? dupes.first { !$0.portForwards.isEmpty || $0.group != nil || !$0.note.isEmpty }
+                ?? dupes.first { !($0.portForwards ?? []).isEmpty || $0.group != nil || !$0.note.isEmpty }
                 ?? dupes.min { $0.sortOrder < $1.sortOrder }!
             for host in dupes where host.id != keeper.id {
                 KeychainStore.deleteSecrets(for: host.id)

@@ -6,6 +6,11 @@ struct BerthiOSApp: App {
     private let container = Persistence.makeContainer()
     @State private var theme = ThemeStore.shared
 
+    init() {
+        KeychainStore.migrateToSharedGroupIfNeeded()
+        _ = CloudSyncMonitor.shared
+    }
+
     var body: some Scene {
         WindowGroup {
             HostListView()

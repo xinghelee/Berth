@@ -11,13 +11,16 @@ struct TerminalScreen: View {
     @State private var theme = ThemeStore.shared
     @State private var showSnippets = false
     @State private var showServerInfo = false
+    @State private var passwordEntry = ""
+    @State private var savePassword = true
+    @FocusState private var passwordFocused: Bool
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         ZStack {
             theme.current.chromeBackground.ignoresSafeArea()
             if let session {
-                TerminalHostingView(session: session)
+                TerminalHostingView(session: session, keyboardActive: keyboardActive(for: session))
                     .ignoresSafeArea(.container, edges: .bottom)
                 overlay(for: session)
             }
@@ -62,40 +65,69 @@ struct TerminalScreen: View {
         }
     }
 
+    /// 终端键盘仅在已连接且无弹窗时显示;连接中/失败/指纹/补录密码期间收起,避免顶着模态框。
+    /// (补录密码卡片有自己的输入框,用独立的 FocusState 弹键盘。)
+    private func keyboardActive(for session: IOSTerminalSession) -> Bool {
+        guard session.hostKeyPrompt == nil else { return false }
+        if case .connected = session.state { return true }
+        return false
+    }
+
+    /// 连接态覆盖层:指纹确认优先;否则按会话状态显示进度/失败卡片。
+    /// 全部包在同一个居中容器里,由 modalScrim 铺满屏幕并压暗终端,避免弹窗浮在文字上错位。
     @ViewBuilder
     private func overlay(for session: IOSTerminalSession) -> some View {
-        switch session.state {
-        case .connecting(let detail):
-            VStack(spacing: 10) {
-                ProgressView()
-                Text(detail)
-                    .font(.footnote)
-                    .foregroundStyle(theme.current.secondaryText)
-            }
-            .padding(20)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
-
-        case .failed(let message):
-            VStack(spacing: 12) {
-                Image(systemName: "bolt.horizontal.circle")
-                    .font(.largeTitle)
-                    .foregroundStyle(theme.current.secondaryText)
-                Text(message)
-                    .font(.footnote)
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(theme.current.secondaryText)
-                Button(String(localized: "关闭")) { dismiss() }
-                    .buttonStyle(.bordered)
-            }
-            .padding(24)
-            .frame(maxWidth: 320)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
-
-        case .idle, .connected, .closed:
-            EmptyView()
-        }
         if let prompt = session.hostKeyPrompt {
-            hostKeySheet(prompt, session: session)
+            modalScrim { hostKeySheet(prompt, session: session) }
+        } else {
+            switch session.state {
+            case .needsPassword:
+                modalScrim { passwordSheet(session: session) }
+
+            case .connecting(let detail):
+                modalScrim {
+                    VStack(spacing: 10) {
+                        ProgressView()
+                        Text(detail)
+                            .font(.footnote)
+                            .foregroundStyle(theme.current.secondaryText)
+                    }
+                    .padding(20)
+                    .frame(maxWidth: 340)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+                }
+
+            case .failed(let message):
+                modalScrim {
+                    VStack(spacing: 12) {
+                        Image(systemName: "bolt.horizontal.circle")
+                            .font(.largeTitle)
+                            .foregroundStyle(theme.current.secondaryText)
+                        Text(message)
+                            .font(.footnote)
+                            .multilineTextAlignment(.center)
+                            .foregroundStyle(theme.current.secondaryText)
+                        Button(String(localized: "关闭")) { dismiss() }
+                            .buttonStyle(.bordered)
+                    }
+                    .padding(24)
+                    .frame(maxWidth: 340)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+                }
+
+            case .idle, .connected, .closed:
+                EmptyView()
+            }
+        }
+    }
+
+    /// 全屏压暗遮罩 + 居中卡片,兜住键盘/安全区,让弹窗永远稳居屏幕中央
+    private func modalScrim<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        ZStack {
+            Color.black.opacity(0.45)
+                .ignoresSafeArea()
+            content()
+                .padding(24)
         }
     }
 
@@ -123,21 +155,78 @@ struct TerminalScreen: View {
                         .foregroundStyle(theme.current.secondaryText)
                 }
             }
-            HStack {
-                Button(String(localized: "取消连接"), role: .cancel) {
-                    session.resolveHostKey(trusted: false)
-                }
-                Spacer()
-                Button(prompt.isKeyChange ? String(localized: "我已核实,更新并连接") : String(localized: "信任并连接")) {
+            VStack(spacing: 10) {
+                Button {
                     session.resolveHostKey(trusted: true)
+                } label: {
+                    Text(prompt.isKeyChange ? String(localized: "我已核实,更新并连接") : String(localized: "信任并连接"))
+                        .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+
+                Button(role: .cancel) {
+                    session.resolveHostKey(trusted: false)
+                } label: {
+                    Text(String(localized: "取消连接"))
+                        .frame(maxWidth: .infinity)
+                }
+                .controlSize(.large)
+            }
+            .padding(.top, 4)
+        }
+        .padding(20)
+        .frame(maxWidth: 340)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    /// 同步过来但本机没存密码的主机:当场补录并重连(可选存入可同步钥匙串)
+    private func passwordSheet(session: IOSTerminalSession) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text(String(localized: "输入密码"))
+                .font(.headline)
+            Text("\(session.spec.username)@\(session.spec.hostname)")
+                .font(.caption)
+                .monospaced()
+                .foregroundStyle(theme.current.secondaryText)
+
+            SecureField(String(localized: "密码"), text: $passwordEntry)
+                .textContentType(.password)
+                .textFieldStyle(.roundedBorder)
+                .focused($passwordFocused)
+                .submitLabel(.go)
+                .onSubmit(submitPassword)
+
+            Toggle(String(localized: "保存密码(经 iCloud 钥匙串同步)"), isOn: $savePassword)
+                .font(.caption)
+
+            VStack(spacing: 10) {
+                Button(action: submitPassword) {
+                    Text(String(localized: "连接"))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .disabled(passwordEntry.isEmpty)
+
+                Button(role: .cancel) { dismiss() } label: {
+                    Text(String(localized: "取消"))
+                        .frame(maxWidth: .infinity)
+                }
+                .controlSize(.large)
             }
         }
         .padding(20)
         .frame(maxWidth: 340)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .padding()
+        .onAppear { passwordFocused = true }
+    }
+
+    private func submitPassword() {
+        guard let session, !passwordEntry.isEmpty else { return }
+        passwordFocused = false
+        session.providePassword(passwordEntry, save: savePassword)
+        passwordEntry = ""
     }
 }
 
@@ -226,6 +315,8 @@ struct ServerInfoSheetIOS: View {
 /// SwiftTerm 的 UIKit TerminalView 封装:主题配色、输出 feed、按键回传、尺寸同步。
 private struct TerminalHostingView: UIViewRepresentable {
     let session: IOSTerminalSession
+    /// 是否让终端持有键盘;弹窗/连接中为 false,连上后为 true
+    let keyboardActive: Bool
 
     func makeUIView(context: Context) -> SwiftTerm.TerminalView {
         let view = SwiftTerm.TerminalView(frame: .zero)
@@ -238,13 +329,17 @@ private struct TerminalHostingView: UIViewRepresentable {
         }
         let term = view.getTerminal()
         session.start(cols: term.cols, rows: term.rows)
-        DispatchQueue.main.async {
-            _ = view.becomeFirstResponder()
-        }
         return view
     }
 
-    func updateUIView(_ uiView: SwiftTerm.TerminalView, context: Context) {}
+    func updateUIView(_ uiView: SwiftTerm.TerminalView, context: Context) {
+        // 连上且无弹窗才抬键盘;否则收起,让模态框独占屏幕
+        if keyboardActive {
+            if !uiView.isFirstResponder { _ = uiView.becomeFirstResponder() }
+        } else {
+            if uiView.isFirstResponder { _ = uiView.resignFirstResponder() }
+        }
+    }
 
     func makeCoordinator() -> Coordinator {
         Coordinator(session: session)

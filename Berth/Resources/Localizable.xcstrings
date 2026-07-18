@@ -4890,6 +4890,206 @@
           }
         }
       }
+    },
+    "iCloud 同步": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud Sync"
+          }
+        }
+      }
+    },
+    "主机、分组、端口转发、片段、模板与触发器经 iCloud 私有库自动同步;密码与私钥只在本机钥匙串,永不上传。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hosts, groups, port forwards, snippets, workspaces and triggers sync automatically through your private iCloud database. Passwords and private keys stay in the local Keychain and are never uploaded."
+          }
+        }
+      }
+    },
+    "已停用(调试)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disabled (debug)"
+          }
+        }
+      }
+    },
+    "已启用,随 iCloud 自动同步": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On — syncing via iCloud"
+          }
+        }
+      }
+    },
+    "未登录 iCloud 账号": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not signed in to iCloud"
+          }
+        }
+      }
+    },
+    "iCloud 账号受限": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud account is restricted"
+          }
+        }
+      }
+    },
+    "iCloud 暂不可用,稍后自动重试": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud temporarily unavailable — will retry"
+          }
+        }
+      }
+    },
+    "检查中…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checking…"
+          }
+        }
+      }
+    },
+    "外观": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appearance"
+          }
+        }
+      }
+    },
+    "请输入此主机的密码": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter the password for this host"
+          }
+        }
+      }
+    },
+    "输入密码": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter password"
+          }
+        }
+      }
+    },
+    "保存密码(经 iCloud 钥匙串同步)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save password (synced via iCloud Keychain)"
+          }
+        }
+      }
+    },
+    "仅同步在 Mac / iPhone 上手动添加的主机;Mac 上从 ~/.ssh/config 导入的主机是本机私有,不会出现在这里。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only hosts you add manually on Mac or iPhone sync here. Hosts imported from ~/.ssh/config on the Mac are local to that machine and don't appear."
+          }
+        }
+      }
+    },
+    "同步中…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Syncing…"
+          }
+        }
+      }
+    },
+    "上次同步": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last synced"
+          }
+        }
+      }
+    },
+    "尚无记录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No record yet"
+          }
+        }
+      }
+    },
+    "立即同步": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sync now"
+          }
+        }
+      }
+    },
+    "主机、分组、端口转发、片段、模板与触发器经 iCloud 私有库自动同步;密码与私钥只在本机钥匙串,永不上传。「立即同步」推送本地改动;云端改动由系统自动拉取。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hosts, groups, port forwards, snippets, workspaces and triggers sync automatically through your private iCloud database. Passwords and private keys stay in the local Keychain and are never uploaded. “Sync now” pushes local changes; incoming changes are pulled by the system automatically."
+          }
+        }
+      }
+    },
+    "已推送本地改动": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local changes pushed"
+          }
+        }
+      }
+    },
+    "本地无待同步改动": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No local changes to sync"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

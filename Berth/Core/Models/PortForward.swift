@@ -20,15 +20,15 @@ enum PortForwardKind: String, Codable, CaseIterable, Identifiable {
 /// target 字段忽略。
 @Model
 final class PortForward {
-    @Attribute(.unique) var id: UUID
-    var kindRaw: String
-    var bindHost: String     // 本地监听地址(local/dynamic)或远端监听地址(remote)
-    var bindPort: Int
-    var targetHost: String   // local/remote 的目标主机
-    var targetPort: Int
-    var enabled: Bool
+    var id: UUID = UUID()
+    var kindRaw: String = PortForwardKind.local.rawValue
+    var bindHost: String = "127.0.0.1"  // 本地监听地址(local/dynamic)或远端监听地址(remote)
+    var bindPort: Int = 0
+    var targetHost: String = ""  // local/remote 的目标主机
+    var targetPort: Int = 0
+    var enabled: Bool = true
     var host: Host?
-    var sortOrder: Int
+    var sortOrder: Int = 0
 
     init(
         id: UUID = UUID(),

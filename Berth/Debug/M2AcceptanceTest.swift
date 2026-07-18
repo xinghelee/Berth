@@ -577,9 +577,9 @@ enum M2AcceptanceTest {
             let ok = result.hosts == 1
                 && restored?.port == 2200
                 && restored?.proxy.kind == .socks5
-                && restored?.portForwards.count == 1
+                && (restored?.portForwards ?? []).count == 1
                 && restored?.jumpHostID == nil
-            log(ok ? "BACKUP_ROUNDTRIP_OK json=\(data.count)B" : "BACKUP_ROUNDTRIP_FAIL restored=\(String(describing: restored?.port)) fwds=\(restored?.portForwards.count ?? -1)")
+            log(ok ? "BACKUP_ROUNDTRIP_OK json=\(data.count)B" : "BACKUP_ROUNDTRIP_FAIL restored=\(String(describing: restored?.port)) fwds=\((restored?.portForwards ?? []).count)")
         } catch {
             log("BACKUP_FAIL \(error)")
         }

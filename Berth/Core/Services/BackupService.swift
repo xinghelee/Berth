@@ -79,7 +79,7 @@ enum BackupService {
                     proxyHost: host.proxyHost,
                     proxyPort: host.proxyPort,
                     proxyUsername: host.proxyUsername,
-                    forwards: host.portForwards
+                    forwards: (host.portForwards ?? [])
                         .sorted { $0.sortOrder < $1.sortOrder }
                         .map { forward in
                             ForwardDTO(

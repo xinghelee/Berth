@@ -21,25 +21,27 @@ enum HostSource: String, Codable {
     case sshConfig // M2:~/.ssh/config 只读镜像
 }
 
+// CloudKit 兼容约束(全部模型同此):不用 @Attribute(.unique),非 optional 属性必须有默认值。
+// id 唯一性由业务逻辑保证(创建即 UUID(),导入/恢复路径先查再插)。
 @Model
 final class Host {
-    @Attribute(.unique) var id: UUID
-    var label: String
-    var hostname: String
-    var port: Int
-    var username: String
-    var authMethodRaw: String
+    var id: UUID = UUID()
+    var label: String = ""
+    var hostname: String = ""
+    var port: Int = 22
+    var username: String = ""
+    var authMethodRaw: String = AuthMethodKind.password.rawValue
     /// authMethod == .privateKeyFile 时的私钥文件路径(支持 ~ 展开)
     var privateKeyPath: String?
     /// authMethod == .storedKey 时引用的 SSHKeyRecord.id
     var keyID: UUID?
     var group: HostGroup?
-    var tagColorRaw: String
-    var note: String
-    var sortOrder: Int
-    var sourceRaw: String
+    var tagColorRaw: String = TagColor.none.rawValue
+    var note: String = ""
+    var sortOrder: Int = 0
+    var sourceRaw: String = HostSource.manual.rawValue
     var lastConnectedAt: Date?
-    var createdAt: Date
+    var createdAt: Date = Date()
     /// 跳板机:另一台 Host 的 id(等效 ProxyJump),支持链式
     var jumpHostID: UUID?
     /// 代理:拍平成基础字段存储(SwiftData 对嵌套枚举的复合 Codable 属性支持不稳,故不直接存 struct)
@@ -56,7 +58,8 @@ final class Host {
     var osName: String = ""
     /// MAC 地址(用于 Wake-on-LAN,局域网唤醒);空 = 未设置
     var macAddress: String = ""
-    @Relationship(deleteRule: .cascade, inverse: \PortForward.host) var portForwards: [PortForward] = []
+    // CloudKit 要求关系为 optional;读取端用 `?? []` 兜底
+    @Relationship(deleteRule: .cascade, inverse: \PortForward.host) var portForwards: [PortForward]? = []
 
     init(
         id: UUID = UUID(),
@@ -144,10 +147,10 @@ final class Host {
 
 @Model
 final class HostGroup {
-    @Attribute(.unique) var id: UUID
-    var name: String
-    var sortOrder: Int
-    @Relationship(deleteRule: .nullify, inverse: \Host.group) var hosts: [Host] = []
+    var id: UUID = UUID()
+    var name: String = ""
+    var sortOrder: Int = 0
+    @Relationship(deleteRule: .nullify, inverse: \Host.group) var hosts: [Host]? = []
 
     init(id: UUID = UUID(), name: String, sortOrder: Int = 0) {
         self.id = id

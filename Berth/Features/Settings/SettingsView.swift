@@ -1,3 +1,4 @@
+import CloudKit
 import SwiftData
 import SwiftUI
 import UniformTypeIdentifiers
@@ -21,6 +22,9 @@ struct SettingsView: View {
     @AppStorage(SettingsKeys.probeReachability) private var probeReachability = false
     @State private var themeStore = ThemeStore.shared
     @State private var dataMessage: String?
+    @State private var syncAccountStatus: CKAccountStatus?
+    @State private var syncMonitor = CloudSyncMonitor.shared
+    @State private var syncNote: String?
     @State private var showAcknowledgements = false
     @State private var languageChanged = false
     @Environment(\.modelContext) private var modelContext
@@ -96,6 +100,33 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            Section("iCloud 同步") {
+                HStack {
+                    Text("状态")
+                    Spacer()
+                    if syncMonitor.phase == .syncing {
+                        ProgressView().controlSize(.small)
+                        Text("同步中…").foregroundStyle(.secondary)
+                    } else {
+                        Text(syncStatusLabel).foregroundStyle(.secondary)
+                    }
+                }
+                HStack {
+                    Text("上次同步")
+                    Spacer()
+                    Text(lastSyncLabel).foregroundStyle(.secondary)
+                }
+                HStack {
+                    Button("立即同步") { syncNow() }
+                    if let syncNote {
+                        Text(syncNote).font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+                Text("主机、分组、端口转发、片段、模板与触发器经 iCloud 私有库自动同步;密码与私钥只在本机钥匙串,永不上传。「立即同步」推送本地改动;云端改动由系统自动拉取。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .task { await refreshSyncStatus() }
             Section("语言") {
                 Picker("界面语言", selection: $appLanguage) {
                     Text("跟随系统").tag("system")
@@ -140,6 +171,42 @@ struct SettingsView: View {
         .tint(themeStore.current.accentColor)
         .frame(width: 460)
         .navigationTitle("设置")
+    }
+
+    private var syncStatusLabel: String {
+        if ProcessInfo.processInfo.environment["BERTH_DISABLE_SYNC"] == "1" {
+            return String(localized: "已停用(调试)")
+        }
+        switch syncAccountStatus {
+        case .available: return String(localized: "已启用,随 iCloud 自动同步")
+        case .noAccount: return String(localized: "未登录 iCloud 账号")
+        case .restricted: return String(localized: "iCloud 账号受限")
+        case .temporarilyUnavailable: return String(localized: "iCloud 暂不可用,稍后自动重试")
+        case .couldNotDetermine, .none: return String(localized: "检查中…")
+        @unknown default: return String(localized: "检查中…")
+        }
+    }
+
+    private var lastSyncLabel: String {
+        guard let date = syncMonitor.lastSyncDate else { return String(localized: "尚无记录") }
+        return date.formatted(date: .omitted, time: .shortened)
+    }
+
+    private func refreshSyncStatus() async {
+        let container = CKContainer(identifier: "iCloud.com.berthssh.app")
+        syncAccountStatus = (try? await container.accountStatus()) ?? .couldNotDetermine
+    }
+
+    /// 推送本地待同步改动(flush 到 CloudKit 导出队列)并刷新账号状态,给出即时反馈
+    private func syncNow() {
+        let hadChanges = modelContext.hasChanges
+        try? modelContext.save()
+        Task { await refreshSyncStatus() }
+        syncNote = hadChanges ? String(localized: "已推送本地改动") : String(localized: "本地无待同步改动")
+        Task {
+            try? await Task.sleep(for: .seconds(3))
+            syncNote = nil
+        }
     }
 
     private func exportBackup() {
