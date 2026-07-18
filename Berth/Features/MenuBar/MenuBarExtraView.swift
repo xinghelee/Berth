@@ -9,8 +9,10 @@ struct MenuBarExtraView: View {
     @Query(sort: \Host.sortOrder) private var storedHosts: [Host]
     @AppStorage(SettingsKeys.demoMode) private var demoMode = false
 
-    /// 演示模式下用内置示例替换真实主机(防录屏/截图泄漏)
-    private var hosts: [Host] { demoMode ? DemoMode.samples : storedHosts }
+    /// 托管主机(库)+ config 镜像(内存);演示模式下换内置示例(防录屏/截图泄漏)
+    private var hosts: [Host] {
+        demoMode ? DemoMode.samples : storedHosts + SSHConfigService.shared.mirrorHosts
+    }
 
     var body: some View {
         if !sessionManager.sessions.isEmpty {

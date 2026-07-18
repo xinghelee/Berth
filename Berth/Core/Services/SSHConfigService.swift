@@ -1,17 +1,23 @@
+import CryptoKit
 import Foundation
 import SwiftData
 
 /// ~/.ssh/config 导入与文件监听。
-/// 导入的主机以 source == .sshConfig 存库,是只读镜像:每次同步整体对齐
-/// (新增/更新/删除),用户编辑需先「转为托管主机」。
+/// 镜像主机是**内存态**只读视图(source == .sshConfig,不插入任何 ModelContext):
+/// 本机 config 是设备私有内容,入库会被 CloudKit 同步扩散到其它设备并互相打架。
+/// 每次同步整体对齐(新增/更新/删除),用户编辑需先「转为托管主机」。
+/// id 由 alias 决定性派生,跨启动/跨设备稳定,会话恢复与模板按 id 仍可命中。
 @MainActor
+@Observable
 final class SSHConfigService {
     static let shared = SSHConfigService()
 
-    private var container: ModelContainer?
-    private var watcher: DispatchSourceFileSystemObject?
-    private var debounceTask: Task<Void, Never>?
-    private var started = false
+    /// config 的内存镜像,按 config 文件内出现顺序排列
+    private(set) var mirrorHosts: [Host] = []
+
+    @ObservationIgnored private var watcher: DispatchSourceFileSystemObject?
+    @ObservationIgnored private var debounceTask: Task<Void, Never>?
+    @ObservationIgnored private var started = false
 
     var configPath: String { NSString(string: "~/.ssh/config").expandingTildeInPath }
     private var sshDirectory: String { NSString(string: "~/.ssh").expandingTildeInPath }
@@ -21,9 +27,26 @@ final class SSHConfigService {
         // 临时库实例(自动化验收/演示场景)保持密闭,不镜像真实 ~/.ssh/config
         if ProcessInfo.processInfo.environment["BERTH_TRANSIENT_STORE"] == "1" { return }
         started = true
-        self.container = container
+        purgeLegacyMirrorRows(container: container)
         sync()
         startWatching()
+    }
+
+    /// 历史版本把镜像主机存进了库;内存化后清掉残留行(幂等,防止随 CloudKit 扩散)
+    private func purgeLegacyMirrorRows(container: ModelContainer) {
+        let context = ModelContext(container)
+        let descriptor = FetchDescriptor<Host>(predicate: #Predicate { $0.sourceRaw == "sshConfig" })
+        guard let stale = try? context.fetch(descriptor), !stale.isEmpty else { return }
+        for host in stale { context.delete(host) }
+        try? context.save()
+    }
+
+    /// alias → 稳定 UUID(SHA-256 前 16 字节),跨启动/设备一致
+    private static func mirrorID(alias: String) -> UUID {
+        let digest = SHA256.hash(data: Data("berth.sshconfig.\(alias)".utf8))
+        let b = Array(digest.prefix(16))
+        return UUID(uuid: (b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7],
+                           b[8], b[9], b[10], b[11], b[12], b[13], b[14], b[15]))
     }
 
     /// 从 ~/.ssh/config 移除某个别名对应的 Host 块(删除前自动备份),随后重新同步。
@@ -94,24 +117,16 @@ final class SSHConfigService {
     ]
 
     func sync() {
-        guard let container else { return }
         let parsed = SSHConfigParser.parseFile(at: configPath)
             .filter { !Self.gitHostingDomains.contains($0.hostname.lowercased()) }
-        let context = ModelContext(container)
 
-        let descriptor = FetchDescriptor<Host>(
-            predicate: #Predicate { $0.sourceRaw == "sshConfig" }
-        )
-        let existing = (try? context.fetch(descriptor)) ?? []
-        var existingByAlias = Dictionary(existing.map { ($0.label, $0) }, uniquingKeysWith: { first, _ in first })
+        // 复用旧实例保持 lastConnectedAt/osName 等运行期状态;config 已删的自然淘汰
+        var previous = Dictionary(mirrorHosts.map { ($0.label, $0) }, uniquingKeysWith: { first, _ in first })
 
-        for entry in parsed {
-            let host = existingByAlias.removeValue(forKey: entry.alias)
-                ?? {
-                    let created = Host(label: entry.alias, hostname: entry.hostname, username: "", source: .sshConfig)
-                    context.insert(created)
-                    return created
-                }()
+        mirrorHosts = parsed.map { entry in
+            let host = previous.removeValue(forKey: entry.alias)
+                ?? Host(id: Self.mirrorID(alias: entry.alias),
+                        label: entry.alias, hostname: entry.hostname, username: "", source: .sshConfig)
             host.hostname = entry.hostname
             host.port = entry.port ?? 22
             host.username = entry.user ?? NSUserName()
@@ -128,13 +143,8 @@ final class SSHConfigService {
                 host.privateKeyPath = defaultIdentityFile()
             }
             host.note = entry.proxyJump.map { String(localized: "ProxyJump \($0)(跳板机连接将在后续版本支持)") } ?? ""
+            return host
         }
-
-        // config 中已移除的镜像主机一并删除
-        for (_, stale) in existingByAlias {
-            context.delete(stale)
-        }
-        try? context.save()
     }
 
     /// config 未指定 IdentityFile 时,按 ssh 默认顺序找一把存在的钥匙

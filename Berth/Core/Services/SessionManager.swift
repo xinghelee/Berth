@@ -35,10 +35,14 @@ final class SessionManager {
         guard !os.isEmpty, let modelContainer else { return }
         let context = modelContainer.mainContext
         let descriptor = FetchDescriptor<Host>(predicate: #Predicate { $0.id == hostID })
-        guard let host = try? context.fetch(descriptor).first else { return }
-        if host.osName != os {
-            host.osName = os
-            try? context.save()
+        if let host = try? context.fetch(descriptor).first {
+            if host.osName != os {
+                host.osName = os
+                try? context.save()
+            }
+        } else if let mirror = SSHConfigService.shared.mirrorHosts.first(where: { $0.id == hostID }) {
+            // config 镜像是内存态,直接改实例(不落库)
+            mirror.osName = os
         }
     }
 
@@ -363,7 +367,9 @@ final class SessionManager {
               let ids = UserDefaults.standard.stringArray(forKey: Self.openTabsKey),
               !ids.isEmpty else { return }
         let context = ModelContext(container)
-        guard let hosts = try? context.fetch(FetchDescriptor<Host>()), !hosts.isEmpty else { return }
+        let stored = (try? context.fetch(FetchDescriptor<Host>())) ?? []
+        let hosts = stored + SSHConfigService.shared.mirrorHosts
+        guard !hosts.isEmpty else { return }
         for idString in ids {
             guard let uuid = UUID(uuidString: idString),
                   let host = hosts.first(where: { $0.id == uuid }) else { continue }
