@@ -77,7 +77,7 @@ BERTH_M1_AUTOTEST=1 BERTH_TRANSIENT_STORE=1 \
 - [~] M4 — 二期(部分已并入 main):
   - [x] ~~iTerm2 主题导入~~ 按用户决定移除,改为 20 套内置主题(含 4 套精选:松烟墨/夜泊琥珀/祖母绿/玉版宣);侧栏底部 🎨 配色面板 + ⚙ 设置入口
   - [x] SFTP 侧边文件面板 + 拖拽上传下载(复用会话连接;`BERTH_SFTP_AUTOTEST` 真机跑通往返)
-  - [ ] CloudKit 同步(last-write-wins + 删除墓碑)—— 需 iCloud entitlement/容器 + 签名构建才能验证,暂缓
+  - [~] CloudKit 同步(feature/cloudkit-sync):单库镜像 iCloud 私有库(容器 iCloud.com.berthssh.app,Team 99LYH6FNPS)。模型已去 unique/关系 optional 化;ssh_config 镜像主机改内存态(不入库不同步);密码/私钥永不上传;`BERTH_DISABLE_SYNC=1` 调试关闭。Mac 端已验证记录导出成功;待 Mac+iOS 双端联测后并回 main
   - [ ] 本地回显(predictive echo)完整版 —— 触及 SwiftTerm 渲染,需交互测延迟,暂缓
 - [~] M6 — iOS 版(`BerthiOS` target,`xcodegen generate` 后用
   `xcodebuildmcp simulator build-and-run --project-path Berth.xcodeproj --scheme BerthiOS --simulator-name "iPhone 17 Pro Max"`):
