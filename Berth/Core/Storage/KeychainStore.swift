@@ -29,23 +29,28 @@ enum KeychainStore {
 
     // MARK: 基本操作
 
+    /// 机密项统一走 iCloud 钥匙串同步(kSecAttrSynchronizable,端到端加密):
+    /// 任一设备录入一次,同一 Apple ID 的其它设备可直接连接。Berth 无自有服务器。
     static func save(_ secret: String, account: String) throws {
         let data = Data(secret.utf8)
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: account,
+            kSecAttrSynchronizable as String: true,
         ]
         let update: [String: Any] = [kSecValueData as String: data]
 
         var status = SecItemUpdate(query as CFDictionary, update as CFDictionary)
-        if status == errSecAuthFailed {
-            // 旧项的 ACL 绑定在别的构建上(如 ad-hoc 签名的历史版本),本构建无权更新。
-            // 删掉重建:重新输入密码即可恢复,不让用户卡死在无法覆盖的旧项上。
-            SecItemDelete(query as CFDictionary)
-            status = errSecItemNotFound
-        }
-        if status == errSecItemNotFound {
+        if status == errSecAuthFailed || status == errSecItemNotFound {
+            // 覆盖历史遗留:本机-only 旧项,或 ACL 绑定在别的构建上的项——删除后按可同步项重建
+            let purge: [String: Any] = [
+                kSecClass as String: kSecClassGenericPassword,
+                kSecAttrService as String: service,
+                kSecAttrAccount as String: account,
+                kSecAttrSynchronizable as String: kSecAttrSynchronizableAny,
+            ]
+            SecItemDelete(purge as CFDictionary)
             var attributes = query
             attributes[kSecValueData as String] = data
             attributes[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlocked
@@ -59,6 +64,7 @@ enum KeychainStore {
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: account,
+            kSecAttrSynchronizable as String: kSecAttrSynchronizableAny,
             kSecReturnData as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne,
         ]
@@ -80,10 +86,39 @@ enum KeychainStore {
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: account,
+            kSecAttrSynchronizable as String: kSecAttrSynchronizableAny,
         ]
         let status = SecItemDelete(query as CFDictionary)
         guard status == errSecSuccess || status == errSecItemNotFound else {
             throw KeychainError.unexpectedStatus(status)
+        }
+    }
+
+    /// 一次性迁移:把本机-only 的旧机密项重写为可同步项(iCloud 钥匙串)。
+    /// 出错(如钥匙串被锁)时不打完成标记,下次启动重试。
+    static func migrateToSynchronizableIfNeeded() {
+        let flag = "migration.keychainSynchronizable.v1"
+        guard !UserDefaults.standard.bool(forKey: flag) else { return }
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrSynchronizable as String: false,
+            kSecReturnAttributes as String: true,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitAll,
+        ]
+        var result: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        if status == errSecSuccess, let items = result as? [[String: Any]] {
+            for item in items {
+                guard let account = item[kSecAttrAccount as String] as? String,
+                      let data = item[kSecValueData as String] as? Data,
+                      let secret = String(data: data, encoding: .utf8) else { continue }
+                try? save(secret, account: account)
+            }
+        }
+        if status == errSecSuccess || status == errSecItemNotFound {
+            UserDefaults.standard.set(true, forKey: flag)
         }
     }
 

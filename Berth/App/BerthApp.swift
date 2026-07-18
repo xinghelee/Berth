@@ -7,6 +7,8 @@ struct BerthApp: App {
     private let sessionManager = SessionManager.shared
 
     init() {
+        // 旧的本机-only 机密项一次性重写为 iCloud 钥匙串可同步项
+        KeychainStore.migrateToSynchronizableIfNeeded()
         // 启动即强制整个 app 跟随主题深浅,避免打开时先闪一下系统浅色
         ThemeStore.shared.applyWindowChrome()
         SessionManager.shared.modelContainer = container
