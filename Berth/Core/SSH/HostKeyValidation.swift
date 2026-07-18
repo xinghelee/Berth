@@ -40,16 +40,21 @@ final class InteractiveHostKeyValidator: NIOSSHClientServerAuthenticationDelegat
     private let port: Int
     private let store: KnownHostsStore
     private let decisionHandler: @Sendable (HostKeyPrompt) async -> Bool
+    /// 首次连接(未知主机密钥)是否静默信任并记住,不弹确认。
+    /// iOS 默认开启(known_hosts 不跨设备同步,逐台确认太扰);密钥变更仍强制确认。
+    private let autoTrustUnknown: Bool
 
     init(
         hostname: String,
         port: Int,
         store: KnownHostsStore = KnownHostsStore(),
+        autoTrustUnknown: Bool = false,
         decisionHandler: @escaping @Sendable (HostKeyPrompt) async -> Bool
     ) {
         self.hostname = hostname
         self.port = port
         self.store = store
+        self.autoTrustUnknown = autoTrustUnknown
         self.decisionHandler = decisionHandler
     }
 
@@ -61,6 +66,12 @@ final class InteractiveHostKeyValidator: NIOSSHClientServerAuthenticationDelegat
             validationCompletePromise.succeed(())
 
         case .unknown:
+            if autoTrustUnknown {
+                // 首次连接静默信任:记住密钥,不打扰。写入失败不阻断本次连接。
+                try? store.append(hostname: hostname, port: port, key: hostKey)
+                validationCompletePromise.succeed(())
+                return
+            }
             let prompt = HostKeyPrompt(
                 hostname: hostname,
                 port: port,

@@ -252,7 +252,9 @@ final class IOSTerminalSession {
 
     private func settings(for hop: HostSpec) throws -> SSHClientSettings {
         let method = try authenticationMethod(for: hop)
-        let validator = InteractiveHostKeyValidator(hostname: hop.hostname, port: hop.port) { [weak self] prompt in
+        let validator = InteractiveHostKeyValidator(
+            hostname: hop.hostname, port: hop.port, autoTrustUnknown: true
+        ) { [weak self] prompt in
             guard let self else { return false }
             return await self.requestHostKeyDecision(prompt)
         }
