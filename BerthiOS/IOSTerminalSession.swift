@@ -14,6 +14,8 @@ final class IOSTerminalSession {
         case connecting(String)
         case connected
         case failed(String)
+        /// 密码认证但本设备没有该主机的密码(同步过来的主机首次在本机使用)——引导补录
+        case needsPassword
         case closed
     }
 
@@ -21,9 +23,11 @@ final class IOSTerminalSession {
         case unsupportedAuth(String)
         case missingStoredKey
         case unsupportedKey
+        case needsPassword
 
         var errorDescription: String? {
             switch self {
+            case .needsPassword: return String(localized: "请输入此主机的密码")
             case .unsupportedAuth(let name): return String(localized: "iOS 版暂不支持「\(name)」认证方式")
             case .missingStoredKey: return String(localized: "找不到该主机引用的密钥,请在「密钥」页检查或重新选择。")
             case .unsupportedKey: return String(localized: "无法解析私钥文件:目前支持 OpenSSH 格式的 ed25519 / RSA 私钥。若密钥带 passphrase,请确认已正确填写。")
@@ -55,6 +59,8 @@ final class IOSTerminalSession {
     private var sessionTask: Task<Void, Never>?
     private var stdinWriter: AsyncStream<StdinEvent>.Continuation?
     private var hostKeyContinuation: CheckedContinuation<Bool, Never>?
+    private var lastCols = 80
+    private var lastRows = 24
 
     init(spec: HostSpec) {
         self.spec = spec
@@ -64,8 +70,9 @@ final class IOSTerminalSession {
     var subtitle: String { "\(spec.username)@\(spec.hostname)" }
 
     func start(cols: Int, rows: Int) {
+        lastCols = max(cols, 20); lastRows = max(rows, 5)
         guard sessionTask == nil else { return }
-        sessionTask = Task { await run(cols: max(cols, 20), rows: max(rows, 5)) }
+        sessionTask = Task { await run(cols: lastCols, rows: lastRows) }
     }
 
     func send(_ data: ArraySlice<UInt8>) {
@@ -77,6 +84,7 @@ final class IOSTerminalSession {
     }
 
     func resize(cols: Int, rows: Int) {
+        lastCols = max(cols, 20); lastRows = max(rows, 5)
         stdinWriter?.yield(.resize(cols: cols, rows: rows))
     }
 
@@ -93,6 +101,19 @@ final class IOSTerminalSession {
         hostKeyPrompt = nil
         hostKeyContinuation?.resume(returning: trusted)
         hostKeyContinuation = nil
+    }
+
+    /// 补录密码后重连;save 时同时写入(可同步)钥匙串,之后本机及其它设备免再输
+    func providePassword(_ password: String, save: Bool) {
+        transientPassword = password
+        if save {
+            try? KeychainStore.save(password, account: KeychainStore.passwordAccount(for: spec.hostID))
+        }
+        sessionTask?.cancel()
+        sessionTask = nil
+        teardown()
+        connectedAt = nil
+        sessionTask = Task { await run(cols: lastCols, rows: lastRows) }
     }
 
     // MARK: - 连接主流程
@@ -161,6 +182,8 @@ final class IOSTerminalSession {
             state = .failed(String(localized: "连接已被服务器关闭"))
         } catch is CancellationError {
             state = .closed
+        } catch IOSSessionError.needsPassword {
+            state = .needsPassword
         } catch let error as IOSSessionError {
             state = .failed(error.localizedDescription)
         } catch let error as HostKeyError {
@@ -297,7 +320,11 @@ final class IOSTerminalSession {
         case .password:
             let password = try (hop.hostID == spec.hostID ? transientPassword : nil)
                 ?? KeychainStore.read(account: KeychainStore.passwordAccount(for: hop.hostID))
-                ?? ""
+            // 目标本机无密码(常见于同步过来但没在本机补录过):引导输入,而非拿空密码撞失败
+            guard let password else {
+                if hop.hostID == spec.hostID { throw IOSSessionError.needsPassword }
+                return .passwordBased(username: hop.username, password: "")
+            }
             return .passwordBased(username: hop.username, password: password)
 
         case .storedKey:

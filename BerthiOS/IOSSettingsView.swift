@@ -1,9 +1,11 @@
+import CloudKit
 import SwiftUI
 
-/// iOS 设置:主题(与 Mac 版共用 20 套)+ 关于。
+/// iOS 设置:主题(与 Mac 版共用 20 套)+ iCloud 同步 + 关于。
 struct IOSSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var theme = ThemeStore.shared
+    @State private var syncAccountStatus: CKAccountStatus?
 
     var body: some View {
         NavigationStack {
@@ -21,6 +23,18 @@ struct IOSSettingsView: View {
                     }
                     .listRowBackground(theme.current.panelBackground)
                 }
+                Section(String(localized: "iCloud 同步")) {
+                    HStack {
+                        Text(String(localized: "状态"))
+                        Spacer()
+                        Text(syncStatusLabel)
+                            .foregroundStyle(theme.current.secondaryText)
+                    }
+                    Text(String(localized: "主机、分组、端口转发、片段、模板与触发器经 iCloud 私有库自动同步;密码与私钥只在本机钥匙串,永不上传。"))
+                        .font(.caption)
+                        .foregroundStyle(theme.current.secondaryText)
+                }
+                .listRowBackground(theme.current.panelBackground)
                 Section(String(localized: "关于")) {
                     if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
                         LabeledContent(String(localized: "版本"), value: version)
@@ -35,6 +49,7 @@ struct IOSSettingsView: View {
             .background(theme.current.sidebarBackground)
             .navigationTitle(String(localized: "设置"))
             .navigationBarTitleDisplayMode(.inline)
+            .task { await refreshSyncStatus() }
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(String(localized: "完成")) { dismiss() }
@@ -45,6 +60,21 @@ struct IOSSettingsView: View {
         .preferredColorScheme(theme.current.isDark ? .dark : .light)
     }
 
+    private var syncStatusLabel: String {
+        switch syncAccountStatus {
+        case .available: return String(localized: "已启用,随 iCloud 自动同步")
+        case .noAccount: return String(localized: "未登录 iCloud 账号")
+        case .restricted: return String(localized: "iCloud 账号受限")
+        case .temporarilyUnavailable: return String(localized: "iCloud 暂不可用,稍后自动重试")
+        case .couldNotDetermine, .none: return String(localized: "检查中…")
+        @unknown default: return String(localized: "检查中…")
+        }
+    }
+
+    private func refreshSyncStatus() async {
+        let container = CKContainer(identifier: "iCloud.com.berthssh.app")
+        syncAccountStatus = (try? await container.accountStatus()) ?? .couldNotDetermine
+    }
 }
 
 /// 主题选择二级页:20 套内置主题列表

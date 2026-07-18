@@ -11,6 +11,9 @@ struct TerminalScreen: View {
     @State private var theme = ThemeStore.shared
     @State private var showSnippets = false
     @State private var showServerInfo = false
+    @State private var passwordEntry = ""
+    @State private var savePassword = true
+    @FocusState private var passwordFocused: Bool
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -62,7 +65,8 @@ struct TerminalScreen: View {
         }
     }
 
-    /// 键盘仅在已连接且无弹窗时显示;连接中/失败/指纹确认期间收起,避免键盘顶着模态框
+    /// 终端键盘仅在已连接且无弹窗时显示;连接中/失败/指纹/补录密码期间收起,避免顶着模态框。
+    /// (补录密码卡片有自己的输入框,用独立的 FocusState 弹键盘。)
     private func keyboardActive(for session: IOSTerminalSession) -> Bool {
         guard session.hostKeyPrompt == nil else { return false }
         if case .connected = session.state { return true }
@@ -77,6 +81,9 @@ struct TerminalScreen: View {
             modalScrim { hostKeySheet(prompt, session: session) }
         } else {
             switch session.state {
+            case .needsPassword:
+                modalScrim { passwordSheet(session: session) }
+
             case .connecting(let detail):
                 modalScrim {
                     VStack(spacing: 10) {
@@ -148,20 +155,78 @@ struct TerminalScreen: View {
                         .foregroundStyle(theme.current.secondaryText)
                 }
             }
-            HStack {
-                Button(String(localized: "取消连接"), role: .cancel) {
-                    session.resolveHostKey(trusted: false)
-                }
-                Spacer()
-                Button(prompt.isKeyChange ? String(localized: "我已核实,更新并连接") : String(localized: "信任并连接")) {
+            VStack(spacing: 10) {
+                Button {
                     session.resolveHostKey(trusted: true)
+                } label: {
+                    Text(prompt.isKeyChange ? String(localized: "我已核实,更新并连接") : String(localized: "信任并连接"))
+                        .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+
+                Button(role: .cancel) {
+                    session.resolveHostKey(trusted: false)
+                } label: {
+                    Text(String(localized: "取消连接"))
+                        .frame(maxWidth: .infinity)
+                }
+                .controlSize(.large)
+            }
+            .padding(.top, 4)
+        }
+        .padding(20)
+        .frame(maxWidth: 340)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    /// 同步过来但本机没存密码的主机:当场补录并重连(可选存入可同步钥匙串)
+    private func passwordSheet(session: IOSTerminalSession) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text(String(localized: "输入密码"))
+                .font(.headline)
+            Text("\(session.spec.username)@\(session.spec.hostname)")
+                .font(.caption)
+                .monospaced()
+                .foregroundStyle(theme.current.secondaryText)
+
+            SecureField(String(localized: "密码"), text: $passwordEntry)
+                .textContentType(.password)
+                .textFieldStyle(.roundedBorder)
+                .focused($passwordFocused)
+                .submitLabel(.go)
+                .onSubmit(submitPassword)
+
+            Toggle(String(localized: "保存密码(经 iCloud 钥匙串同步)"), isOn: $savePassword)
+                .font(.caption)
+
+            VStack(spacing: 10) {
+                Button(action: submitPassword) {
+                    Text(String(localized: "连接"))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .disabled(passwordEntry.isEmpty)
+
+                Button(role: .cancel) { dismiss() } label: {
+                    Text(String(localized: "取消"))
+                        .frame(maxWidth: .infinity)
+                }
+                .controlSize(.large)
             }
         }
         .padding(20)
         .frame(maxWidth: 340)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .onAppear { passwordFocused = true }
+    }
+
+    private func submitPassword() {
+        guard let session, !passwordEntry.isEmpty else { return }
+        passwordFocused = false
+        session.providePassword(passwordEntry, save: savePassword)
+        passwordEntry = ""
     }
 }
 

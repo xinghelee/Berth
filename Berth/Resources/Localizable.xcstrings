@@ -4980,6 +4980,46 @@
           }
         }
       }
+    },
+    "请输入此主机的密码": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter the password for this host"
+          }
+        }
+      }
+    },
+    "输入密码": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter password"
+          }
+        }
+      }
+    },
+    "保存密码(经 iCloud 钥匙串同步)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save password (synced via iCloud Keychain)"
+          }
+        }
+      }
+    },
+    "仅同步在 Mac / iPhone 上手动添加的主机;Mac 上从 ~/.ssh/config 导入的主机是本机私有,不会出现在这里。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only hosts you add manually on Mac or iPhone sync here. Hosts imported from ~/.ssh/config on the Mac are local to that machine and don't appear."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

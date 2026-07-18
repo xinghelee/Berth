@@ -83,6 +83,12 @@ struct HostListView: View {
                     }
                 }
             }
+            Section {
+                Text(String(localized: "仅同步在 Mac / iPhone 上手动添加的主机;Mac 上从 ~/.ssh/config 导入的主机是本机私有,不会出现在这里。"))
+                    .font(.caption)
+                    .foregroundStyle(theme.current.secondaryText)
+                    .listRowBackground(Color.clear)
+            }
         }
     }
 
