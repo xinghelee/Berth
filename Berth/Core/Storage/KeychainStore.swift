@@ -4,7 +4,7 @@ import Security
 /// Keychain 封装:密码与 passphrase 只存 Keychain(kSecAttrAccessibleWhenUnlocked),
 /// 数据库中不落任何明文,只按约定命名规则(host.<uuid>.password 等)引用。
 enum KeychainStore {
-    static let service = "com.berthssh.Berth"
+    static let service = "com.berthssh.app"
 
     enum KeychainError: LocalizedError {
         case unexpectedStatus(OSStatus)

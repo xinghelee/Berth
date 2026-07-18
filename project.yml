@@ -47,7 +47,7 @@ targets:
         NSHighResolutionCapable: true
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.berthssh.Berth
+        PRODUCT_BUNDLE_IDENTIFIER: com.berthssh.app
         SWIFT_VERSION: "5.0"
         # 用稳定的开发证书签名(而非 ad-hoc "-"):ad-hoc 下每次重建二进制指纹都变,
         # Keychain 把新构建当陌生 app,读旧密码项报 errSecAuthFailed(发布用 Developer ID 另签)
@@ -96,7 +96,7 @@ targets:
           - UIInterfaceOrientationLandscapeRight
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.berthssh.Berth.ios
+        PRODUCT_BUNDLE_IDENTIFIER: com.berthssh.ios
         SWIFT_VERSION: "5.0"
         TARGETED_DEVICE_FAMILY: "1,2"
         CODE_SIGN_STYLE: Automatic
