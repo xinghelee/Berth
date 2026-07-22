@@ -1,75 +1,77 @@
-# Berth
+# Berth 泊
 
-**SSH, the Mac way.**
+**SSH,该有 Mac 的样子。**
 
-Berth is a Swift-native SSH client for macOS — Metal-rendered terminal, connection reuse, infinite split panes. Passwords and keys live in your Keychain; nothing ever leaves your Mac.
+[English](README.en.md)
 
-![Berth terminal](site/public/assets/shots/hero-terminal.png)
+Berth 是一款 Swift 原生的 macOS SSH 客户端——Metal 渲染终端、连接复用、无限分屏。密码与私钥只进 Keychain,任何数据不离开你的 Mac。
 
-macOS 15+ · Apple Silicon & Intel · Developer ID signed & notarized
+![Berth 终端](site/public/assets/shots/hero-terminal.png)
 
-## Features
+macOS 15+ · Apple Silicon & Intel · Developer ID 签名与公证
 
-**Connection reuse & infinite splits.** ⌘T tabs and ⌘D splits share one SSH channel — no second handshake. Nest splits without limit; `exit` collapses the pane.
+## 功能
 
-**Jump hosts & port forwarding.** Chain jump hosts end to end. Local, remote and dynamic SOCKS5 forwarding, plus outbound HTTP/SOCKS5 proxies and ssh-agent support.
+**连接复用与无限分屏。** ⌘T 新标签、⌘D 分屏共享同一条 SSH 通道,不再重新握手。分屏可无限嵌套,`exit` 即收起。
 
-**Keys & Touch ID.** Generate or import keys; Touch ID guards every private-key use. `known_hosts` pinning with loud alerts on fingerprint changes.
+**跳板机与端口转发。** 链式跳板一路到底;本地 / 远程 / 动态 SOCKS5 转发,支持 HTTP 与 SOCKS5 出站代理和 ssh-agent。
 
-**SFTP file panel.** Rides the session connection. Drag-and-drop transfers, edit remote files in your local editor with automatic write-back, chmod, bookmarks, previews.
+**密钥与 Touch ID。** 生成、导入密钥,使用私钥前 Touch ID 验证。`known_hosts` 指纹确认,变更即警告。
 
-**Calm about disconnects.** Auto-reconnect with exponential backoff, straight back to your working directory (OSC 7). Exit codes marked inline (OSC 133).
+**SFTP 文件面板。** 复用会话连接,拖拽上传下载。远端文件用本地编辑器打开,保存自动回传;chmod、书签、文本预览。
 
-**Production guardrails.** Per-host alert colors, so prod never looks like staging. Broadcast input across sessions (⌘⌥B); snippets with `{{variables}}`.
+**断线不慌。** 指数退避自动重连,重连后回到原工作目录(OSC 7);命令退出码直接标在终端里(OSC 133)。
 
-**ssh_config native.** Imports your existing `~/.ssh/config` and watches it for changes. Paste any `ssh user@host -p 2222` command to connect.
+**生产环境警戒。** 按主机警戒配色,一眼分清测试与生产。广播输入(⌘⌥B)同时操作多台;Snippets 片段库带 `{{变量}}`。
 
-**iCloud sync.** Hosts and settings mirror to your iCloud private database; secrets sync end-to-end encrypted via iCloud Keychain. No accounts, no servers of ours.
+**ssh_config 原生集成。** 导入现有 `~/.ssh/config` 并监听变更实时同步。粘贴任意 `ssh user@host -p 2222` 命令即可直接连接。
 
-**Twenty built-in themes.** Nord, Dracula, Catppuccin, Solarized and friends, plus four crafted in-house: Sumi, Xuan, Amber Mooring and Emerald.
+**iCloud 同步。** 主机与设置镜像到你的 iCloud 私有数据库;机密经 iCloud 钥匙串端到端加密同步。没有账号,没有我们的服务器。
 
-**Keyboard first.** ⌘K quick connect, ⌘P command palette, ⌘D split, ⌘F search, ⌘I server info. Every Ctrl combo passes through to the shell — your Emacs and readline habits stay intact.
+**二十套内置主题。** Nord、Dracula、Catppuccin、Solarized 尽数内置,另有四套 Berth 原创:松烟墨、玉版宣、夜泊琥珀、祖母绿圣殿。
 
-An iOS companion app (`BerthiOS`) shares the same core: host list, full host editor, SwiftTerm terminal with key bar, key management, snippets and themes.
+**键盘优先。** ⌘K 快速连接、⌘P 命令面板、⌘D 分屏、⌘F 搜索、⌘I 服务器信息。Ctrl 组合键全部透传给 shell,你的 Emacs / readline 习惯原样保留。
 
-## Security
+iOS 伴侣应用(`BerthiOS`)共享同一套核心:主机列表、完整主机编辑器、带按键条的 SwiftTerm 终端、密钥管理、Snippets 与主题。
 
-Two hard rules, built into the architecture:
+## 安全
 
-- **Secrets stay in Keychain.** Passwords, passphrases and private keys live in the macOS Keychain — never written to disk in plain text. JSON backups carry host structure only, no secrets.
-- **Everything stays local.** No account, no cloud of ours. Your host list lives on your Mac and syncs both ways with `ssh_config`; iCloud sync only ever touches your own private database.
+两条底线,写进架构:
 
-## Building from source
+- **机密只进 Keychain。** 密码、passphrase、私钥存 macOS Keychain,任何情况不落盘明文。JSON 备份只含主机结构,不含机密。
+- **数据全在本地。** 没有账号,没有我们的云端。主机列表在你的 Mac 上,与 `ssh_config` 双向同步;iCloud 同步只经过你自己的私有数据库。
 
-Requirements: Xcode 16+ with the Metal toolchain (`xcodebuild -downloadComponent metalToolchain` if missing) and [XcodeGen](https://github.com/yonaskolb/XcodeGen).
+## 从源码构建
+
+依赖:Xcode 16+ 及 Metal 工具链(缺失时 `xcodebuild -downloadComponent metalToolchain` 补装)、[XcodeGen](https://github.com/yonaskolb/XcodeGen)。
 
 ```bash
-xcodegen generate    # Berth.xcodeproj is generated, not checked in
-xcodebuild -project Berth.xcodeproj -scheme Berth build        # macOS app
+xcodegen generate    # Berth.xcodeproj 由工程文件生成,不入库
+xcodebuild -project Berth.xcodeproj -scheme Berth build        # macOS 应用
 xcodebuild -project Berth.xcodeproj -scheme BerthiOS build \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' # iOS app
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' # iOS 应用
 ```
 
-Run the unit tests (parsers, Keychain, known_hosts — 35 cases):
+运行单元测试(解析器、Keychain、known_hosts,共 35 项):
 
 ```bash
 xcodebuild -project Berth.xcodeproj -scheme Berth test
 ```
 
-A disposable sshd for local testing (password `dev` / `berth-spike`, key auth, `127.0.0.1:2222`):
+本地测试用的一次性 sshd(密码 `dev` / `berth-spike`,支持密钥认证,监听 `127.0.0.1:2222`):
 
 ```bash
 ./docker/test-sshd/up.sh
-docker rm -f berth-test-sshd   # tear down
+docker rm -f berth-test-sshd   # 停止
 ```
 
-## Tech stack
+## 技术栈
 
-- **SwiftUI** with an AppKit-bridged terminal view; **SwiftData** for persistence
-- **[SwiftTerm](https://github.com/migueldeicaza/SwiftTerm)** for terminal emulation, with the Metal GPU rendering backend
-- **[Citadel](https://github.com/orlandos-nl/Citadel)** for SSH, vendored in `vendor/` with patches — notably `rsa-sha2-512` signatures (RFC 8332) so RSA keys work against OpenSSH 8.8+; see `vendor/PATCHES.md`
-- **XcodeGen** project generation; distribution as a notarized DMG (no App Store sandbox, so `~/.ssh` stays readable)
+- **SwiftUI**(AppKit 桥接终端视图)+ **SwiftData** 持久化
+- **[SwiftTerm](https://github.com/migueldeicaza/SwiftTerm)** 终端模拟,启用 Metal GPU 渲染后端
+- **[Citadel](https://github.com/orlandos-nl/Citadel)** SSH 库,vendor 在 `vendor/` 并打补丁——核心是 `rsa-sha2-512` 签名(RFC 8332),让 RSA 密钥能连 OpenSSH 8.8+;详见 `vendor/PATCHES.md`
+- **XcodeGen** 生成工程;以公证 DMG 分发(不走 App Store 沙盒,保住 `~/.ssh` 读取)
 
 ---
 
-*Berth — moor every connection.*
+*Berth · 系好每一条连接*
