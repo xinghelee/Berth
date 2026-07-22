@@ -12,8 +12,6 @@ import Security
 /// 3. **可同步** `kSecAttrSynchronizable`:经 iCloud 钥匙串端到端加密同步。Berth 无自有服务器。
 enum KeychainStore {
     static let service = "com.berthssh.app"
-    /// bundle 改名(com.berthssh.Berth → com.berthssh)前存机密用的旧 service,迁移时一并回收
-    static let legacyService = "com.berthssh.Berth"
     /// 与 project.yml 里两端 entitlement 的 `$(AppIdentifierPrefix)com.berthssh.shared` 一致
     static let accessGroup = "99LYH6FNPS.com.berthssh.shared"
 
@@ -147,7 +145,7 @@ enum KeychainStore {
         }
 
         var ok = true
-        for svc in [service, legacyService] {
+        for svc in [service] {
             #if os(macOS)
             ok = harvest(service: svc, dataProtection: false) && ok
             ok = harvest(service: svc, dataProtection: true) && ok
