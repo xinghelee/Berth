@@ -10,6 +10,8 @@ Berth is a Swift-native SSH client for macOS — Metal-rendered terminal, connec
 
 macOS 15+ · Apple Silicon & Intel · Developer ID signed & notarized
 
+**[⬇︎ Download Berth 1.0.0](https://github.com/xinghelee/Berth/releases/latest/download/Berth-1.0.0.dmg)** · [All releases](https://github.com/xinghelee/Berth/releases)
+
 ## Features
 
 **Connection reuse & infinite splits.** ⌘T tabs and ⌘D splits share one SSH channel — no second handshake. Nest splits without limit; `exit` collapses the pane.
@@ -40,6 +42,10 @@ Two hard rules, built into the architecture:
 
 - **Secrets stay in Keychain.** Passwords, passphrases and private keys live in the macOS Keychain — never written to disk in plain text. JSON backups carry host structure only, no secrets.
 - **Everything stays local.** No account, no cloud of ours. Your host list lives on your Mac and syncs both ways with `ssh_config`; iCloud sync only ever touches your own private database.
+
+## Install
+
+Grab the latest `Berth-x.y.z.dmg` from [Releases](https://github.com/xinghelee/Berth/releases/latest), open it and drag Berth into Applications. The DMG is Developer ID signed and notarized by Apple — no bypass steps on first launch.
 
 ## Building from source
 
