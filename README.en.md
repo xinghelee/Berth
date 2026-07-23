@@ -45,7 +45,13 @@ Two hard rules, built into the architecture:
 
 ## Install
 
-Grab the latest `Berth-x.y.z.dmg` from [Releases](https://github.com/xinghelee/Berth/releases/latest), open it and drag Berth into Applications. The DMG is Developer ID signed and notarized by Apple — no bypass steps on first launch.
+Homebrew:
+
+```sh
+brew install --cask xinghelee/tap/berth
+```
+
+Or grab the latest `Berth-x.y.z.dmg` from [Releases](https://github.com/xinghelee/Berth/releases/latest), open it and drag Berth into Applications. The DMG is Developer ID signed and notarized by Apple — no bypass steps on first launch.
 
 ## Building from source
 

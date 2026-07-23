@@ -45,7 +45,13 @@ iOS 伴侣应用(`BerthiOS`)共享同一套核心:主机列表、完整主机编
 
 ## 安装
 
-从 [Releases](https://github.com/xinghelee/Berth/releases/latest) 下载最新的 `Berth-x.y.z.dmg`,打开后把 Berth 拖入「应用程序」。DMG 经 Developer ID 签名并通过 Apple 公证,首次启动无需任何绕过步骤。
+Homebrew:
+
+```sh
+brew install --cask xinghelee/tap/berth
+```
+
+或从 [Releases](https://github.com/xinghelee/Berth/releases/latest) 下载最新的 `Berth-x.y.z.dmg`,打开后把 Berth 拖入「应用程序」。DMG 经 Developer ID 签名并通过 Apple 公证,首次启动无需任何绕过步骤。
 
 ## 从源码构建
 
