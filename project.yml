@@ -10,8 +10,8 @@ settings:
   base:
     SWIFT_EMIT_LOC_STRINGS: true
     # 版本号唯一来源:两个 target 的 Info.plist 都引用这两个变量,别去改生成出来的 plist
-    MARKETING_VERSION: "1.9.5"
-    CURRENT_PROJECT_VERSION: "22"
+    MARKETING_VERSION: "1.9.6"
+    CURRENT_PROJECT_VERSION: "23"
 
 fileGroups:
   - project.yml
