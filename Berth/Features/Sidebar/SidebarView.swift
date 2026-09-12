@@ -21,8 +21,6 @@ struct SidebarView: View {
 
     @AppStorage(SettingsKeys.translucentChrome) private var translucentChrome = true
     @State private var searchText = ""
-    /// 键盘/单击选中的主机行
-    @State private var selectedHostID: UUID?
     /// 主题配色面板(popover)
     @State private var isThemePanelPresented = false
     /// 底部「更多」弹窗(仪表盘/配色/设置)
@@ -184,8 +182,9 @@ struct SidebarView: View {
         .padding(.top, 8)
         .padding(.bottom, 8)
         .onChange(of: searchText) { _, _ in
-            if let selected = selectedHostID, !visibleHosts.contains(where: { $0.id == selected }) {
-                selectedHostID = visibleHosts.first?.id
+            if let selected = sessionManager.selectedHostID,
+               !visibleHosts.contains(where: { $0.id == selected }) {
+                sessionManager.selectedHostID = visibleHosts.first?.id
             }
         }
     }
@@ -307,7 +306,7 @@ struct SidebarView: View {
                     ForEach(hosts) { host in
                         HostRow(
                             host: host,
-                            isSelected: selectedHostID == host.id,
+                            isSelected: sessionManager.selectedHostID == host.id,
                             theme: theme
                         )
                         // 按下即选中(AppKit 层,无手势判定延迟);⌘ 点按再开一条同主机
@@ -546,7 +545,7 @@ struct SidebarView: View {
     /// 单击行 = 切到这台主机:已经开着就切过去,没开才拨号。
     /// (否则单击连接会让在侧栏上下点几下就攒出一堆同主机标签)
     private func activate(_ host: Host) {
-        selectedHostID = host.id
+        sessionManager.selectedHostID = host.id
         if let existing = sessionManager.sessions.first(where: { $0.spec.hostID == host.id }) {
             sessionManager.focusPane(existing.id)
             return
@@ -559,14 +558,14 @@ struct SidebarView: View {
     /// 断网后的假活连接(state 还是 connected)借来也只会失败且不自动重连。
     /// 想复用连接开新 PTY 用 ⌘T(复制当前连接)。
     private func connect(_ host: Host) {
-        selectedHostID = host.id
+        sessionManager.selectedHostID = host.id
         host.lastConnectedAt = Date()
         sessionManager.open(spec: HostSpec.resolve(host, in: allHosts))
     }
 
     /// issue #11:在当前聚焦 pane 旁分屏连接该主机
     private func splitConnect(_ host: Host, axis: SplitAxis) {
-        selectedHostID = host.id
+        sessionManager.selectedHostID = host.id
         host.lastConnectedAt = Date()
         sessionManager.splitFocused(axis: axis, spec: HostSpec.resolve(host, in: allHosts))
     }
@@ -605,7 +604,8 @@ struct SidebarView: View {
     /// 回车:有选中连选中,否则连第一个可见结果(搜索场景)
     private func connectSelectionOrFirst() {
         let rows = displayedHosts
-        if let selected = selectedHostID, let host = rows.first(where: { $0.id == selected }) {
+        if let selected = sessionManager.selectedHostID,
+           let host = rows.first(where: { $0.id == selected }) {
             activate(host)
         } else if !searchText.isEmpty, let first = rows.first {
             activate(first)
@@ -615,16 +615,17 @@ struct SidebarView: View {
     private func moveSelection(_ delta: Int) {
         let rows = displayedHosts
         guard !rows.isEmpty else { return }
-        guard let current = selectedHostID, let index = rows.firstIndex(where: { $0.id == current }) else {
-            selectedHostID = delta > 0 ? rows.first?.id : rows.last?.id
+        guard let current = sessionManager.selectedHostID,
+              let index = rows.firstIndex(where: { $0.id == current }) else {
+            sessionManager.selectedHostID = delta > 0 ? rows.first?.id : rows.last?.id
             return
         }
         let next = min(max(index + delta, 0), rows.count - 1)
-        selectedHostID = rows[next].id
+        sessionManager.selectedHostID = rows[next].id
     }
 
     private func requestDeleteSelection() {
-        guard let selected = selectedHostID,
+        guard let selected = sessionManager.selectedHostID,
               let host = displayedHosts.first(where: { $0.id == selected }) else { return }
         if host.source == .sshConfig {
             configHostPendingDeletion = PendingHost(id: host.id, label: host.label)

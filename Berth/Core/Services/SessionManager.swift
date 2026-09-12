@@ -15,7 +15,12 @@ final class SessionManager {
     private(set) var sessions: [TerminalSession] = []
     /// 标签页(每个是一棵分屏树)
     private(set) var tabs: [PaneTab] = []
-    var selectedTabID: PaneTab.ID?
+    var selectedTabID: PaneTab.ID? {
+        didSet { syncSelectedHostID() }
+    }
+    /// 侧栏高亮与当前标签共享的主机选择。侧栏键盘导航也写回这里；
+    /// 标签、分屏焦点变化则由 syncSelectedHostID() 覆盖成当前会话的主机。
+    var selectedHostID: UUID?
 
     /// 有活跃连接的 pane 请求关闭时置此值,UI 弹确认框
     var pendingCloseSession: TerminalSession?
@@ -96,6 +101,14 @@ final class SessionManager {
     var selected: TerminalSession? {
         guard let focused = selectedTab?.focusedID else { return nil }
         return sessions.first { $0.id == focused }
+    }
+
+    private func syncSelectedHostID() {
+        guard let selected, !selected.spec.isLocal else {
+            selectedHostID = nil
+            return
+        }
+        selectedHostID = selected.spec.hostID
     }
 
     /// 兼容旧调用:selectedID = 当前标签聚焦的会话 id
@@ -208,6 +221,7 @@ final class SessionManager {
         sessions.append(secondary)
         tab.root = tab.root.splitting(leaf: current.id, into: secondary.id, axis: axis, branchID: UUID())
         tab.focusedID = secondary.id
+        syncSelectedHostID()
         secondary.connect()
     }
 
@@ -217,8 +231,9 @@ final class SessionManager {
         // 主动去某个 pane = 要看终端,顺手从仪表盘退出来
         isDashboardVisible = false
         let switchedTab = selectedTabID != tab.id
-        selectedTabID = tab.id
         tab.focusedID = sessionID
+        selectedTabID = tab.id
+        syncSelectedHostID()
         if switchedTab {
             isSFTPVisible = false
             isInspectorVisible = false
@@ -273,6 +288,7 @@ final class SessionManager {
         } else {
             removeTabSelectingNeighbor(tab)
         }
+        syncSelectedHostID()
         afterClose()
     }
 
@@ -456,6 +472,7 @@ final class SessionManager {
         guard let tab = tabs.last, tab.root.leafIDs() == [first.id] else { return }
         buildSplits(node, existingLeaf: first.id, in: tab, hosts: hosts)
         tab.focusedID = first.id
+        syncSelectedHostID()
     }
 
     private func firstResolvableHost(_ node: WorkspaceLayout.Node, hosts: [Host]) -> Host? {
