@@ -34,24 +34,32 @@ echo "==> 打包 ${APP_NAME} ${VERSION}"
 # 1) 工程文件不入库,先重新生成
 xcodegen generate
 
-# 2) 选签名身份
+# 2) 选签名身份:Developer ID(对外发布)→ Apple Development(个人使用:免费的
+#    Apple ID 证书,签名指纹跨构建稳定,Keychain 存的密码不用反复授权,CloudKit
+#    同步可用)→ ad-hoc(纯本地兜底)
 HARDENED_RUNTIME=NO
+SIGN_STYLE="Automatic"
 if security find-identity -v -p codesigning 2>/dev/null | grep -q "Developer ID Application"; then
   SIGN_IDENTITY="Developer ID Application"
   HARDENED_RUNTIME=YES
-  echo "==> 签名:Developer ID Application(hardened runtime 开)"
+  echo "==> 签名:Developer ID Application(hardened runtime 开,可公证)"
+elif security find-identity -v -p codesigning 2>/dev/null | grep -q "Apple Development"; then
+  SIGN_IDENTITY="Apple Development"
+  echo "==> 签名:Apple Development(个人使用:Keychain 指纹稳定、CloudKit 可用)"
 else
   SIGN_IDENTITY="-"
-  echo "==> 签名:ad-hoc(未发现 Developer ID 证书,产物仅供本机/测试使用)"
+  SIGN_STYLE="Manual"
+  echo "==> 签名:ad-hoc(未发现任何证书,仅供本机使用;每次重建后 Keychain 已存密码需重新授权一次)"
 fi
 
-# 3) Release 构建。公证要求 hardened runtime,无证书时保持项目默认
+# 3) Release 构建。公证要求 hardened runtime,无 Developer ID 时保持项目默认
 xcodebuild \
   -project "${APP_NAME}.xcodeproj" \
   -scheme "${APP_NAME}" \
   -configuration Release \
   -derivedDataPath "${OUT_DIR}/DerivedData" \
   CODE_SIGN_IDENTITY="${SIGN_IDENTITY}" \
+  CODE_SIGN_STYLE="${SIGN_STYLE}" \
   ENABLE_HARDENED_RUNTIME="${HARDENED_RUNTIME}" \
   build
 
