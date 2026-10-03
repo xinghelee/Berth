@@ -21,7 +21,18 @@ enum AcceptanceDefaults {
             forName: NSApplication.willTerminateNotification, object: nil, queue: nil
         ) { _ in restore() }
         atexit { AcceptanceDefaults.restore() }
+        // pkill 默认发 SIGTERM,不走 atexit —— 接住它先恢复再退出
+        signal(SIGTERM, SIG_IGN)
+        let source = DispatchSource.makeSignalSource(signal: SIGTERM, queue: .main)
+        source.setEventHandler {
+            restore()
+            exit(0)
+        }
+        source.resume()
+        termSource = source
     }
+
+    private static var termSource: DispatchSourceSignal?
 
     static func restore() {
         lock.lock()
