@@ -4356,6 +4356,26 @@
         }
       }
     },
+    "复制全文": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy All"
+          }
+        }
+      }
+    },
+    "复制整条回复(Markdown)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy the whole reply (Markdown)"
+          }
+        }
+      }
+    },
     "已复制": {
       "localizations": {
         "en": {

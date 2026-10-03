@@ -5,9 +5,12 @@ import SwiftUI
 /// 本地 Shell 会话只露 AI 与片段;SSH 专属面板的选中态在切回 SSH 标签后自动恢复。
 struct InspectorRail: View {
     let session: TerminalSession
+    var width: CGFloat = InspectorRail.defaultWidth
     @Environment(SessionManager.self) private var sessionManager
 
-    static let width: CGFloat = 320
+    static let defaultWidth: CGFloat = 320
+    static let minWidth: CGFloat = 280
+    static let maxWidth: CGFloat = 900
 
     @Namespace private var segmentNamespace
 
@@ -49,7 +52,7 @@ struct InspectorRail: View {
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(width: Self.width)
+        .frame(width: width)
         .background(theme.panelBackground)
     }
 
