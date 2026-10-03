@@ -13,6 +13,7 @@ struct TerminalTabsView: View {
     @State private var dragOffset: CGFloat = 0
     @State private var dragSwapShift: CGFloat = 0
     @State private var chipFrames: [UUID: CGRect] = [:]
+    @AppStorage("inspectorRailWidth") private var railWidth: Double = InspectorRail.defaultWidth
     private static let chipSpacing: CGFloat = 2
     private static let chipTrackSpace = "chipTrack"
     /// 调试开关:在 macOS 26+ 上强制走 15 的工具条路径,方便本机复现/验收 issue #14
@@ -23,6 +24,12 @@ struct TerminalTabsView: View {
         if #available(macOS 26.0, *) { return !forcesLegacyChrome }
         return false
     }()
+
+    /// 检查器栏宽度上限随窗口走:至少给终端留一半多,窗口缩小后已存的宽度也按此夹取
+    private func clampedRailWidth(_ width: CGFloat) -> CGFloat {
+        let upper = max(InspectorRail.minWidth, min(InspectorRail.maxWidth, windowWidth * 0.45))
+        return min(max(width, InspectorRail.minWidth), upper)
+    }
 
     var body: some View {
         @Bindable var manager = sessionManager
@@ -50,9 +57,16 @@ struct TerminalTabsView: View {
                         sessionManager.focusPane(id)
                     }
                     if let session = sessionManager.selected, sessionManager.activeSidePanel != nil {
-                        // 检查器栏(Xcode inspector 式):顶部图标条选面板,整条随开关进出
-                        Divider().overlay(ThemeStore.shared.current.borderColor)
-                        InspectorRail(session: session)
+                        // 检查器栏(Xcode inspector 式):顶部图标条选面板,整条随开关进出;
+                        // 左缘可拖拽调宽(issue #37),双击复位
+                        PaneDivider(
+                            axis: .horizontal,
+                            thickness: 6,
+                            step: 1,
+                            onDrag: { delta in railWidth = clampedRailWidth(railWidth - delta) },
+                            onReset: { railWidth = InspectorRail.defaultWidth }
+                        )
+                        InspectorRail(session: session, width: clampedRailWidth(railWidth))
                             .transition(.move(edge: .trailing).combined(with: .opacity))
                     }
                 }

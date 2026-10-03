@@ -393,8 +393,28 @@ struct AIChatMessageView: View {
                     ProgressView()
                         .controlSize(.small)
                 }
+                if canCopyWhole {
+                    AICopyMessageButton(text: message.text)
+                }
+            }
+            // 分块渲染的 Text 之间不能连续拖选(issue #37),整条复制走按钮或右键
+            .contextMenu {
+                if canCopyWhole {
+                    Button(String(localized: "复制全文")) { Self.copy(message.text) }
+                }
             }
         }
+    }
+
+    /// 正在流式输出的那条先不给整条复制(内容还没完)
+    private var canCopyWhole: Bool {
+        guard !message.text.isEmpty else { return false }
+        return !(controller.isBusy && controller.messages.last?.id == message.id)
+    }
+
+    static func copy(_ text: String) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
     }
 
     /// 尽力渲染 Markdown(行内样式 + 保留换行),失败退回纯文本
@@ -481,6 +501,33 @@ private extension AITableAlignment {
 }
 
 // MARK: - 代码块
+
+/// AI 回复底部的「复制全文」:复制原始 Markdown
+private struct AICopyMessageButton: View {
+    let text: String
+    @State private var copied = false
+
+    var body: some View {
+        Button {
+            AIChatMessageView.copy(text)
+            copied = true
+            Task {
+                try? await Task.sleep(for: .seconds(1.5))
+                copied = false
+            }
+        } label: {
+            Label(
+                copied ? String(localized: "已复制") : String(localized: "复制全文"),
+                systemImage: copied ? "checkmark" : "doc.on.doc"
+            )
+            .font(.system(size: 10))
+            .labelStyle(.titleAndIcon)
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(copied ? .green : .secondary)
+        .help("复制整条回复(Markdown)")
+    }
+}
 
 /// AI 给出的命令/代码:等宽卡片 + 复制 + 一键送进当前终端。
 /// 送进终端只写入不回车,由用户按 ⏎ 决定是否执行(危险命令走粘贴保护那套确认)。
