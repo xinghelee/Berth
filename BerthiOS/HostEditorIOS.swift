@@ -121,7 +121,7 @@ struct HostEditorIOS: View {
         Section(String(localized: "跳板机与代理")) {
             Picker(String(localized: "跳板机"), selection: $jumpHostID) {
                 Text(String(localized: "不使用")).tag(UUID?.none)
-                ForEach(allHosts.filter { $0.id != host?.id }) { candidate in
+                ForEach(allHosts.filter { $0.id != host?.id && !$0.isLocalShell }) { candidate in
                     Text(candidate.label).tag(UUID?.some(candidate.id))
                 }
             }

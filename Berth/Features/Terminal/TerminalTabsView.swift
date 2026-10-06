@@ -13,6 +13,8 @@ struct TerminalTabsView: View {
     @State private var dragOffset: CGFloat = 0
     @State private var dragSwapShift: CGFloat = 0
     @State private var chipFrames: [UUID: CGRect] = [:]
+    /// 「将当前目录存为本地 Shell 书签」的未入库草稿(编辑器保存时才插入)
+    @State private var bookmarkDraft: Host?
     @AppStorage("inspectorRailWidth") private var railWidth: Double = InspectorRail.defaultWidth
     private static let chipSpacing: CGFloat = 2
     private static let chipTrackSpace = "chipTrack"
@@ -84,6 +86,9 @@ struct TerminalTabsView: View {
             } else {
                 legacyToolbarContent
             }
+        }
+        .sheet(item: $bookmarkDraft) { draft in
+            HostEditorView(host: draft, defaultGroupID: nil)
         }
         .alert(
             "关闭分屏「\(sessionManager.pendingCloseSession?.spec.label ?? "")」?",
@@ -179,9 +184,7 @@ struct TerminalTabsView: View {
     /// » 溢出菜单里的标签名:与 chip 显示规则一致(自定义名 > 聚焦会话打码 label)
     private func overflowTabTitle(_ tab: PaneTab) -> String {
         if let custom = tab.customTitle, !custom.isEmpty { return custom }
-        return sessionManager.session(tab.focusedID)
-            .map { PrivacyMode.shared.maskHost(in: $0.spec.label, hostname: $0.spec.hostname) }
-            ?? String(localized: "终端")
+        return sessionManager.session(tab.focusedID)?.tabTitle ?? String(localized: "终端")
     }
 
     /// 从系统侧栏按钮之后使用可用空间,多标签在其中横向滚动。
@@ -216,6 +219,20 @@ struct TerminalTabsView: View {
         }
     }
 
+    /// 临时本地 Shell 标签的右键「存为书签」:草稿预填当前目录,名字取目录名
+    private func saveAsBookmarkAction(for tab: PaneTab) -> (() -> Void)? {
+        guard let session = sessionManager.session(tab.focusedID),
+              session.spec.isLocal, session.spec.hostID == HostSpec.localShellHostID else { return nil }
+        return {
+            let dir = session.currentRemoteDirectory ?? ""
+            let draft = Host(label: "", hostname: "localhost", port: 0, username: NSUserName())
+            draft.isLocalShell = true
+            draft.localDirectory = dir.isEmpty ? "" : LocalPath.abbreviate(dir)
+            draft.label = tab.customTitle ?? LocalPath.shortName(dir.isEmpty ? "~" : dir)
+            bookmarkDraft = draft
+        }
+    }
+
     /// chips 轨道
     private var chipTrack: some View {
         HStack(spacing: Self.chipSpacing) {
@@ -227,6 +244,7 @@ struct TerminalTabsView: View {
                     isSelected: tab.id == sessionManager.selectedTabID,
                     select: { sessionManager.selectTab(tab.id) },
                     close: { sessionManager.requestCloseTab(tab) },
+                    onSaveAsBookmark: saveAsBookmarkAction(for: tab),
                     onDragChanged: { chipDragChanged(tab, deltaX: $0) },
                     onDragEnded: { chipDragEnded(tab) }
                 )
@@ -604,6 +622,7 @@ private struct TerminalTabChip: View {
     let isSelected: Bool
     let select: () -> Void
     let close: () -> Void
+    var onSaveAsBookmark: (() -> Void)?
     var onDragChanged: ((CGFloat) -> Void)?
     var onDragEnded: (() -> Void)?
 
@@ -612,23 +631,33 @@ private struct TerminalTabChip: View {
     @State private var isRenaming = false
     @State private var renameDraft = ""
     @FocusState private var renameFocused: Bool
+    @AppStorage(SettingsKeys.tabFontSize) private var tabFontSize: Double = 12
 
     /// 自定义名优先;否则跟随聚焦会话(主机打码规则不变)
     private var displayTitle: String {
         if let custom = tab.customTitle, !custom.isEmpty { return custom }
-        return focusedSession.map { PrivacyMode.shared.maskHost(in: $0.spec.label, hostname: $0.spec.hostname) } ?? String(localized: "终端")
+        return focusedSession?.tabTitle ?? String(localized: "终端")
     }
+
+    /// 本地会话悬停显示完整当前目录(标题只放最后一级)
+    private var hoverHelp: String {
+        guard let session = focusedSession, session.spec.isLocal,
+              let dir = session.currentRemoteDirectory else { return "" }
+        return LocalPath.abbreviate(dir)
+    }
+
+    private var scale: CGFloat { tabFontSize / 12 }
 
     var body: some View {
         HStack(spacing: 6) {
             Circle()
                 .fill(stateColor)
-                .frame(width: 6, height: 6)
+                .frame(width: 6 * scale, height: 6 * scale)
             if isRenaming {
                 TextField("", text: $renameDraft)
                     .textFieldStyle(.plain)
-                    .font(.system(size: 12))
-                    .frame(width: max(64, CGFloat(renameDraft.count) * 7 + 14))
+                    .font(.system(size: tabFontSize))
+                    .frame(width: max(64 * scale, CGFloat(renameDraft.count) * 7 * scale + 14))
                     .focused($renameFocused)
                     .onSubmit(commitRename)
                     .onExitCommand {
@@ -640,12 +669,12 @@ private struct TerminalTabChip: View {
                     }
             } else {
                 Text(displayTitle)
-                    .font(.system(size: 12))
+                    .font(.system(size: tabFontSize))
                     .lineLimit(1)
             }
             if paneCount > 1 {
                 Text("\(paneCount)")
-                    .font(.system(size: 9, weight: .semibold).monospacedDigit())
+                    .font(.system(size: 9 * scale, weight: .semibold).monospacedDigit())
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 4)
                     .padding(.vertical, 1)
@@ -654,13 +683,13 @@ private struct TerminalTabChip: View {
             }
             Button(action: close) {
                 Image(systemName: "xmark")
-                    .font(.system(size: 8, weight: .bold))
+                    .font(.system(size: 8 * scale, weight: .bold))
             }
             .buttonStyle(.plain)
             .opacity(isHovering || isSelected ? 0.7 : 0)
         }
-        .padding(.horizontal, 11)
-        .padding(.vertical, 5)
+        .padding(.horizontal, 11 * scale)
+        .padding(.vertical, 5 * min(scale, 1.2))
         // 选中 = 浮起材质(与侧栏选中行同一块料,26+ 即 Liquid Glass),不用强调色水洗。
         // macOS 26+ 未选中不再描边(Safari 26 式安静标签),悬停给淡玻璃;
         // macOS 15 保留 1pt 发丝描边(拖拽重排的把手感)
@@ -694,14 +723,18 @@ private struct TerminalTabChip: View {
                     onDragChanged: onDragChanged,
                     onDragEnded: onDragEnded
                 )
-                .padding(.trailing, (isHovering || isSelected) ? 26 : 0)
+                .padding(.trailing, (isHovering || isSelected) ? 26 * scale : 0)
             }
         }
         .onHover { isHovering = $0 }
+        .help(hoverHelp)
         .contextMenu {
             Button(String(localized: "重命名标签")) { startRename() }
             if tab.customTitle != nil {
                 Button(String(localized: "恢复默认名称")) { tab.customTitle = nil }
+            }
+            if let onSaveAsBookmark {
+                Button(String(localized: "将当前目录存为侧栏书签…"), action: onSaveAsBookmark)
             }
             Divider()
             Button(String(localized: "关闭标签页"), role: .destructive, action: close)

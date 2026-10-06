@@ -4,6 +4,7 @@ import AppKit
 /// 窗口自截图:BERTH_WINDOW_SNAPSHOT=<png 路径> 时,启动后延时把主窗口(含标题栏)渲染成 PNG。
 /// 走 NSView 自身的 cacheDisplay(app 画自己的视图层级),无需屏幕录制权限;
 /// BERTH_SNAPSHOT_OPEN_LOCAL=1 可先开一个本地 Shell 再截;
+/// BERTH_SNAPSHOT_LOCAL_BOOKMARK=1 造并打开一个本地 Shell 书签;
 /// BERTH_SNAPSHOT_SPLIT=0.7 再左右分屏一个本地 Shell 并把分割比例设成 0.7。
 /// 给自动化验收看界面用。
 @MainActor
@@ -35,6 +36,16 @@ enum WindowSnapshot {
                 host.group = seed.3
             }
             try? context.save()
+        }
+        // issue #41:造一个本地 Shell 书签(配临时库)并打开,截侧栏书签行与书签标签
+        if env["BERTH_SNAPSHOT_LOCAL_BOOKMARK"] == "1", let container = SessionManager.shared.modelContainer {
+            let bookmark = Host(label: "系统日志", hostname: "localhost", port: 0, username: NSUserName())
+            bookmark.isLocalShell = true
+            bookmark.localDirectory = "/var/log"
+            container.mainContext.insert(bookmark)
+            try? container.mainContext.save()
+            try? await Task.sleep(for: .seconds(1))
+            _ = SessionManager.shared.open(spec: HostSpec(host: bookmark))
         }
         // 值即要开的本地 Shell 数量("1" 开一个,"5" 开五个,方便截多标签布局)
         if let count = Int(env["BERTH_SNAPSHOT_OPEN_LOCAL"] ?? ""), count > 0 {

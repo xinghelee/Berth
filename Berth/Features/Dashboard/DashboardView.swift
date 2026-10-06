@@ -51,7 +51,8 @@ struct DashboardView: View {
 
     /// 托管主机 + ssh_config 镜像;演示模式换内置示例(与侧栏同源)
     private var allHosts: [Host] {
-        demoMode ? DemoMode.samples : storedHosts + SSHConfigService.shared.mirrorHosts
+        // 本地 Shell 书签没有服务器可采集
+        demoMode ? DemoMode.samples : storedHosts.filter { !$0.isLocalShell } + SSHConfigService.shared.mirrorHosts
     }
 
     private var visibleStates: [ServerMonitor.HostState] {

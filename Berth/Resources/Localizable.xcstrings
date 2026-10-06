@@ -9136,6 +9136,126 @@
           }
         }
       }
+    },
+    "SSH 主机": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SSH Host"
+          }
+        }
+      }
+    },
+    "shell 启动后按顺序自动发送(各自动补回车)。分屏复制的会话不重复执行。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sent in order once the shell starts (each followed by Return). Not repeated in split or duplicated sessions."
+          }
+        }
+      }
+    },
+    "~(家目录)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "~ (home folder)"
+          }
+        }
+      }
+    },
+    "保存并打开": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save & Open"
+          }
+        }
+      }
+    },
+    "在 Finder 中显示": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show in Finder"
+          }
+        }
+      }
+    },
+    "在本机这个目录下打开 shell(设置里的 Shell 路径)。标签页显示这里的名字。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opens a shell in this folder on this Mac (using the shell path from Settings). The tab shows the name above."
+          }
+        }
+      }
+    },
+    "复制路径": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy Path"
+          }
+        }
+      }
+    },
+    "将当前目录存为侧栏书签…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save Current Folder to Sidebar…"
+          }
+        }
+      }
+    },
+    "打开后自动执行": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Run After Opening"
+          }
+        }
+      }
+    },
+    "标签字号": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tab Font Size"
+          }
+        }
+      }
+    },
+    "起始目录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start Folder"
+          }
+        }
+      }
+    },
+    "起始目录不存在或不是文件夹。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The start folder does not exist or is not a folder."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

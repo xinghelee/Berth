@@ -128,6 +128,7 @@ final class TerminalSession: Identifiable {
     @ObservationIgnored private var triggerLineBuffer = ""
     /// 本地 Shell(spec.isLocal)的 PTY 宿主。本地会话不使用任何 SSH 字段。
     @ObservationIgnored private var localPty: LocalPty?
+    @ObservationIgnored private var localDirectoryRefreshScheduled = false
     /// 会话录制:输出剥离转义后追加到此文件
     @ObservationIgnored private var logHandle: FileHandle?
     /// 当前正在录制到的文件 URL(nil = 未录制)
@@ -624,7 +625,17 @@ final class TerminalSession: Identifiable {
         }
     }
 
+    /// 标签/溢出菜单的默认标题:临时本地 Shell 跟随当前目录(开多个才分得清,issue #41),
+    /// 其余用主机显示名(本地 Shell 书签是用户起的名字)
+    var tabTitle: String {
+        if spec.isLocal, spec.hostID == HostSpec.localShellHostID {
+            return LocalPath.shortName(lastRemoteDirectory ?? "~")
+        }
+        return PrivacyMode.shared.maskHost(in: spec.label, hostname: spec.hostname)
+    }
+
     /// 远端当前工作目录(OSC 7 上报;未启用命令集成时为 nil)。AI 助手提示词用。
+    /// 本地会话为 shell 进程的实际当前目录(内核查询)
     var currentRemoteDirectory: String? { lastRemoteDirectory }
 
     /// AI 助手用:同一连接上另开 exec 通道执行命令(不影响 PTY)。
@@ -925,7 +936,11 @@ final class TerminalSession: Identifiable {
     }
 
     func focusTerminal() {
-        terminalView.window?.makeFirstResponder(terminalView)
+        if let view = terminalView as? BerthTerminalView {
+            view.requestFocus()
+        } else {
+            terminalView.window?.makeFirstResponder(terminalView)
+        }
     }
 
     /// 在当前连接上开一个 SFTP 子通道(与 PTY 并存,复用同一 SSHClient)
@@ -1167,6 +1182,7 @@ final class TerminalSession: Identifiable {
         }
         matchTriggers(bytes: bytes)
         matchOutputExpectation(bytes: bytes)
+        scheduleLocalDirectoryRefresh()
         if logHandle != nil, let text = String(bytes: bytes, encoding: .utf8) {
             appendToLog(text)
         }
@@ -1187,6 +1203,7 @@ final class TerminalSession: Identifiable {
         var env = Terminal.getEnvironmentVariables(termName: "xterm-256color")
         env.append("SHELL=\(shell)")
         env.append("TERM_PROGRAM=Berth")
+        let directory = Self.localStartDirectory(spec.localDirectory)
         let pty: LocalPty
         do {
             // 按 Terminal.app 惯例 argv[0] 带 "-" 前缀,让 shell 走登录初始化(zprofile 等)
@@ -1194,7 +1211,7 @@ final class TerminalSession: Identifiable {
                 executable: shell,
                 execName: "-" + (shell as NSString).lastPathComponent,
                 environment: env,
-                directory: FileManager.default.homeDirectoryForCurrentUser.path,
+                directory: directory,
                 cols: term.cols,
                 rows: term.rows
             )
@@ -1204,6 +1221,7 @@ final class TerminalSession: Identifiable {
         }
         localPty = pty
         DebugLog.append("local shell spawned pid=\(pty.pid) shell=\(shell)")
+        lastRemoteDirectory = directory
         pty.onData = { [weak self] bytes in
             self?.ingest(bytes: bytes)
         }
@@ -1230,6 +1248,20 @@ final class TerminalSession: Identifiable {
         }
         defer { stdinPump.cancel() }
 
+        // 书签的启动命令(分屏/⌘T 派生的会话 spec 已清空,不重复执行)
+        let startup = spec.startupCommands.trimmingCharacters(in: .whitespacesAndNewlines)
+        let startupTask = Task { [weak self] in
+            guard !startup.isEmpty else { return }
+            try? await Task.sleep(for: .milliseconds(400))
+            for line in startup.split(whereSeparator: \.isNewline) {
+                let cmd = line.trimmingCharacters(in: .whitespaces)
+                guard !cmd.isEmpty, !Task.isCancelled else { continue }
+                self?.sendText(cmd + "\n")
+                try? await Task.sleep(for: .milliseconds(120))
+            }
+        }
+        defer { startupTask.cancel() }
+
         // 等待子进程退出;任务取消(用户断开/关 pane)时 SIGTERM,由退出监视器收尾
         await withTaskCancellationHandler {
             await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
@@ -1247,6 +1279,46 @@ final class TerminalSession: Identifiable {
             DebugLog.append("local shell exited immediately uptime=\(uptime) status=\(String(describing: pty.exitStatus))")
             throw SessionError.localShellExited(pty.exitStatus, shell)
         }
+    }
+
+    /// 书签起始目录:展开 ~,不存在/不是目录则回落家目录(目录被删/换了机器同步过来)
+    static func localStartDirectory(_ configured: String) -> String {
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        let trimmed = configured.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return home }
+        let expanded = LocalPath.expand(trimmed)
+        var isDir: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: expanded, isDirectory: &isDir), isDir.boolValue else {
+            DebugLog.append("local shell start dir missing, falling back to home")
+            return home
+        }
+        return expanded
+    }
+
+    /// 本地 shell 进程的当前目录(issue #41):macOS 自带 zsh 不发 OSC 7
+    /// (只对 Apple_Terminal 发),标签标题直接问内核。输出后合并成一次查询
+    private func scheduleLocalDirectoryRefresh() {
+        guard spec.isLocal, !localDirectoryRefreshScheduled, localPty != nil else { return }
+        localDirectoryRefreshScheduled = true
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(300))
+            guard let self else { return }
+            self.localDirectoryRefreshScheduled = false
+            guard let pid = self.localPty?.pid, pid > 0,
+                  let cwd = Self.processWorkingDirectory(pid),
+                  cwd != self.lastRemoteDirectory else { return }
+            self.lastRemoteDirectory = cwd
+        }
+    }
+
+    nonisolated static func processWorkingDirectory(_ pid: pid_t) -> String? {
+        var info = proc_vnodepathinfo()
+        let size = Int32(MemoryLayout<proc_vnodepathinfo>.size)
+        guard proc_pidinfo(pid, PROC_PIDVNODEPATHINFO, 0, &info, size) == size else { return nil }
+        let path = withUnsafeBytes(of: info.pvi_cdir.vip_path) { raw in
+            String(cString: raw.bindMemory(to: CChar.self).baseAddress!)
+        }
+        return path.isEmpty ? nil : path
     }
 
     /// AI 助手用(本地会话):独立子进程执行命令,不触碰用户的交互 shell。

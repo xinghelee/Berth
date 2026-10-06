@@ -65,6 +65,8 @@ struct HostSpec: Equatable, Sendable {
     var aiInstructions: String = ""
     /// 本地 Shell 会话(不走 SSH,直接 fork 本机 shell)。macOS 专用;iOS 不提供入口。
     var isLocal: Bool = false
+    /// 本地 Shell 的起始目录(支持 ~);空 = 家目录(issue #41)
+    var localDirectory: String = ""
 
     init(
         hostID: UUID,
@@ -113,6 +115,8 @@ struct HostSpec: Equatable, Sendable {
         self.startupCommands = host.startupCommands
         self.switchUser = host.switchUser
         self.aiInstructions = host.aiInstructions
+        self.isLocal = host.isLocalShell
+        self.localDirectory = host.localDirectory
         self.jump = []
         self.forwards = (host.portForwards ?? [])
             .filter(\.enabled)
@@ -127,7 +131,8 @@ struct HostSpec: Equatable, Sendable {
     static let localShellHostID = UUID(uuidString: "B0C41000-0000-4000-8000-4C6F63616C21")!
 
     /// 本地 Shell 的会话快照:hostname/port/authMethod 均为占位,连接层按 isLocal 分流。
-    static func localShell() -> HostSpec {
+    /// directory 为空 = 家目录
+    static func localShell(directory: String = "") -> HostSpec {
         var spec = HostSpec(
             hostID: localShellHostID,
             label: String(localized: "本地 Shell"),
@@ -138,6 +143,15 @@ struct HostSpec: Equatable, Sendable {
             privateKeyPath: nil
         )
         spec.isLocal = true
+        spec.localDirectory = directory
+        return spec
+    }
+
+    /// 分屏/⌘T 派生的本地会话:起在源 pane 当前所在目录;启动命令不重复执行
+    func derivedLocalShell(directory: String?) -> HostSpec {
+        var spec = self
+        if let directory, !directory.isEmpty { spec.localDirectory = directory }
+        spec.startupCommands = ""
         return spec
     }
 
@@ -155,5 +169,29 @@ struct HostSpec: Equatable, Sendable {
         var spec = HostSpec(host: host) // forwards 已在 init(host:) 里解析
         spec.jump = chain
         return spec
+    }
+}
+
+/// 本地路径的 ~ 展开/缩写(本地 Shell 书签与标签标题用)
+enum LocalPath {
+    static func expand(_ path: String) -> String {
+        NSString(string: path.trimmingCharacters(in: .whitespacesAndNewlines)).expandingTildeInPath
+    }
+
+    /// 家目录前缀缩成 ~(/Users/me/proj → ~/proj)
+    static func abbreviate(_ path: String) -> String {
+        let expanded = expand(path)
+        let home = NSHomeDirectory()
+        if expanded == home { return "~" }
+        if expanded.hasPrefix(home + "/") { return "~" + expanded.dropFirst(home.count) }
+        return expanded
+    }
+
+    /// 标签标题用的短名:最后一级目录名(家目录 = ~,根 = /)
+    static func shortName(_ path: String) -> String {
+        let abbreviated = abbreviate(path)
+        if abbreviated == "~" || abbreviated == "/" { return abbreviated }
+        let name = (abbreviated as NSString).lastPathComponent
+        return name.isEmpty ? abbreviated : name
     }
 }
