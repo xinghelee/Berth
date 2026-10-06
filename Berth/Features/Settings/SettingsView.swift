@@ -24,6 +24,7 @@ final class SettingsNavigation {
 /// 基础设置(M1)。M2 扩展:主题、字体族、scrollback、快捷键、安全策略等。
 struct SettingsView: View {
     @AppStorage(SettingsKeys.terminalFontSize) private var fontSize: Double = 13
+    @AppStorage(SettingsKeys.tabFontSize) private var tabFontSize: Double = 12
     @AppStorage(SettingsKeys.terminalFontFamily) private var fontFamily = ""
     private let monoFamilies = TerminalFontPrefs.availableMonospacedFamilies()
     @AppStorage(SettingsKeys.cursorShape) private var cursorShape = CursorPrefs.shapeBlock
@@ -233,6 +234,14 @@ struct SettingsView: View {
     @ViewBuilder
     private var sessionPage: some View {
             Section("标签页") {
+                HStack {
+                    Slider(value: $tabFontSize, in: 11...18, step: 1) {
+                        Text("标签字号")
+                    }
+                    Text("\(Int(tabFontSize)) pt")
+                        .monospacedDigit()
+                        .frame(width: 44, alignment: .trailing)
+                }
                 Toggle("关闭有活跃连接的标签页前需要确认", isOn: $confirmBeforeClosingTab)
             }
             Section("会话") {

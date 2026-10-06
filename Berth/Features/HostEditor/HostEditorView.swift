@@ -14,6 +14,8 @@ struct HostEditorView: View {
     /// 创建副本(issue #36):保存时把这台源主机 Keychain 里的密码/passphrase/代理密码/su 密码
     /// 复制到新主机 id 下,表单里留空即沿用;nil = 普通新建/编辑
     var secretsSourceHostID: UUID? = nil
+    /// 新建时预选「本地 Shell」类型(侧栏/⌘P 的「新建本地 Shell…」入口)
+    var startsAsLocalShell = false
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -47,6 +49,9 @@ struct HostEditorView: View {
     @State private var macAddress = ""
     @State private var validationMessage: String?
     @State private var quickFill = ""
+    /// issue #41:本地 Shell 书签(起始目录 + 名字),与 SSH 主机共用整理/启动命令/AI 引导
+    @State private var isLocalShell = false
+    @State private var localDirectory = ""
 
     private var isEditing: Bool { host != nil }
     private var isDuplicating: Bool { secretsSourceHostID != nil }
@@ -70,6 +75,25 @@ struct HostEditorView: View {
         VStack(spacing: 0) {
             Form {
                 if !isEditing {
+                    Picker("类型", selection: $isLocalShell) {
+                        Text("SSH 主机").tag(false)
+                        Text("本地 Shell").tag(true)
+                    }
+                    .pickerStyle(.segmented)
+                }
+                if isLocalShell {
+                    Section("本地 Shell") {
+                        TextField("显示名", text: $label, prompt: Text(localDirectoryPlaceholderName).foregroundStyle(.quaternary))
+                        HStack {
+                            TextField("起始目录", text: $localDirectory, prompt: Text("~(家目录)").foregroundStyle(.quaternary))
+                                .autocorrectionDisabled()
+                            Button("选择…") { pickLocalDirectory() }
+                        }
+                        Text("在本机这个目录下打开 shell(设置里的 Shell 路径)。标签页显示这里的名字。")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+                if !isEditing && !isLocalShell {
                     Section {
                         TextField(
                             "快速新建",
@@ -81,6 +105,7 @@ struct HostEditorView: View {
                         }
                     }
                 }
+                if !isLocalShell {
                 Section("连接") {
                     TextField("显示名", text: $label, prompt: Text(hostname.isEmpty ? String(localized: "例如:生产环境 API") : hostname).foregroundStyle(.quaternary))
                     TextField("主机地址", text: $hostname, prompt: Text("example.com 或 IP").foregroundStyle(.quaternary))
@@ -182,6 +207,8 @@ struct HostEditorView: View {
                     }
                 }
 
+                }
+
                 Section("整理") {
                     Picker("标签色", selection: $tagColor) {
                         ForEach(TagColor.allCases) { color in
@@ -195,12 +222,15 @@ struct HostEditorView: View {
                                 .font(.caption).foregroundStyle(.secondary)
                         }
                     }
-                    TextField("MAC 地址(Wake-on-LAN)", text: $macAddress, prompt: Text("AA:BB:CC:11:22:33").foregroundStyle(.quaternary))
-                        .autocorrectionDisabled()
+                    if !isLocalShell {
+                        TextField("MAC 地址(Wake-on-LAN)", text: $macAddress, prompt: Text("AA:BB:CC:11:22:33").foregroundStyle(.quaternary))
+                            .autocorrectionDisabled()
+                    }
                     TextField("备注", text: $note, axis: .vertical)
                         .lineLimit(2...4)
                 }
 
+                if !isLocalShell {
                 Section("连接后切换用户") {
                     TextField("su 到用户", text: $switchUser, prompt: Text("留空不切换,例如 appuser").foregroundStyle(.quaternary))
                         .autocorrectionDisabled()
@@ -214,8 +244,9 @@ struct HostEditorView: View {
                     Text("适合禁止直接登录、只能 su 过去的账号:连上后自动执行 su - 用户,等到密码提示再从钥匙串填入,不会盲发;分屏新开的 shell 也会切换。密码只进钥匙串。")
                         .font(.caption).foregroundStyle(.secondary)
                 }
+                }
 
-                Section("连接后自动执行") {
+                Section(isLocalShell ? String(localized: "打开后自动执行") : String(localized: "连接后自动执行")) {
                     TextField(
                         "启动命令",
                         text: $startupCommands,
@@ -224,7 +255,9 @@ struct HostEditorView: View {
                     )
                     .lineLimit(2...6)
                     .font(.system(size: 12, design: .monospaced))
-                    Text("连接建立后按顺序自动发送(各自动补回车)。分屏复制的会话不重复执行。")
+                    Text(isLocalShell
+                         ? String(localized: "shell 启动后按顺序自动发送(各自动补回车)。分屏复制的会话不重复执行。")
+                         : String(localized: "连接建立后按顺序自动发送(各自动补回车)。分屏复制的会话不重复执行。"))
                         .font(.caption).foregroundStyle(.secondary)
                 }
 
@@ -254,7 +287,7 @@ struct HostEditorView: View {
                     .keyboardShortcut(.cancelAction)
                 Spacer()
                 Button(isEditing && !isDuplicating ? "保存" : "创建") { save() }
-                Button("保存并连接") { save(andConnect: true) }
+                Button(isLocalShell ? String(localized: "保存并打开") : String(localized: "保存并连接")) { save(andConnect: true) }
                     .keyboardShortcut(.defaultAction)
                     .buttonStyle(.borderedProminent)
             }
@@ -278,8 +311,11 @@ struct HostEditorView: View {
     private func populate() {
         guard let host else {
             groupID = defaultGroupID
+            isLocalShell = startsAsLocalShell
             return
         }
+        isLocalShell = host.isLocalShell
+        localDirectory = host.localDirectory
         label = host.label
         hostname = host.hostname
         port = String(host.port)
@@ -331,7 +367,7 @@ struct HostEditorView: View {
     /// 可选跳板机:排除自己,避免形成环(不允许选择会指回自己的主机)
     private var availableJumpHosts: [Host] {
         allHosts.filter { candidate in
-            guard candidate.id != host?.id else { return false }
+            guard candidate.id != host?.id, !candidate.isLocalShell else { return false }
             return !reachesSelf(from: candidate)
         }
     }
@@ -349,6 +385,10 @@ struct HostEditorView: View {
     }
 
     private func save(andConnect: Bool = false) {
+        if isLocalShell {
+            saveLocalShell(andConnect: andConnect)
+            return
+        }
         let trimmedHostname = hostname.trimmingCharacters(in: .whitespaces)
         let trimmedUsername = username.trimmingCharacters(in: .whitespaces)
         guard !trimmedHostname.isEmpty, !trimmedUsername.isEmpty else {
@@ -372,6 +412,7 @@ struct HostEditorView: View {
         if host?.modelContext == nil {
             if let duplicate = allHosts.first(where: {
                 $0.id != host?.id
+                    && !$0.isLocalShell
                     && $0.hostname == trimmedHostname
                     && $0.port == portNumber
                     && $0.username == trimmedUsername
@@ -470,6 +511,75 @@ struct HostEditorView: View {
             }
         } else if let onSave {
             onSave(target)
+        }
+    }
+
+    /// 显示名留空时的回退:起始目录最后一级(空 = 本地 Shell)
+    private var localDirectoryPlaceholderName: String {
+        let dir = localDirectory.trimmingCharacters(in: .whitespacesAndNewlines)
+        return dir.isEmpty ? String(localized: "本地 Shell") : LocalPath.shortName(dir)
+    }
+
+    private func saveLocalShell(andConnect: Bool) {
+        let dir = localDirectory.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !dir.isEmpty {
+            var isDir: ObjCBool = false
+            guard FileManager.default.fileExists(atPath: LocalPath.expand(dir), isDirectory: &isDir), isDir.boolValue else {
+                validationMessage = String(localized: "起始目录不存在或不是文件夹。")
+                return
+            }
+        }
+        let target: Host
+        if let host {
+            target = host
+            if host.modelContext == nil { modelContext.insert(host) }
+        } else {
+            target = Host(label: "", hostname: "", username: "")
+            modelContext.insert(target)
+        }
+        let displayLabel = label.trimmingCharacters(in: .whitespaces)
+        target.isLocalShell = true
+        // 存 ~ 缩写:同步到另一台 Mac(用户名不同)仍指向对应的家目录
+        target.localDirectory = dir.isEmpty ? "" : LocalPath.abbreviate(dir)
+        target.label = displayLabel.isEmpty ? localDirectoryPlaceholderName : displayLabel
+        target.hostname = "localhost"
+        target.port = 0
+        target.username = NSUserName()
+        target.group = groupID.flatMap { id in groups.first { $0.id == id } }
+        target.tagColor = tagColor
+        target.isProduction = isProduction
+        target.startupCommands = startupCommands
+        target.aiInstructions = aiInstructions
+        target.note = note
+        do {
+            try modelContext.save()
+        } catch {
+            validationMessage = String(localized: "保存主机失败:\(error.localizedDescription)")
+            return
+        }
+        dismiss()
+        if andConnect {
+            if let onConnect {
+                onConnect(target)
+            } else {
+                target.lastConnectedAt = Date()
+                _ = SessionManager.shared.open(spec: HostSpec(host: target))
+            }
+        } else if let onSave {
+            onSave(target)
+        }
+    }
+
+    private func pickLocalDirectory() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.canCreateDirectories = true
+        panel.allowsMultipleSelection = false
+        let current = localDirectory.trimmingCharacters(in: .whitespacesAndNewlines)
+        panel.directoryURL = URL(fileURLWithPath: current.isEmpty ? NSHomeDirectory() : LocalPath.expand(current))
+        if panel.runModal() == .OK, let url = panel.url {
+            localDirectory = LocalPath.abbreviate(url.path)
         }
     }
 

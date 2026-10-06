@@ -3,7 +3,8 @@ import SwiftUI
 
 /// iOS 主界面:平铺主机列表 + 快速连接 / 密钥 / 片段 / 设置入口。
 struct HostListView: View {
-    @Query(sort: \Host.sortOrder) private var hosts: [Host]
+    /// 本地 Shell 书签(Mac 专用,issue #41)经 iCloud 同步过来也不展示
+    @Query(filter: #Predicate<Host> { !$0.isLocalShell }, sort: \Host.sortOrder) private var hosts: [Host]
     @Environment(\.modelContext) private var modelContext
     @State private var theme = ThemeStore.shared
     @State private var reachability = HostReachability.shared

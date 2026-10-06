@@ -19,6 +19,30 @@ final class BerthTerminalView: SwiftTerm.TerminalView {
     /// 所属会话 id:点击 pane 时在 AppKit 层接管模型焦点(SwiftUI 的 onTapGesture
     /// 在 macOS 15 上收不到被 NSView 消费的点击)
     var focusSessionID: UUID?
+    /// 要焦点时视图还没挂进窗口(切标签后 SwiftUI 晚于下一拍才把新标签的视图挂回去),
+    /// 记下来等 viewDidMoveToWindow 再拿(issue #41)
+    private var wantsFocusOnAttach = false
+
+    /// 让终端成为第一响应者;不在窗口里就推迟到挂进窗口时
+    func requestFocus() {
+        if let window {
+            wantsFocusOnAttach = false
+            window.makeFirstResponder(self)
+        } else {
+            wantsFocusOnAttach = true
+        }
+    }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        guard wantsFocusOnAttach, let window else { return }
+        wantsFocusOnAttach = false
+        // 挂载过程中别的视图(标签 chip 的事件层等)还可能抢一下,落定后再拿
+        DispatchQueue.main.async { [weak self, weak window] in
+            guard let self, let window, self.window === window else { return }
+            window.makeFirstResponder(self)
+        }
+    }
 
     override init(frame: CGRect) {
         super.init(frame: frame)

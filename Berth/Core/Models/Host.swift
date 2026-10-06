@@ -63,6 +63,11 @@ final class Host {
     var osName: String = ""
     /// MAC 地址(用于 Wake-on-LAN,局域网唤醒);空 = 未设置
     var macAddress: String = ""
+    /// 本地 Shell 书签(issue #41):不走 SSH,在本机 localDirectory 下起 shell。
+    /// 地址/认证/跳板等 SSH 字段全部忽略;macOS 专用,iOS 不展示
+    var isLocalShell: Bool = false
+    /// 本地 Shell 的起始目录(支持 ~);空 = 家目录
+    var localDirectory: String = ""
     // CloudKit 要求关系为 optional;读取端用 `?? []` 兜底
     @Relationship(deleteRule: .cascade, inverse: \PortForward.host) var portForwards: [PortForward]? = []
 
@@ -144,9 +149,10 @@ final class Host {
         set { sourceRaw = newValue.rawValue }
     }
 
-    /// 显示用 user@host[:port]
+    /// 显示用 user@host[:port];本地 Shell 书签显示起始目录
     var address: String {
-        port == 22 ? "\(username)@\(hostname)" : "\(username)@\(hostname):\(port)"
+        if isLocalShell { return LocalPath.abbreviate(localDirectory.isEmpty ? "~" : localDirectory) }
+        return port == 22 ? "\(username)@\(hostname)" : "\(username)@\(hostname):\(port)"
     }
 }
 

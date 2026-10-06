@@ -5,7 +5,8 @@ import SwiftTerm
 /// 本地 Shell 自动化验收:BERTH_LOCAL_AUTOTEST=1 时执行。
 ///   BERTH_TEST_DUMP=/tmp/local — 结果日志与缓冲区 dump 的基础路径
 /// 流程:开本地 Shell → echo 求值校验(排除命令回显误判)→ 分屏(第二个本地会话)
-/// → exit 自动关 pane → 自定义 shell 路径(/bin/sh)生效 → 全部关闭。
+/// → exit 自动关 pane → 自定义 shell 路径(/bin/sh)生效 → issue #41(标题跟随目录、⌘T 继承目录、
+/// 切标签焦点、书签起始目录/启动命令、缺失目录回落)→ 全部关闭。
 @MainActor
 enum LocalShellAcceptanceTest {
 
@@ -127,10 +128,91 @@ enum LocalShellAcceptanceTest {
         }
         UserDefaults.standard.removeObject(forKey: SettingsKeys.localShellPath)
 
+        // 5c. issue #41:标签标题跟随本地当前目录 / ⌘T 继承目录 / 书签起始目录+启动命令 / 切标签焦点
+        guard await issue41Checks(manager: manager, first: session, mark: mark) else { return }
+
         // 6. 全部关闭(首个会话 ⌘W 路径)
         manager.closePane(session)
         let allClosed = await waitFor(timeout: 5) { manager.sessions.isEmpty }
         mark(allClosed ? "ALL_DONE" : "CLOSE_INCOMPLETE sessions=\(manager.sessions.count)")
+    }
+
+    private static func issue41Checks(
+        manager: SessionManager,
+        first: TerminalSession,
+        mark: (String) -> Void
+    ) async -> Bool {
+        let fm = FileManager.default
+        let base = fm.temporaryDirectory.appendingPathComponent("berth-issue41-\(UUID().uuidString.prefix(8))")
+        let projectDir = base.appendingPathComponent("proj-alpha")
+        let cdDir = base.appendingPathComponent("cd-target")
+        try? fm.createDirectory(at: projectDir, withIntermediateDirectories: true)
+        try? fm.createDirectory(at: cdDir, withIntermediateDirectories: true)
+        defer { try? fm.removeItem(at: base) }
+        let realCdDir = cdDir.resolvingSymlinksInPath().path
+
+        // 标题:cd 之后临时本地 Shell 的标签名变成目录名(内核查 cwd,不靠 OSC 7)
+        first.sendText("cd '\(cdDir.path)'\n")
+        guard await waitFor(timeout: 5, { first.tabTitle == "cd-target" }) else {
+            mark("TITLE_FOLLOW_FAIL title=\(first.tabTitle) cwd=\(first.currentRemoteDirectory ?? "nil")")
+            return false
+        }
+        mark("TITLE_FOLLOW_OK \(first.tabTitle)")
+
+        // ⌘T:新标签起在源 pane 的当前目录
+        manager.duplicateCurrent()
+        guard let dup = manager.selected, dup.id != first.id, await waitForConnected(dup, timeout: 10) else {
+            mark("DUP_CONNECT_FAIL")
+            return false
+        }
+        let dupOK = await waitFor(timeout: 5) { dup.currentRemoteDirectory.map { URL(fileURLWithPath: $0).resolvingSymlinksInPath().path } == realCdDir }
+        mark(dupOK ? "DUP_INHERITS_CWD_OK" : "DUP_INHERITS_CWD_FAIL cwd=\(dup.currentRemoteDirectory ?? "nil")")
+        guard dupOK else { return false }
+
+        // 切标签焦点(issue #41-3):选回第一个标签,终端应直接成为第一响应者
+        manager.selectTab(manager.tabs[0].id)
+        let focusFirst = await waitFor(timeout: 2) { first.terminalView.window?.firstResponder === first.terminalView }
+        manager.selectTab(manager.tabs[1].id)
+        let focusDup = await waitFor(timeout: 2) { dup.terminalView.window?.firstResponder === dup.terminalView }
+        mark(focusFirst && focusDup ? "TAB_SWITCH_FOCUS_OK" : "TAB_SWITCH_FOCUS_FAIL first=\(focusFirst) dup=\(focusDup)")
+        guard focusFirst && focusDup else { return false }
+        manager.closePane(dup)
+        _ = await waitFor(timeout: 5) { manager.sessions.count == 1 }
+
+        // 书签:起始目录 + 启动命令 + 标题用书签名(未入库的 Host 只用来生成 spec)
+        let bookmark = Host(label: "Alpha 项目", hostname: "localhost", port: 0, username: NSUserName())
+        bookmark.isLocalShell = true
+        bookmark.localDirectory = LocalPath.abbreviate(projectDir.path)
+        bookmark.startupCommands = "echo BERTH_BOOKMARK_$((40+2))"
+        let marked = manager.open(spec: HostSpec(host: bookmark))
+        guard await waitForConnected(marked, timeout: 10) else {
+            mark("BOOKMARK_CONNECT_FAIL state=\(marked.state)")
+            return false
+        }
+        let startupOK = await waitFor(timeout: 5) { bufferText(marked).contains("BERTH_BOOKMARK_42") }
+        marked.sendText("pwd\n")
+        let realProject = projectDir.resolvingSymlinksInPath().path
+        let pwdOK = await waitFor(timeout: 5) { bufferText(marked).contains(realProject) || bufferText(marked).contains(projectDir.path + "\n") }
+        let titleOK = marked.tabTitle == "Alpha 项目"
+        mark(startupOK && pwdOK && titleOK
+             ? "BOOKMARK_OK"
+             : "BOOKMARK_FAIL startup=\(startupOK) pwd=\(pwdOK) title=\(marked.tabTitle)")
+        dump(marked, to: (ProcessInfo.processInfo.environment["BERTH_TEST_DUMP"] ?? "/tmp/local") + ".bookmark")
+        manager.closePane(marked)
+        _ = await waitFor(timeout: 5) { manager.sessions.count == 1 }
+        guard startupOK && pwdOK && titleOK else { return false }
+
+        // 起始目录不存在 → 回落家目录,不启动失败
+        let missing = manager.open(spec: .localShell(directory: base.appendingPathComponent("gone").path))
+        guard await waitForConnected(missing, timeout: 10) else {
+            mark("MISSING_DIR_CONNECT_FAIL state=\(missing.state)")
+            return false
+        }
+        let homeOK = missing.currentRemoteDirectory == fm.homeDirectoryForCurrentUser.path
+        mark(homeOK ? "MISSING_DIR_FALLBACK_OK" : "MISSING_DIR_FALLBACK_FAIL cwd=\(missing.currentRemoteDirectory ?? "nil")")
+        manager.closePane(missing)
+        _ = await waitFor(timeout: 5) { manager.sessions.count == 1 }
+        return homeOK
     }
 
     private static func waitForConnected(_ session: TerminalSession, timeout: TimeInterval) async -> Bool {

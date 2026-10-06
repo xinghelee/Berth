@@ -353,10 +353,15 @@ struct SidebarView: View {
             Button("在分屏中连接(左右)") { splitConnect(host, axis: .horizontal) }
             Button("在分屏中连接(上下)") { splitConnect(host, axis: .vertical) }
         }
-        Button("复制 IP") { copyToPasteboard(host.hostname) }
-        Button("复制用户名") { copyToPasteboard(host.username) }
-        Button("复制 ssh 命令") { copyToPasteboard(sshCommand(for: host)) }
-        if !host.macAddress.isEmpty {
+        if host.isLocalShell {
+            Button("在 Finder 中显示") { revealLocalDirectory(host) }
+            Button("复制路径") { copyToPasteboard(LocalPath.expand(host.localDirectory.isEmpty ? "~" : host.localDirectory)) }
+        } else {
+            Button("复制 IP") { copyToPasteboard(host.hostname) }
+            Button("复制用户名") { copyToPasteboard(host.username) }
+            Button("复制 ssh 命令") { copyToPasteboard(sshCommand(for: host)) }
+        }
+        if !host.isLocalShell, !host.macAddress.isEmpty {
             Button("网络唤醒(Wake-on-LAN)") { wake(host) }
         }
         if !groups.isEmpty, !demoMode {
@@ -607,7 +612,7 @@ struct SidebarView: View {
 
     /// 把直连主机(无跳板/无代理)喂给可达性探测
     private func updateReachabilityTargets() {
-        let targets = allHosts.map { host in
+        let targets = allHosts.filter { !$0.isLocalShell }.map { host in
             (id: host.id, host: host.hostname, port: host.port,
              direct: host.jumpHostID == nil && host.proxy.kind == .none)
         }
@@ -645,6 +650,11 @@ struct SidebarView: View {
         } else {
             hostPendingDeletion = PendingHost(id: host.id, label: host.label)
         }
+    }
+
+    private func revealLocalDirectory(_ host: Host) {
+        let path = TerminalSession.localStartDirectory(host.localDirectory)
+        NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: path)
     }
 
     private func copyToPasteboard(_ text: String) {
@@ -709,6 +719,8 @@ struct SidebarView: View {
         copy.switchUser = host.switchUser
         copy.aiInstructions = host.aiInstructions
         copy.macAddress = host.macAddress
+        copy.isLocalShell = host.isLocalShell
+        copy.localDirectory = host.localDirectory
         duplicateOrigin = DuplicateOrigin(hostID: host.id, groupID: spaceStore.effectiveSpaceID(of: host))
         editingHost = copy
     }
@@ -836,8 +848,16 @@ private struct HostRow: View {
     var body: some View {
         HStack(spacing: 8) {
             // Finder 式图标列:固定宽度对齐成列
-            OSBadge(osName: host.osName)
-                .frame(width: 20)
+            Group {
+                if host.isLocalShell {
+                    Image(systemName: "folder")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                } else {
+                    OSBadge(osName: host.osName)
+                }
+            }
+            .frame(width: 20)
             // 状态竖条:连接态 > 可达性 > 标签色,连接中带辉光
             RoundedRectangle(cornerRadius: 1.5)
                 .fill(barColor)

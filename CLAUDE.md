@@ -123,6 +123,11 @@ BERTH_M1_AUTOTEST=1 BERTH_TRANSIENT_STORE=1 \
     MFA/Touch ID 门禁分别落到「需确认/需授权」卡片,授权按钮过一次 Touch ID 解锁本次运行)。
     验收:`BERTH_DASHBOARD_AUTOTEST=1`(菜单接线 → 内嵌可见 → 在线卡片有真实 CPU/内存/磁盘
     → 借用终端连接 → 关掉会话后自建连接 → 离线原因 → 撕成独立窗口后采集不断 → 两种形态自截图)
+  - [x] issue #41:本地 Shell 书签(`Host.isLocalShell` + `localDirectory`,侧栏新建选「本地 Shell」类型,
+    起始目录/启动命令;iOS/仪表盘/可达性/跳板候选过滤掉;本地标签右键「将当前目录存为侧栏书签」);
+    临时本地标签标题跟随 shell 当前目录(`proc_pidinfo` 查 cwd —— 系统 zsh 不对非 Apple_Terminal 发 OSC 7),
+    ⌘T/分屏继承当前目录;设置「标签字号」11–18pt;切标签后终端焦点修复(视图挂回窗口才
+    makeFirstResponder,`BerthTerminalView.requestFocus`)。`BERTH_LOCAL_AUTOTEST` 覆盖
   - [ ] 本地回显(predictive echo)完整版 —— 触及 SwiftTerm 渲染,需交互测延迟,暂缓
 - [~] M6 — iOS 版(`BerthiOS` target,`xcodegen generate` 后用
   `xcodebuildmcp simulator build-and-run --project-path Berth.xcodeproj --scheme BerthiOS --simulator-name "iPhone 17 Pro Max"`):

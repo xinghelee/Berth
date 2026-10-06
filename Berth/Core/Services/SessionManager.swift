@@ -104,7 +104,8 @@ final class SessionManager {
     }
 
     private func syncSelectedHostID() {
-        guard let selected, !selected.spec.isLocal else {
+        // 临时本地 Shell 不对应侧栏行;本地 Shell 书签照常高亮
+        guard let selected, selected.spec.hostID != HostSpec.localShellHostID else {
             selectedHostID = nil
             return
         }
@@ -167,7 +168,7 @@ final class SessionManager {
     func duplicateCurrent() {
         guard let current = selected else { return }
         open(
-            spec: current.spec,
+            spec: Self.derivedSpec(from: current),
             transientPassword: current.transientPassword,
             transientPassphrase: current.transientPassphrase,
             reusing: current.liveConnection
@@ -179,17 +180,25 @@ final class SessionManager {
     /// ⌘D / ⌘⇧D / 右键:在当前聚焦 pane 上再分出一个同主机会话(复用连接)。每次都新增,支持嵌套。
     func splitFocused(axis: SplitAxis) {
         guard let current = selected else { return }
-        let secondary = TerminalSession(spec: current.spec)
+        let secondary = TerminalSession(spec: Self.derivedSpec(from: current))
         secondary.transientPassword = current.transientPassword
         secondary.transientPassphrase = current.transientPassphrase
         if let connection = current.liveConnection { secondary.prepareToBorrow(connection) }
         insertSplit(secondary, axis: axis)
     }
 
-    /// 混合分屏:在当前聚焦 pane 旁分出一个本地 Shell(SSH 会话旁跑 scp/kubectl 等本地命令)
+    /// 混合分屏:在当前聚焦 pane 旁分出一个本地 Shell(SSH 会话旁跑 scp/kubectl 等本地命令)。
+    /// 旁边就是本地会话时起在它的当前目录
     func splitFocusedLocalShell(axis: SplitAxis) {
-        guard selected != nil else { return }
-        insertSplit(TerminalSession(spec: .localShell()), axis: axis)
+        guard let current = selected else { return }
+        let directory = current.spec.isLocal ? (current.currentRemoteDirectory ?? "") : ""
+        insertSplit(TerminalSession(spec: .localShell(directory: directory)), axis: axis)
+    }
+
+    /// ⌘T/分屏复制当前会话:本地 Shell 起在源 pane 的当前目录、不重放启动命令
+    private static func derivedSpec(from session: TerminalSession) -> HostSpec {
+        guard session.spec.isLocal else { return session.spec }
+        return session.spec.derivedLocalShell(directory: session.currentRemoteDirectory)
     }
 
     /// issue #11:在当前聚焦 pane 旁分屏连接任意主机(右键/侧栏选主机)。

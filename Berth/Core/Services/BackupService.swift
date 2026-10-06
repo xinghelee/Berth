@@ -37,6 +37,9 @@ enum BackupService {
         var proxyPort: Int
         var proxyUsername: String
         var forwards: [ForwardDTO]
+        /// 本地 Shell 书签(issue #41);旧备份没有这两项
+        var isLocalShell: Bool?
+        var localDirectory: String?
     }
 
     struct ForwardDTO: Codable {
@@ -90,7 +93,9 @@ enum BackupService {
                                 targetHost: forward.targetHost, targetPort: forward.targetPort,
                                 enabled: forward.enabled, sortOrder: forward.sortOrder
                             )
-                        }
+                        },
+                    isLocalShell: host.isLocalShell ? true : nil,
+                    localDirectory: host.isLocalShell ? host.localDirectory : nil
                 )
             }
         )
@@ -146,6 +151,8 @@ enum BackupService {
                     requiresAuth: !dto.proxyUsername.isEmpty
                 )
             )
+            host.isLocalShell = dto.isLocalShell ?? false
+            host.localDirectory = dto.localDirectory ?? ""
             context.insert(host)
             for forwardDTO in dto.forwards {
                 let forward = PortForward(
