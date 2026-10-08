@@ -20,6 +20,7 @@ struct SidebarView: View {
     }
 
     @AppStorage(SettingsKeys.translucentChrome) private var translucentChrome = true
+    @AppStorage(SettingsKeys.doubleClickNewConnection) private var doubleClickNewConnection = true
     @State private var searchText = ""
     /// 主题配色面板(popover)
     @State private var isThemePanelPresented = false
@@ -325,7 +326,17 @@ struct SidebarView: View {
                         .overlay {
                             PressMouseLayer(
                                 onPress: { activate(host) },
-                                onCommandPress: { connect(host) }
+                                onCommandPress: { connect(host) },
+                                onDoubleClick: {
+                                    // 双击 = 再开一条同主机连接(可在设置里关)。
+                                    // 只对已有会话的主机生效:没开过时单击已拨号,
+                                    // 双击第一击就开了,第二击再开会瞬间攒出两条
+                                    guard doubleClickNewConnection,
+                                          sessionManager
+                                        .sessions.contains(where: { $0.spec.hostID == host.id })
+                                    else { return }
+                                    connect(host)
+                                }
                             )
                         }
                         .contextMenu { hostMenu(host) }
