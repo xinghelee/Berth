@@ -20,6 +20,10 @@ struct SidebarView: View {
     }
 
     @AppStorage(SettingsKeys.translucentChrome) private var translucentChrome = true
+    @AppStorage(SettingsKeys.doubleClickNewConnection) private var doubleClickNewConnection = true
+    /// 最近一次「单击拨号」:(主机, 时间)。双击的第二击据此判断首击是否刚
+    /// 为这台主机拨过号 —— 是则视为同一手势,不再补开第二条
+    @State private var lastDial: (hostID: UUID, date: Date)?
     @State private var searchText = ""
     /// 主题配色面板(popover)
     @State private var isThemePanelPresented = false
@@ -324,8 +328,30 @@ struct SidebarView: View {
                         // 连接;右键仍走 .contextMenu
                         .overlay {
                             PressMouseLayer(
-                                onPress: { activate(host) },
-                                onCommandPress: { connect(host) }
+                                onPress: {
+                                    // 没开会话时单击即拨号:打点,双击的第二击在
+                                    // 双击间隔内看到该主机刚拨过号就不补开(否则
+                                    // 没开过的主机双击一次会攒出两条连接)
+                                    let dialed = activate(host)
+                                    if dialed { lastDial = (host.id, Date()) }
+                                },
+                                onCommandPress: { connect(host) },
+                                onDoubleClick: {
+                                    // 双击 = 再开一条同主机连接(可在设置里关)。
+                                    // 只对「双击前就已有会话」的主机生效:首击刚拨的号
+                                    // 算在首击头上,不能让第二击再开一条
+                                    guard doubleClickNewConnection,
+                                          sessionManager
+                                        .sessions.contains(where: { $0.spec.hostID == host.id }),
+                                          !(lastDial?.hostID == host.id &&
+                                            Date().timeIntervalSince(lastDial!.date) < 1.2)
+                                    else {
+                                        // 已有会话时首击只是切焦点,不算拨号;这里不重置
+                                        // lastDial —— 别的主机的 dial 打点保留即可
+                                        return
+                                    }
+                                    connect(host)
+                                }
                             )
                         }
                         .contextMenu { hostMenu(host) }
@@ -562,13 +588,16 @@ struct SidebarView: View {
 
     /// 单击行 = 切到这台主机:已经开着就切过去,没开才拨号。
     /// (否则单击连接会让在侧栏上下点几下就攒出一堆同主机标签)
-    private func activate(_ host: Host) {
+    /// 返回「本次调用是否真的拨了号」,供双击防误触打点。
+    @discardableResult
+    private func activate(_ host: Host) -> Bool {
         sessionManager.selectedHostID = host.id
         if let existing = sessionManager.sessions.first(where: { $0.spec.hostID == host.id }) {
             sessionManager.focusPane(existing.id)
-            return
+            return false
         }
         connect(host)
+        return true
     }
 
     /// 明确要「再开一个」:⌘ 点按、右键菜单、⌘K 等。总是新拨号,不借用旧连接 ——
