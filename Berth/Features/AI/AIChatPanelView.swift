@@ -78,7 +78,7 @@ struct AIChatPanelView: View {
                 Button(model) { selectModel(model) }
             }
             Divider()
-            Button(String(localized: "手动输入模型...")) { manualModelEntry = true }
+            Button(String(localized: "手动输入模型…")) { manualModelEntry = true }
             if AISettings.isConfigured {
                 Button {
                     Task {
@@ -191,7 +191,7 @@ struct AIChatPanelView: View {
     /// 底部一行放模型胶囊(左)与发送/停止(右)
     private var inputBar: some View {
         VStack(alignment: .leading, spacing: 6) {
-            TextField(String(localized: "让 AI 在这台服务器上执行操作..."), text: $draft, axis: .vertical)
+            TextField(String(localized: "让 AI 在这台服务器上执行操作…"), text: $draft, axis: .vertical)
                 .textFieldStyle(.plain)
                 .font(.system(size: 12.5))
                 .lineLimit(1...6)

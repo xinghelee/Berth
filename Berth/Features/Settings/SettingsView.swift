@@ -32,6 +32,7 @@ struct SettingsView: View {
     @AppStorage(SettingsKeys.copyOnSelect) private var copyOnSelect = false
     @AppStorage(SettingsKeys.middleClickPaste) private var middleClickPaste = false
     @AppStorage(SettingsKeys.confirmBeforeClosingTab) private var confirmBeforeClosingTab = true
+    @AppStorage(SettingsKeys.doubleClickNewConnection) private var doubleClickNewConnection = true
     @AppStorage(SettingsKeys.autoReconnect) private var autoReconnect = true
     @AppStorage(SettingsKeys.requireTouchIDForKeys) private var requireTouchID = true
     @AppStorage(SettingsKeys.pasteProtection) private var pasteProtection = true
@@ -244,6 +245,7 @@ struct SettingsView: View {
                         .frame(width: 44, alignment: .trailing)
                 }
                 Toggle("关闭有活跃连接的标签页前需要确认", isOn: $confirmBeforeClosingTab)
+                Toggle("双击主机行再开一条同主机连接", isOn: $doubleClickNewConnection)
             }
             Section("会话") {
                 Toggle("非主动断开时自动重连(指数退避)", isOn: $autoReconnect)
@@ -290,7 +292,7 @@ struct SettingsView: View {
                             Text(verbatim: model).tag(model)
                         }
                         Divider()
-                        Text("自定义...").tag(AIProvider.customModelTag)
+                        Text("自定义…").tag(AIProvider.customModelTag)
                     }
                     if aiModelIsCustom {
                         TextField("模型名", text: $aiModel, prompt: Text(verbatim: AISettings.defaultModel))

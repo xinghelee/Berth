@@ -1133,6 +1133,13 @@ struct TerminalPaneView: View {
                 .buttonBorderShape(.capsule)
                 .controlSize(.regular)
                 .padding(.top, 4)
+                // 键盘入口:断线态任意按键都会重连,这里点明,避免用户以为终端卡死
+                if !showsRetrySpinner {
+                    Text("按回车也可重连")
+                        .font(.system(size: 11.5))
+                        .foregroundStyle(.tertiary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                }
             }
             .padding(18)
             .frame(width: 340)

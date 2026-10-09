@@ -1149,16 +1149,6 @@
       },
       "shouldTranslate": false
     },
-    "SSH 主机": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SSH Host"
-          }
-        }
-      }
-    },
     "SSH_AUTH_SOCK 路径过长": {
       "localizations": {
         "en": {
@@ -1310,16 +1300,6 @@
         }
       }
     },
-    "shell 启动后按顺序自动发送(各自动补回车)。分屏复制的会话不重复执行。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sent in order once the shell starts (each followed by Return). Not repeated in split or duplicated sessions."
-          }
-        }
-      }
-    },
     "ssh-agent 签名失败。": {
       "localizations": {
         "en": {
@@ -1387,16 +1367,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "user@host:port or an ssh command"
-          }
-        }
-      }
-    },
-    "~(家目录)": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "~ (home folder)"
           }
         }
       }
@@ -1755,16 +1725,6 @@
         }
       }
     },
-    "下载临时工作项不存在: %@": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The temporary download item is missing: %@"
-          }
-        }
-      }
-    },
     "下载到此处": {
       "localizations": {
         "en": {
@@ -1781,6 +1741,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Download & Share…"
+          }
+        }
+      }
+    },
+    "下载临时工作项不存在: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The temporary download item is missing: %@"
           }
         }
       }
@@ -2415,16 +2385,6 @@
         }
       }
     },
-    "保存并打开": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Save & Open"
-          }
-        }
-      }
-    },
     "保存并连接": {
       "localizations": {
         "en": {
@@ -2876,17 +2836,6 @@
         }
       }
     },
-    "切换模型": {
-      "localizationState": "translated",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Switch model"
-          }
-        }
-      }
-    },
     "切换默认 shell 失败(可能需要密码或权限)": {
       "localizations": {
         "en": {
@@ -3047,17 +2996,6 @@
         }
       }
     },
-    "刷新模型列表": {
-      "localizationState": "translated",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Refresh model list"
-          }
-        }
-      }
-    },
     "前往": {
       "localizations": {
         "en": {
@@ -3134,17 +3072,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Previously recorded fingerprint"
-          }
-        }
-      }
-    },
-    "双击主机行再开一条同主机连接": {
-      "localizationState": "translated",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Double-click a host row to open another connection to it"
           }
         }
       }
@@ -3499,17 +3426,6 @@
         }
       }
     },
-    "响应格式无法解析,请在设置里手填模型": {
-      "localizationState": "translated",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couldn't parse the response, enter the model name in Settings instead"
-          }
-        }
-      }
-    },
     "回传失败": {
       "localizations": {
         "en": {
@@ -3546,16 +3462,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Return"
-          }
-        }
-      }
-    },
-    "在 Finder 中显示": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Show in Finder"
           }
         }
       }
@@ -3640,16 +3546,6 @@
         }
       }
     },
-    "在本机这个目录下打开 shell(设置里的 Shell 路径)。标签页显示这里的名字。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Opens a shell in this folder on this Mac (using the shell path from Settings). The tab shows the name above."
-          }
-        }
-      }
-    },
     "在此服务器安装 zsh-syntax-highlighting,输入命令实时染色": {
       "localizations": {
         "en": {
@@ -3706,17 +3602,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Show menu bar icon (session switcher / quick connect)"
-          }
-        }
-      }
-    },
-    "在设置的「AI 助手」里填入 API Key(或用本地模型)后,即可通过对话操作服务器。": {
-      "localizationState": "translated",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enter an API key (or use local models) in Settings > AI Assistant, then drive the server by conversation."
           }
         }
       }
@@ -3851,16 +3736,6 @@
         }
       }
     },
-    "复制全文": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Copy All"
-          }
-        }
-      }
-    },
     "复制公钥": {
       "localizations": {
         "en": {
@@ -3901,32 +3776,12 @@
         }
       }
     },
-    "复制整条回复(Markdown)": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Copy the whole reply (Markdown)"
-          }
-        }
-      }
-    },
     "复制用户名": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Copy Username"
-          }
-        }
-      }
-    },
-    "复制路径": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Copy Path"
           }
         }
       }
@@ -4311,16 +4166,6 @@
         }
       }
     },
-    "将当前目录存为侧栏书签…": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Save Current Folder to Sidebar…"
-          }
-        }
-      }
-    },
     "将自动重连(第 %lld 次)…": {
       "localizations": {
         "en": {
@@ -4511,6 +4356,26 @@
         }
       }
     },
+    "复制全文": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy All"
+          }
+        }
+      }
+    },
+    "复制整条回复(Markdown)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy the whole reply (Markdown)"
+          }
+        }
+      }
+    },
     "已复制": {
       "localizations": {
         "en": {
@@ -4597,17 +4462,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Skipped %lld Git hosting aliases automatically (github.com and friends have no usable shell)."
-          }
-        }
-      }
-    },
-    "已获取 \\(Int(count)) 个模型": {
-      "localizationState": "translated",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fetched \\(Int(count)) models"
           }
         }
       }
@@ -4852,28 +4706,6 @@
         }
       }
     },
-    "手动输入模型": {
-      "localizationState": "translated",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enter model manually"
-          }
-        }
-      }
-    },
-    "手动输入模型…": {
-      "localizationState": "translated",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enter model manually…"
-          }
-        }
-      }
-    },
     "打开": {
       "localizations": {
         "en": {
@@ -4940,16 +4772,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Open download page"
-          }
-        }
-      }
-    },
-    "打开后自动执行": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Run After Opening"
           }
         }
       }
@@ -5160,17 +4982,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "API Format"
-          }
-        }
-      }
-    },
-    "接口没有返回任何模型": {
-      "localizationState": "translated",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The endpoint returned no models"
           }
         }
       }
@@ -5906,22 +5717,32 @@
         }
       }
     },
-    "服务器在握手阶段关闭了连接:多半是本机 IP 触发了 %@ 的连接频率限制": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The server closed the connection during handshake — your IP most likely triggered rate limiting on %@"
-          }
-        }
-      }
-    },
     "服务器在文件下载完成前提前结束传输。": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "The server ended the transfer before the file download completed."
+          }
+        }
+      }
+    },
+    "服务器返回了无效的文件数据。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The server returned invalid file data."
+          }
+        }
+      }
+    },
+    "服务器在握手阶段关闭了连接:多半是本机 IP 触发了 %@ 的连接频率限制": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The server closed the connection during handshake — your IP most likely triggered rate limiting on %@"
           }
         }
       }
@@ -5952,16 +5773,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Server Requests Interactive Authentication"
-          }
-        }
-      }
-    },
-    "服务器返回了无效的文件数据。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The server returned invalid file data."
           }
         }
       }
@@ -6222,16 +6033,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "View logs"
-          }
-        }
-      }
-    },
-    "标签字号": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tab Font Size"
           }
         }
       }
@@ -7766,39 +7567,6 @@
         }
       }
     },
-    "获取模型列表": {
-      "localizationState": "translated",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fetch model list"
-          }
-        }
-      }
-    },
-    "获取模型列表失败": {
-      "localizationState": "translated",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Failed to fetch models"
-          }
-        }
-      }
-    },
-    "获取模型列表失败(HTTP \\(Int(status)))": {
-      "localizationState": "translated",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Failed to fetch models (HTTP \\(Int(status)))"
-          }
-        }
-      }
-    },
     "蓝": {
       "localizations": {
         "en": {
@@ -8049,17 +7817,6 @@
         }
       }
     },
-    "该地址不支持模型列表接口,请在设置里手填模型。": {
-      "localizationState": "translated",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This endpoint doesn't support the models API — enter the model name in Settings instead."
-          }
-        }
-      }
-    },
     "该密钥类型暂不支持通过 agent 认证(目前支持 ed25519 / RSA)。": {
       "localizations": {
         "en": {
@@ -8260,26 +8017,6 @@
         }
       }
     },
-    "起始目录": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Start Folder"
-          }
-        }
-      }
-    },
-    "起始目录不存在或不是文件夹。": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The start folder does not exist or is not a folder."
-          }
-        }
-      }
-    },
     "跟随系统": {
       "localizations": {
         "en": {
@@ -8416,17 +8153,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Enter password"
-          }
-        }
-      }
-    },
-    "输入模型名,直接用于接下来的对话。": {
-      "localizationState": "translated",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Enter a model name to use for the upcoming turns."
           }
         }
       }
@@ -8731,16 +8457,6 @@
         }
       }
     },
-    "远端 rc 一键安装 OSC 133 钩子,退出码与命令边界可见": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "One-click install of OSC 133 hooks into the remote rc files; shows exit codes and command boundaries"
-          }
-        }
-      }
-    },
     "远端 ~/.zshrc 一键安装,输入命令时实时染色": {
       "localizations": {
         "en": {
@@ -8751,12 +8467,12 @@
         }
       }
     },
-    "远端已有同名文件": {
+    "远端 rc 一键安装 OSC 133 钩子,退出码与命令边界可见": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Files already exist on the server"
+            "value": "One-click install of OSC 133 hooks into the remote rc files; shows exit codes and command boundaries"
           }
         }
       }
@@ -8797,6 +8513,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "The destination path for the remote file is outside the download directory."
+          }
+        }
+      }
+    },
+    "远端已有同名文件": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Files already exist on the server"
           }
         }
       }
@@ -9407,6 +9133,286 @@
           "stringUnit": {
             "state": "translated",
             "value": "Advanced"
+          }
+        }
+      }
+    },
+    "SSH 主机": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SSH Host"
+          }
+        }
+      }
+    },
+    "shell 启动后按顺序自动发送(各自动补回车)。分屏复制的会话不重复执行。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sent in order once the shell starts (each followed by Return). Not repeated in split or duplicated sessions."
+          }
+        }
+      }
+    },
+    "~(家目录)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "~ (home folder)"
+          }
+        }
+      }
+    },
+    "保存并打开": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save & Open"
+          }
+        }
+      }
+    },
+    "在 Finder 中显示": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show in Finder"
+          }
+        }
+      }
+    },
+    "在本机这个目录下打开 shell(设置里的 Shell 路径)。标签页显示这里的名字。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opens a shell in this folder on this Mac (using the shell path from Settings). The tab shows the name above."
+          }
+        }
+      }
+    },
+    "复制路径": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy Path"
+          }
+        }
+      }
+    },
+    "将当前目录存为侧栏书签…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save Current Folder to Sidebar…"
+          }
+        }
+      }
+    },
+    "打开后自动执行": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Run After Opening"
+          }
+        }
+      }
+    },
+    "标签字号": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tab Font Size"
+          }
+        }
+      }
+    },
+    "起始目录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start Folder"
+          }
+        }
+      }
+    },
+    "起始目录不存在或不是文件夹。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The start folder does not exist or is not a folder."
+          }
+        }
+      }
+    },
+    "双击主机行再开一条同主机连接": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Double-click a host row to open another connection to it"
+          }
+        }
+      }
+    },
+    "按回车也可重连": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Press Return to reconnect"
+          }
+        }
+      }
+    },
+    "切换模型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch model"
+          }
+        }
+      }
+    },
+    "刷新模型列表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refresh model list"
+          }
+        }
+      }
+    },
+    "手动输入模型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter model manually"
+          }
+        }
+      }
+    },
+    "手动输入模型…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter model manually…"
+          }
+        }
+      }
+    },
+    "输入模型名,直接用于接下来的对话。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter a model name to use for the upcoming turns."
+          }
+        }
+      }
+    },
+    "在设置的「AI 助手」里填入 API Key(或用本地模型)后,即可通过对话操作服务器。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter an API key (or use a local model) in Settings > AI Assistant, then drive the server by conversation."
+          }
+        }
+      }
+    },
+    "接口没有返回任何模型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The endpoint returned no models"
+          }
+        }
+      }
+    },
+    "该接口不提供模型列表,请手动输入模型名(地址有误也会返回这个结果,请检查 API 地址)。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This endpoint doesn't provide a model list; enter the model name manually. A wrong API URL also gives this result, so check the address."
+          }
+        }
+      }
+    },
+    "响应格式无法解析,请在设置里手填模型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't parse the response; enter the model name in Settings instead"
+          }
+        }
+      }
+    },
+    "获取模型列表失败": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed to fetch models"
+          }
+        }
+      }
+    },
+    "获取模型列表失败(HTTP %@)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed to fetch models (HTTP %@)"
+          }
+        }
+      }
+    },
+    "获取模型列表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fetch model list"
+          }
+        }
+      }
+    },
+    "已获取 %lld 个模型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fetched %lld models"
+          }
+        }
+      }
+    },
+    "请先保存 API Key 再获取模型列表。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save the API key first, then fetch the model list."
           }
         }
       }
