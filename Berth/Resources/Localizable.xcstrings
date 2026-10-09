@@ -9258,7 +9258,6 @@
       }
     },
     "双击主机行再开一条同主机连接": {
-      "localizationState": "translated",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9274,6 +9273,146 @@
           "stringUnit": {
             "state": "translated",
             "value": "Press Return to reconnect"
+          }
+        }
+      }
+    },
+    "切换模型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch model"
+          }
+        }
+      }
+    },
+    "刷新模型列表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refresh model list"
+          }
+        }
+      }
+    },
+    "手动输入模型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter model manually"
+          }
+        }
+      }
+    },
+    "手动输入模型…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter model manually…"
+          }
+        }
+      }
+    },
+    "输入模型名,直接用于接下来的对话。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter a model name to use for the upcoming turns."
+          }
+        }
+      }
+    },
+    "在设置的「AI 助手」里填入 API Key(或用本地模型)后,即可通过对话操作服务器。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter an API key (or use a local model) in Settings > AI Assistant, then drive the server by conversation."
+          }
+        }
+      }
+    },
+    "接口没有返回任何模型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The endpoint returned no models"
+          }
+        }
+      }
+    },
+    "该接口不提供模型列表,请手动输入模型名(地址有误也会返回这个结果,请检查 API 地址)。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This endpoint doesn't provide a model list; enter the model name manually. A wrong API URL also gives this result, so check the address."
+          }
+        }
+      }
+    },
+    "响应格式无法解析,请在设置里手填模型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't parse the response; enter the model name in Settings instead"
+          }
+        }
+      }
+    },
+    "获取模型列表失败": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed to fetch models"
+          }
+        }
+      }
+    },
+    "获取模型列表失败(HTTP %@)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed to fetch models (HTTP %@)"
+          }
+        }
+      }
+    },
+    "获取模型列表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fetch model list"
+          }
+        }
+      }
+    },
+    "已获取 %lld 个模型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fetched %lld models"
+          }
+        }
+      }
+    },
+    "请先保存 API Key 再获取模型列表。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save the API key first, then fetch the model list."
           }
         }
       }

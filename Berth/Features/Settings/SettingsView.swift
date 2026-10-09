@@ -54,6 +54,7 @@ struct SettingsView: View {
     @AppStorage(SettingsKeys.translucentChrome) private var translucentChrome = true
     @State private var aiProviderID = AIProvider.all[0].id
     @State private var aiModelIsCustom = false
+    @State private var modelCatalog = AIModelCatalog.shared
     @State private var navigation = SettingsNavigation.shared
     @State private var aiKeyDraft = ""
     @State private var aiKeySaved = ""
@@ -283,9 +284,11 @@ struct SettingsView: View {
                     Button("保存") { saveAIKey() }
                         .disabled(aiKeyDraft == aiKeySaved)
                 }
-                if let provider = AIProvider.find(aiProviderID), !provider.models.isEmpty {
+                let presetModels = AIProvider.find(aiProviderID)?.models ?? []
+                let options = fetchedModels.isEmpty ? presetModels : fetchedModels
+                if !options.isEmpty {
                     Picker("模型", selection: modelSelection) {
-                        ForEach(provider.models, id: \.self) { model in
+                        ForEach(options, id: \.self) { model in
                             Text(verbatim: model).tag(model)
                         }
                         Divider()
@@ -297,6 +300,8 @@ struct SettingsView: View {
                 } else {
                     TextField("模型", text: $aiModel, prompt: Text(verbatim: AISettings.defaultModel))
                 }
+                fetchModelRow
+
                 TextField("API 地址", text: $aiBaseURL, prompt: Text(verbatim: AISettings.defaultBaseURL))
                 Picker("接口格式", selection: $aiFormat) {
                     ForEach(AISettings.APIFormat.allCases) { format in
@@ -331,10 +336,15 @@ struct SettingsView: View {
                 aiKeySaved = (try? KeychainStore.read(account: AISettings.apiKeyAccount)) ?? ""
                 aiKeyDraft = aiKeySaved
                 aiProviderID = AIProvider.matching(baseURL: aiBaseURL)?.id ?? AIProvider.customID
-                // 已存的模型不在该供应商的常见列表里 → 停在「自定义…」,别把用户填的值顶掉
-                let known = AIProvider.find(aiProviderID)?.models ?? []
-                aiModelIsCustom = !known.isEmpty && !known.contains(aiModel)
+                syncCustomModelFlag()
+                // 已拉过该接入点的模型列表则静默续用(未拉过不打接口,等用户点按钮)
+                if AISettings.isConfigured, let key = modelKey, modelCatalog.hasCache(for: key) {
+                    fetchModelList(force: false)
+                }
             }
+            // 接口列表拉到/刷新后重新判定:当前模型不在列表里就停在「自定义…」,
+            // 否则 Picker 没有匹配 tag 会显示成空白
+            .onChange(of: fetchedModels) { _, _ in syncCustomModelFlag() }
             Section("自定义引导") {
                 TextField(
                     "全局引导",
@@ -532,6 +542,49 @@ struct SettingsView: View {
         )
     }
 
+    /// 「获取/刷新模型列表」行:任何供应商(含自定义地址、本地端点)都显示。
+    /// 拉到后模型选择器用接口列表;失败原因显示在这一行下方。
+    private var fetchModelRow: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Button {
+                    fetchModelList(force: true)
+                } label: {
+                    if modelCatalog.isLoading {
+                        ProgressView().controlSize(.small)
+                    } else {
+                        Label(
+                            fetchedModels.isEmpty
+                                ? String(localized: "获取模型列表")
+                                : String(localized: "刷新模型列表"),
+                            systemImage: "arrow.down.circle"
+                        )
+                    }
+                }
+                .disabled(modelCatalog.isLoading || modelKey == nil)
+                if let key = modelKey, modelCatalog.hasCache(for: key) {
+                    Text("已获取 \(fetchedModels.count) 个模型")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+            }
+            if let error = modelCatalog.errorMessage {
+                Text(error)
+                    .font(.caption)
+                    .foregroundStyle(modelCatalog.errorIsNotice ? Color.secondary : Color.orange)
+            }
+        }
+    }
+
+    /// 已存的模型不在可选列表(接口拉到的优先,否则供应商常见列表)里 → 停在「自定义…」
+    /// 并显示输入框,别把用户填的值顶掉
+    private func syncCustomModelFlag() {
+        let preset = AIProvider.find(aiProviderID)?.models ?? []
+        let options = fetchedModels.isEmpty ? preset : fetchedModels
+        aiModelIsCustom = !options.isEmpty && !options.contains(aiModel)
+    }
+
     /// 选中供应商预设:填好地址、接口格式与常见模型(之后可手改)
     private func applyProvider(_ id: String) {
         guard let provider = AIProvider.find(id) else { return }
@@ -541,6 +594,38 @@ struct SettingsView: View {
         aiModelIsCustom = false
         AISettingsStore.shared.refresh()
     }
+
+    /// 当前接口对应的模型目录缓存键(地址或格式还没填成形时为 nil)
+    private var modelKey: AIModelCatalog.ConfigKey? {
+        let baseURL = aiBaseURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let url = URL(string: baseURL), url.scheme != nil,
+              let format = AISettings.APIFormat(rawValue: aiFormat) else { return nil }
+        return AIModelCatalog.key(baseURL: baseURL, format: format)
+    }
+
+    /// 已拉取的模型列表(按当前接入点持久化缓存,重启后仍在)
+    private var fetchedModels: [String] {
+        guard let key = modelKey else { return [] }
+        return modelCatalog.models(for: key)
+    }
+
+    /// 拉取模型列表(需要 Key,本地端点免);成功且当前模型为手填时不用回默认,
+    /// 让用户自己决定;失败缘由展示在按钮下方
+    private func fetchModelList(force: Bool) {
+        let key = aiBaseURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        let format = AISettings.APIFormat(rawValue: aiFormat) ?? .anthropic
+        let apiKey = AISettings.apiKey ?? ""
+        let isLocal = URL(string: key).flatMap(\.host).map { ["localhost", "127.0.0.1", "::1"].contains($0.lowercased()) } ?? false
+        // 远端接口没有 Key 必然 401,直接提示而不发请求
+        guard !apiKey.isEmpty || isLocal else {
+            modelCatalog.setError(String(localized: "请先保存 API Key 再获取模型列表。"))
+            return
+        }
+        Task {
+            await modelCatalog.load(baseURL: key, format: format, apiKey: apiKey, force: force)
+        }
+    }
+
 
     /// API Key 保存/清空(只进钥匙串)
     private func saveAIKey() {

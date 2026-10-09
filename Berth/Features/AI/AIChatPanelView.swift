@@ -10,6 +10,12 @@ struct AIChatPanelView: View {
     @State private var draft = ""
     @State private var settings = AISettingsStore.shared
     @State private var isHistoryPresented = false
+    @State private var modelCatalog = AIModelCatalog.shared
+    /// 「手动输入模型」确认框开关与草稿
+    @State private var manualModelEntry = false
+    @State private var manualModelDraft = ""
+    /// 当前模型名(UserDefaults 不是可观察源,用这个镜像驱动胶囊刷新)
+    @State private var selectedModel = AISettings.model
     @FocusState private var inputFocused: Bool
 
     private var theme: TerminalTheme { ThemeStore.shared.current }
@@ -45,13 +51,12 @@ struct AIChatPanelView: View {
             Divider().overlay(theme.borderColor)
             if !settings.isConfigured {
                 setupState
-            } else if controller.messages.isEmpty {
-                emptyState
             } else {
-                messageList
-            }
-            if settings.isConfigured {
-                Divider().overlay(theme.borderColor)
+                if controller.messages.isEmpty {
+                    emptyState
+                } else {
+                    messageList
+                }
                 inputBar
             }
         }
@@ -61,6 +66,97 @@ struct AIChatPanelView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             settings.refresh()
         }
+    }
+
+    // MARK: - 模型选择(放在输入框底部)
+
+    /// 输入框底部的模型胶囊:点开菜单切换。列表优先取接口数据(AIModelCatalog),
+    /// 没有则用预设常见列表,都没有时只剩「手动输入」。
+    private var modelSelector: some View {
+        Menu {
+            ForEach(modelOptions, id: \.self) { model in
+                Button(model) { selectModel(model) }
+            }
+            Divider()
+            Button(String(localized: "手动输入模型…")) { manualModelEntry = true }
+            if AISettings.isConfigured {
+                Button {
+                    Task {
+                        await modelCatalog.load(
+                            baseURL: AISettings.baseURL.absoluteString,
+                            format: AISettings.format,
+                            apiKey: AISettings.apiKey ?? "",
+                            force: true
+                        )
+                    }
+                } label: {
+                    if modelCatalog.isLoading {
+                        ProgressView().controlSize(.mini)
+                    } else {
+                        Label(String(localized: "刷新模型列表"), systemImage: "arrow.down.circle")
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "cpu")
+                    .font(.system(size: 9))
+                    .foregroundStyle(.tertiary)
+                Text(verbatim: selectedModel)
+                    .font(.system(size: 11, weight: .medium))
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 7, weight: .semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(Capsule().fill(Color.primary.opacity(0.06)))
+            .contentShape(Capsule())
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help(String(localized: "切换模型"))
+        .confirmationDialog(
+            String(localized: "手动输入模型"),
+            isPresented: $manualModelEntry,
+            titleVisibility: .visible
+        ) {
+            TextField(AISettings.model, text: $manualModelDraft)
+            Button(String(localized: "确定")) {
+                let trimmed = manualModelDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmed.isEmpty { selectModel(trimmed) }
+            }
+            Button(String(localized: "取消"), role: .cancel) {}
+        } message: {
+            Text(String(localized: "输入模型名,直接用于接下来的对话。"))
+        }
+    }
+
+    /// 菜单选项:接口缓存 → 预设常见列表 → 空(只剩手动输入)
+    private var modelOptions: [String] {
+        let key = AIModelCatalog.key(
+            baseURL: AISettings.baseURL.absoluteString,
+            format: AISettings.format
+        )
+        let cached = modelCatalog.models(for: key)
+        if !cached.isEmpty { return cached }
+        if let provider = AIProvider.matching(baseURL: AISettings.baseURL.absoluteString),
+           !provider.models.isEmpty {
+            return provider.models
+        }
+        return []
+    }
+
+
+    /// 切换模型:写 UserDefaults(下一条消息即用新模型,makeClient 每次 send 现读)
+    /// 并刷新镜像状态驱动胶囊更新;同步设置页的 @AppStorage 会自动跟
+    private func selectModel(_ model: String) {
+        UserDefaults.standard.set(model, forKey: SettingsKeys.aiModel)
+        selectedModel = model
+        AISettingsStore.shared.refresh()
     }
 
     // MARK: - 消息列表
@@ -91,9 +187,10 @@ struct AIChatPanelView: View {
         !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
-    /// 输入区做成一个明确的输入盒:底色 + 描边,聚焦时描边转强调色,和上方消息流区分开
+    /// 输入区做成一个明确的输入盒:底色 + 描边,聚焦时描边转强调色,和上方消息流区分开。
+    /// 底部一行放模型胶囊(左)与发送/停止(右)
     private var inputBar: some View {
-        HStack(alignment: .bottom, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             TextField(String(localized: "让 AI 在这台服务器上执行操作…"), text: $draft, axis: .vertical)
                 .textFieldStyle(.plain)
                 .font(.system(size: 12.5))
@@ -101,33 +198,10 @@ struct AIChatPanelView: View {
                 .focused($inputFocused)
                 .onSubmit { sendDraft() }
                 .frame(minHeight: 22, alignment: .leading)
-            if controller.isBusy {
-                Button {
-                    controller.stop()
-                } label: {
-                    Image(systemName: "stop.fill")
-                        .font(.system(size: 9, weight: .bold))
-                        .foregroundStyle(.white)
-                        .frame(width: 22, height: 22)
-                        .background(Circle().fill(theme.accentColor))
-                }
-                .buttonStyle(.plain)
-                .help(String(localized: "停止"))
-            } else {
-                Button {
-                    sendDraft()
-                } label: {
-                    Image(systemName: "arrow.up")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(canSend ? Color.white : Color.secondary)
-                        .frame(width: 22, height: 22)
-                        .background(
-                            Circle().fill(canSend ? theme.accentColor : Color.secondary.opacity(0.18))
-                        )
-                }
-                .buttonStyle(.plain)
-                .disabled(!canSend)
-                .help(String(localized: "发送(⏎)"))
+            HStack(spacing: 6) {
+                modelSelector
+                Spacer(minLength: 0)
+                sendOrStopButton
             }
         }
         .padding(.horizontal, 10)
@@ -149,6 +223,39 @@ struct AIChatPanelView: View {
         .contentShape(Rectangle())
         .onTapGesture { inputFocused = true }
     }
+
+    @ViewBuilder
+    private var sendOrStopButton: some View {
+        if controller.isBusy {
+            Button {
+                controller.stop()
+            } label: {
+                Image(systemName: "stop.fill")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 22, height: 22)
+                    .background(Circle().fill(theme.accentColor))
+            }
+            .buttonStyle(.plain)
+            .help(String(localized: "停止"))
+        } else {
+            Button {
+                sendDraft()
+            } label: {
+                Image(systemName: "arrow.up")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(canSend ? Color.white : Color.secondary)
+                    .frame(width: 22, height: 22)
+                    .background(
+                        Circle().fill(canSend ? theme.accentColor : Color.secondary.opacity(0.18))
+                    )
+            }
+            .buttonStyle(.plain)
+            .disabled(!canSend)
+            .help(String(localized: "发送(⏎)"))
+        }
+    }
+
 
     private func sendDraft() {
         let text = draft
@@ -187,7 +294,7 @@ struct AIChatPanelView: View {
             Text("先配置 API Key")
                 .font(.callout)
                 .foregroundStyle(.secondary)
-            Text("在设置的「AI 助手」里填入 Anthropic API Key 后即可通过对话操作服务器。")
+            Text("在设置的「AI 助手」里填入 API Key(或用本地模型)后,即可通过对话操作服务器。")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
                 .multilineTextAlignment(.center)
