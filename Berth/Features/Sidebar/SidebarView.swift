@@ -335,7 +335,12 @@ struct SidebarView: View {
                                     let dialed = activate(host)
                                     if dialed { lastDial = (host.id, Date()) }
                                 },
-                                onCommandPress: { connect(host) },
+                                onCommandPress: {
+                                    // ⌘ 点按总是新拨号;也打点,否则 ⌘ 双击的第二击
+                                    //(clickCount==2 → onDoubleClick)看到刚开的会话会再开一条
+                                    connect(host)
+                                    lastDial = (host.id, Date())
+                                },
                                 onDoubleClick: {
                                     // 双击 = 再开一条同主机连接(可在设置里关)。
                                     // 只对「双击前就已有会话」的主机生效:首击刚拨的号
