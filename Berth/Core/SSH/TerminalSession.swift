@@ -1389,11 +1389,18 @@ extension TerminalSession: TerminalViewDelegate {
     nonisolated func send(source: TerminalView, data: ArraySlice<UInt8>) {
         let bytes = Array(data)
         MainActor.assumeIsolated {
+            // 断线态:按键不是输入给远端,而是「重连」。否则字节被 stdinWriter=nil 静默丢掉,
+            // 用户长时间不操作后按回车只会看到没反应。
+            if case .disconnected = state {
+                connect()
+                return
+            }
             _ = stdinWriter?.yield(.bytes(bytes))
             // 广播输入:把本 pane 的键入同步到同标签其它 pane
             SessionManager.shared.broadcastInput(from: id, bytes: bytes)
         }
     }
+
 
     /// 广播/自动化用:直接把字节写入本会话 stdin(不经过 terminalView)
     func sendRawInput(_ bytes: [UInt8]) {
