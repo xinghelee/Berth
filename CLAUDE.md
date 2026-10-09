@@ -134,8 +134,8 @@ BERTH_M1_AUTOTEST=1 BERTH_TRANSIENT_STORE=1 \
     (卡片提示「按回车也可重连」,按键不转发给远端);AI 模型列表从接入点 `GET /models` 拉取
     (`AIModelCatalog`,只打用户配置的 API 地址、用同一把 Key,结果按「格式|地址」缓存到
     UserDefaults `ai.modelCatalog`;404/405 当「不支持列表」灰提示),面板输入框底部模型胶囊可切换/
-    手填/刷新;设置页「获取模型列表」行,模型不在列表时落「自定义…」。附带 `scripts/package_dmg.sh`
-    (贡献者的本地打包脚本,非正式发布流程)。验收:mock `/v1/models` 网关 + docker sshd 真机点过
+    手填/刷新;设置页「获取模型列表」行,模型不在列表时落「自定义…」。验收:mock `/v1/models` 网关 +
+    docker sshd 真机点过。PR 夹带的 `scripts/package_dmg.sh` 已删(非正式发布流程,无 archive/export)
 - [~] M6 — iOS 版(`BerthiOS` target,`xcodegen generate` 后用
   `xcodebuildmcp simulator build-and-run --project-path Berth.xcodeproj --scheme BerthiOS --simulator-name "iPhone 17 Pro Max"`):
   - [x] 共享核心:Models/Storage/Parsing/SSH 层(HostSpec、KnownHosts、ProxyConnector、PortForwardService、KeyStore、TerminalTheme 已跨平台化,iOS 上 `typealias NSColor = UIColor`)
