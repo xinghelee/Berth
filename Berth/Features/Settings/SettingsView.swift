@@ -336,14 +336,15 @@ struct SettingsView: View {
                 aiKeySaved = (try? KeychainStore.read(account: AISettings.apiKeyAccount)) ?? ""
                 aiKeyDraft = aiKeySaved
                 aiProviderID = AIProvider.matching(baseURL: aiBaseURL)?.id ?? AIProvider.customID
-                // 已存的模型不在该供应商的常见列表里 → 停在「自定义…」,别把用户填的值顶掉
-                let known = AIProvider.find(aiProviderID)?.models ?? []
-                aiModelIsCustom = !known.isEmpty && !known.contains(aiModel)
+                syncCustomModelFlag()
                 // 已拉过该接入点的模型列表则静默续用(未拉过不打接口,等用户点按钮)
                 if AISettings.isConfigured, let key = modelKey, modelCatalog.hasCache(for: key) {
                     fetchModelList(force: false)
                 }
             }
+            // 接口列表拉到/刷新后重新判定:当前模型不在列表里就停在「自定义…」,
+            // 否则 Picker 没有匹配 tag 会显示成空白
+            .onChange(of: fetchedModels) { _, _ in syncCustomModelFlag() }
             Section("自定义引导") {
                 TextField(
                     "全局引导",
@@ -574,6 +575,14 @@ struct SettingsView: View {
                     .foregroundStyle(modelCatalog.errorIsNotice ? Color.secondary : Color.orange)
             }
         }
+    }
+
+    /// 已存的模型不在可选列表(接口拉到的优先,否则供应商常见列表)里 → 停在「自定义…」
+    /// 并显示输入框,别把用户填的值顶掉
+    private func syncCustomModelFlag() {
+        let preset = AIProvider.find(aiProviderID)?.models ?? []
+        let options = fetchedModels.isEmpty ? preset : fetchedModels
+        aiModelIsCustom = !options.isEmpty && !options.contains(aiModel)
     }
 
     /// 选中供应商预设:填好地址、接口格式与常见模型(之后可手改)
