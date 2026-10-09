@@ -9257,6 +9257,17 @@
         }
       }
     },
+    "双击主机行再开一条同主机连接": {
+      "localizationState": "translated",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Double-click a host row to open another connection to it"
+          }
+        }
+      }
+    },
     "按回车也可重连": {
       "localizations": {
         "en": {

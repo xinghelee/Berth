@@ -57,4 +57,6 @@ enum SettingsKeys {
     static let dashboardSort = "dashboard.sort"
     /// 仪表盘卡片显示比例(1 / 1.25 / 1.5),适合高分辨率大屏常驻查看
     static let dashboardCardScale = "dashboard.cardScale"
+    /// 侧栏主机行双击 = 再开一条同主机连接(默认开;关掉则双击等同单击)
+    static let doubleClickNewConnection = "sidebar.doubleClickNewConnection"
 }
