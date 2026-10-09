@@ -9256,6 +9256,16 @@
           }
         }
       }
+    },
+    "按回车也可重连": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Press Return to reconnect"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
