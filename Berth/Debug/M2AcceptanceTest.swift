@@ -727,7 +727,24 @@ enum M2AcceptanceTest {
         // issue #34:md 相对引用的资源随主文件镜像下载
         let assets = await verifyReferencedAssets(browser: browser, session: session, log: log)
 
-        log(synced && assets ? "SFTPEDIT_OK downloaded=\(downloaded) synced=\(synced) assets=\(assets)" : "SFTPEDIT_FAIL synced=\(synced) assets=\(assets)")
+        // issue #46:未指定编辑器时各类文件名解析到哪个程序(真机 LaunchServices 结果,只记录供人工核对;
+        // 硬断言只有「可执行/网页类不会落到纯文本编辑器之外」)
+        UserDefaults.standard.set("", forKey: SettingsKeys.externalEditorPath)
+        let plainTextEditor = SFTPBrowser.systemEditorApplication(for: URL(fileURLWithPath: "/x/plain.txt"))
+        var resolved: [String] = []
+        var guarded = true
+        for name in ["app.yaml", "config.json", "README.md", "notes.terminal", "link.webloc", "run.command", "run.sh",
+                     "profile.mobileconfig", "index.html", "page.xhtml", "logo.svg", "pkg.dmg", "noext"] {
+            let app = SFTPBrowser.systemEditorApplication(for: URL(fileURLWithPath: "/x/" + name))
+            resolved.append("\(name)→\(app.lastPathComponent)")
+            let mustFallBack = !["app.yaml", "config.json", "README.md"].contains(name)
+            if mustFallBack, app != plainTextEditor { guarded = false }
+        }
+        let editorLine = "editors: " + resolved.joined(separator: " ")
+
+        let ok = synced && assets && guarded
+        log((ok ? "SFTPEDIT_OK downloaded=\(downloaded) synced=\(synced) assets=\(assets) guarded=\(guarded)"
+                : "SFTPEDIT_FAIL synced=\(synced) assets=\(assets) guarded=\(guarded)") + "\n" + editorLine)
         browser.close()
     }
 

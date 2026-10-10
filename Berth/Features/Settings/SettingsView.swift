@@ -211,7 +211,7 @@ struct SettingsView: View {
                     }
                     Button("选择…") { chooseExternalEditor() }
                 }
-                Text("SFTP 面板双击远端文件时,下载到本地临时目录后用来打开的应用。留空则使用 macOS 为该文件类型指定的默认应用。")
+                Text("SFTP 面板双击远端文件时,下载到本地临时目录后用来打开的应用。留空则 .yaml/.json/.md 等纯文本类文件交给 macOS 为该类型指定的默认应用(仅限能编辑纯文本的程序,浏览器除外);脚本、网页及其他类型固定用系统纯文本编辑器打开,远端文件名不会触发执行。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

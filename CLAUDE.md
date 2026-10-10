@@ -69,7 +69,7 @@ BERTH_M1_AUTOTEST=1 BERTH_TRANSIENT_STORE=1 \
 - 安全边界(远端服务器视为敌对):主机密钥首次连接必须核对指纹(Mac/iOS 一致),已知主机换
   密钥类型按「变更」级警告,证书形式主机密钥一律拒绝;认证失败不自动重连、仪表盘不重试;
   AI 自动执行只放行 `AICommandPolicy` 白名单里的只读命令,命令输出落盘/送模型前过
-  `SecretRedactor`;远端命名的文件不交给 LaunchServices 默认程序(本地编辑固定用文本编辑器),
+  `SecretRedactor`;远端命名的文件不无条件交给 LaunchServices 默认程序(本地编辑:纯文本类型且默认程序是文本编辑器才用默认应用,否则纯文本编辑器,`RemoteEditOpenPolicy`),
   `LSFileQuarantineEnabled` 已开;终端不回应 OSC 52 读剪贴板,链接只放行 http/https/mailto(+Mac file);
   私钥门禁(Touch ID)按「本次运行 + 主机 + 认证材料」记一次(`KeyUseGrants`,issue #29):存活会话
   期间不失效,断开后空闲 15 分钟失效,换密钥/跳板机重验,退出即清;仪表盘的后台授权独立
@@ -136,6 +136,10 @@ BERTH_M1_AUTOTEST=1 BERTH_TRANSIENT_STORE=1 \
     UserDefaults `ai.modelCatalog`;404/405 当「不支持列表」灰提示),面板输入框底部模型胶囊可切换/
     手填/刷新;设置页「获取模型列表」行,模型不在列表时落「自定义…」。验收:mock `/v1/models` 网关 +
     docker sshd 真机点过。PR 夹带的 `scripts/package_dmg.sh` 已删(非正式发布流程,无 archive/export)
+  - [x] issue #46(realDGD):远程编辑未指定编辑器时,.yaml/.json/.md 等纯文本类型改按 macOS 默认应用打开,
+    但默认程序必须自己声明能开纯文本且不注册 http/https scheme(`RemoteEditOpenPolicy` 两道门);脚本/网页/
+    图片/非文本类型与 Terminal、ProfileHelper、Surge 这类导入执行型处理程序仍退回系统纯文本编辑器。
+    设置页文案同步改正;单测覆盖两道门,`BERTH_SFTPEDIT_AUTOTEST` 日志里打印样例文件名的实际解析结果
 - [~] M6 — iOS 版(`BerthiOS` target,`xcodegen generate` 后用
   `xcodebuildmcp simulator build-and-run --project-path Berth.xcodeproj --scheme BerthiOS --simulator-name "iPhone 17 Pro Max"`):
   - [x] 共享核心:Models/Storage/Parsing/SSH 层(HostSpec、KnownHosts、ProxyConnector、PortForwardService、KeyStore、TerminalTheme 已跨平台化,iOS 上 `typealias NSColor = UIColor`)

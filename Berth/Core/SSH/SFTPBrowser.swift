@@ -858,8 +858,8 @@ final class SFTPBrowser {
 
     // MARK: - 服务端文件编辑(下载 → 本地编辑器 → 保存自动回传)
 
-    /// 用设置里指定的编辑器打开本地临时副本;未指定(或指定的 app 已不存在)则退回
-    /// LaunchServices 默认应用,与之前行为一致。
+    /// 用设置里指定的编辑器打开本地临时副本;未指定(或指定的 app 已不存在)则按
+    /// `systemEditorApplication(for:)` 的规则挑程序。
     private static func openWithPreferredEditor(_ url: URL, workspace: URL? = nil) {
         #if canImport(AppKit)
         let customPath = UserDefaults.standard.string(forKey: SettingsKeys.externalEditorPath) ?? ""
@@ -875,14 +875,32 @@ final class SFTPBrowser {
                 return
             }
         }
-        // 文件名(含扩展名)由服务器决定,不能交给 LaunchServices 按扩展名挑默认程序:
-        // notes.terminal / .webloc / .mobileconfig 会被直接「执行」而不是编辑。
-        // 「本地编辑」的语义就是当文本改,固定用系统默认的纯文本编辑器打开。
-        let textEditor = NSWorkspace.shared.urlForApplication(toOpen: UTType.plainText)
-            ?? URL(fileURLWithPath: "/System/Applications/TextEdit.app")
-        NSWorkspace.shared.open([url], withApplicationAt: textEditor, configuration: NSWorkspace.OpenConfiguration())
+        NSWorkspace.shared.open(
+            [url], withApplicationAt: systemEditorApplication(for: url), configuration: NSWorkspace.OpenConfiguration()
+        )
         #endif
     }
+
+    #if canImport(AppKit)
+    /// 未指定编辑器时用哪个程序。文件名(含扩展名)由服务器决定,不能无条件交给 LaunchServices
+    /// 按扩展名挑默认程序:notes.terminal / .webloc / .command / .mobileconfig 会被直接「执行」而不是编辑。
+    /// issue #46:.yaml/.json/.md 这类纯文本类型、且 macOS 为它指定的默认程序本身是文本编辑器
+    /// (声明能开纯文本、不是浏览器)时,尊重用户的默认应用;其余一律系统纯文本编辑器。
+    /// 两道门的规则见 `RemoteEditOpenPolicy`。
+    static func systemEditorApplication(for url: URL) -> URL {
+        let plainTextEditor = NSWorkspace.shared.urlForApplication(toOpen: UTType.plainText)
+            ?? URL(fileURLWithPath: "/System/Applications/TextEdit.app")
+        guard let type = RemoteEditOpenPolicy.textType(forFilenameExtension: url.pathExtension),
+              let handler = NSWorkspace.shared.urlForApplication(toOpen: type) else {
+            return plainTextEditor
+        }
+        let urlTypes = (Bundle(url: handler)?.infoDictionary?["CFBundleURLTypes"] as? [[String: Any]]) ?? []
+        let schemes = urlTypes.flatMap { ($0["CFBundleURLSchemes"] as? [String]) ?? [] }
+        let plainTextApps = NSWorkspace.shared.urlsForApplications(toOpen: UTType.plainText)
+        let trusted = RemoteEditOpenPolicy.isTrustedEditor(handler, plainTextApps: plainTextApps, urlSchemes: schemes)
+        return trusted ? handler : plainTextEditor
+    }
+    #endif
 
     /// 编辑器的 Info.plist 是否把文件夹声明为可打开的文档类型(VS Code、Cursor、Zed 等都声明)
     private static func editorAcceptsFolders(at appURL: URL) -> Bool {
