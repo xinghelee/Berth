@@ -1058,12 +1058,12 @@
         }
       }
     },
-    "SFTP 面板双击远端文件时,下载到本地临时目录后用来打开的应用。留空则使用 macOS 为该文件类型指定的默认应用。": {
+    "SFTP 面板双击远端文件时,下载到本地临时目录后用来打开的应用。留空则 .yaml/.json/.md 等纯文本类文件交给 macOS 为该类型指定的默认应用(仅限能编辑纯文本的程序,浏览器除外);脚本、网页及其他类型固定用系统纯文本编辑器打开,远端文件名不会触发执行。": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The app used to open a remote file after the SFTP panel downloads it to a local temp folder on double-click. Leave empty to use the default app macOS assigns to that file type."
+            "value": "The app used to open a remote file after the SFTP panel downloads it to a local temp folder on double-click. Leave empty to open plain-text types such as .yaml/.json/.md with the default app macOS assigns to that type (only when it is a text-editing app, never a browser); scripts, web pages and everything else always open in the system plain-text editor, so a remote file name can never trigger execution."
           }
         }
       }
