@@ -128,6 +128,10 @@ BERTH_M1_AUTOTEST=1 BERTH_TRANSIENT_STORE=1 \
     临时本地标签标题跟随 shell 当前目录(`proc_pidinfo` 查 cwd —— 系统 zsh 不对非 Apple_Terminal 发 OSC 7),
     ⌘T/分屏继承当前目录;设置「标签字号」11–18pt;切标签后终端焦点修复(视图挂回窗口才
     makeFirstResponder,`BerthTerminalView.requestFocus`)。`BERTH_LOCAL_AUTOTEST` 覆盖
+  - [x] issue #49:应用图标改为 Icon Composer 的 `Berth/AppIcon.icon`(背景渐变 + 柱体/缆绳两层 SVG,
+    矢量源稿 `design/app-icon.svg`),macOS 26+ 拿到 Liquid Glass 边缘高光与深色/着色外观;
+    macOS 15 的兜底 icns 与 Assets.car 位图由 actool 从 `.icon` 生成,旧 appiconset 已删。预览:
+    `"/Applications/Xcode.app/Contents/Applications/Icon Composer.app/Contents/Executables/ictool" Berth/AppIcon.icon --export-image --output-file x.png --platform macOS --rendition Default --width 512 --height 512 --scale 1`
   - [ ] 本地回显(predictive echo)完整版 —— 触及 SwiftTerm 渲染,需交互测延迟,暂缓
   - [x] 外部 PR #43/#44/#45(wsldl123292,2026-10-09 合入):侧栏主机行双击再开一条同主机连接
     (设置「标签页」可关;首击已拨号则双击第二击不补开,⌘ 点按同样打点);断线态任意按键即重连
