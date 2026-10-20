@@ -26,7 +26,8 @@ packages:
   SwiftTerm:
     url: https://github.com/migueldeicaza/SwiftTerm.git
     # 1.12+ 引入 Metal GPU 渲染后端(需 Xcode Metal Toolchain,已安装)。
-    from: 1.14.0
+    # upToNextMinor:1.99.0 删了 getTerminal,from 会在全新解析时拉到它导致编译失败
+    minorVersion: 1.14.0
 
 targets:
   Berth:
