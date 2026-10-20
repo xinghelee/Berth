@@ -1795,6 +1795,16 @@
         }
       }
     },
+    "与服务器的连接已失效:长时间没有任何响应。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The connection to the server is dead: no response for a long time. "
+          }
+        }
+      }
+    },
     "中键粘贴": {
       "localizations": {
         "en": {
@@ -7483,6 +7493,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Edit Snippet"
+          }
+        }
+      }
+    },
+    "网络中途切换、NAT/防火墙会话过期或电脑睡眠都可能造成这种半开连接 —— 服务器没来得及通知本机,链路就断了。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A network switch, an expired NAT/firewall session or the Mac going to sleep can leave a half-open connection like this — the link dropped before the server could tell this Mac."
           }
         }
       }

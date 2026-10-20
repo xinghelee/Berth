@@ -44,6 +44,8 @@ final class TerminalSession: Identifiable {
         case notConnected
         case localShellFailed(String)
         case localShellExited(Int32?, String)
+        /// 活性探测连续无响应:TCP 看着还在,但远端再也不回任何东西(半开连接)
+        case unresponsive
 
         var errorDescription: String? {
             switch self {
@@ -54,6 +56,9 @@ final class TerminalSession: Identifiable {
             case .localShellExited(let status, let path):
                 let code = status.map { String($0) } ?? "?"
                 return String(localized: "本地 Shell 启动后立即退出(退出码 \(code)):\(path)。请检查 shell 路径与其启动配置;可在「设置 → 终端」修改 Shell 路径。")
+            case .unresponsive:
+                return String(localized: "与服务器的连接已失效:长时间没有任何响应。")
+                    + String(localized: "网络中途切换、NAT/防火墙会话过期或电脑睡眠都可能造成这种半开连接 —— 服务器没来得及通知本机,链路就断了。")
             }
         }
     }
@@ -124,6 +129,14 @@ final class TerminalSession: Identifiable {
     /// 后台长任务通知:上次输出/上次通知时间
     @ObservationIgnored private var lastOutputAt: Date?
     @ObservationIgnored private var lastNotifiedAt: Date?
+    /// 活性探测的武装/取用判定,见 LivenessGate。每次建立新通道都换一枚干净的
+    @ObservationIgnored private var livenessGate = LivenessGate()
+    /// 探测循环跑在未结构化 Task 上(不随 sessionTask 自动取消),收尾时显式 cancel
+    @ObservationIgnored private var livenessTask: Task<Void, Never>?
+    /// 会话被"我们自己判死"的死因(活性探测无回音 / stdin 写入报错)。
+    /// 非空时不能交给 SessionTerminationClassifier:它见 CancellationError 就判"用户主动断开",
+    /// 那样断线横幅和自动重连都不会启动 —— 正是本次要修的哑火
+    @ObservationIgnored private var forcedTermination: (any Error)?
     /// 触发器匹配用的未完成行缓冲(按 \n 切分,剥离转义)
     @ObservationIgnored private var triggerLineBuffer = ""
     /// 本地 Shell(spec.isLocal)的 PTY 宿主。本地会话不使用任何 SSH 字段。
@@ -209,15 +222,26 @@ final class TerminalSession: Identifiable {
                 caughtError = error
             }
 
-            let disposition = SessionTerminationClassifier.classify(
-                error: caughtError,
-                everConnected: everConnected,
-                userInitiated: userInitiatedDisconnect,
-                isLocal: spec.isLocal,
-                hostname: spec.hostname,
-                port: spec.port,
-                authMethod: spec.authMethod
-            )
+            let disposition: SessionTerminationDisposition
+            if let forced = forcedTermination {
+                // 探测/写入已经判定这条连接死了,取消只是走收尾的手段,不是用户主动断开
+                disposition = .transportFailure(message: SSHErrorMapper.friendlyMessage(
+                    for: forced,
+                    hostname: spec.hostname,
+                    port: spec.port,
+                    authMethod: spec.authMethod
+                ))
+            } else {
+                disposition = SessionTerminationClassifier.classify(
+                    error: caughtError,
+                    everConnected: everConnected,
+                    userInitiated: userInitiatedDisconnect,
+                    isLocal: spec.isLocal,
+                    hostname: spec.hostname,
+                    port: spec.port,
+                    authMethod: spec.authMethod
+                )
+            }
 
             if let error = caughtError {
                 let category = SessionTerminationClassifier.categorize(error: error)
@@ -251,6 +275,10 @@ final class TerminalSession: Identifiable {
             stopLogging()
             stdinWriter?.finish()
             stdinWriter = nil
+            livenessTask?.cancel()
+            livenessTask = nil
+            livenessGate = LivenessGate()
+            forcedTermination = nil
             let releasing = self.connection
             self.client = nil
             self.connection = nil
@@ -315,6 +343,121 @@ final class TerminalSession: Identifiable {
             self.isAutoReconnectScheduled = false
             self.connect()
         }
+    }
+
+    // MARK: - 活性探测(半开连接判定)
+    //
+    // 被动检测只会等 inbound 结束,而 NAT 会话过期 / 电脑睡眠这类断法不会有 FIN/RST 回来,
+    // 于是 state 永远停在 .connected:按键重连的闸门(:disconnected 才触发)和断线横幅
+    // (靠 state 变更事件)一起哑火,键入写进半死的 TCP 连个错误都没有。这里补上主动判定。
+
+    /// 静默够久之后的键入:开始等回显(判定细节见 LivenessGate)
+    private func armEchoWatchIfNeeded() {
+        guard !spec.isLocal, case .connected = state else { return }
+        livenessGate.noteKeystroke(at: Date(), outputAt: lastOutputAt)
+    }
+
+    /// 探测循环每轮来取一次:现在该不该探
+    private func takeProbeDemand() -> Bool {
+        guard case .connected = state, !spec.isLocal else { return false }
+        return livenessGate.takeProbeDemand(outputAt: lastOutputAt, at: Date())
+    }
+
+    private func livenessLabel() -> String { "\(spec.hostname):\(spec.port)" }
+
+    /// 确认还活着(探测有回音):下一次怀疑要再攒够一整个静默期
+    private func noteLivenessOK() {
+        livenessGate.markAlive(at: Date())
+    }
+
+    private func noteLivenessFailure() {
+        DebugLog.append("liveness probe got no reply host=\(livenessLabel())")
+    }
+
+    /// 判定这条连接已死:记下死因,再取消会话任务走既有收尾(断线横幅 + 自动重连)
+    private func forceTerminate(with error: any Error) {
+        guard forcedTermination == nil else { return }
+        // 用户主动断开/关闭标签时,拆通道的过程里 stdin 写入照样会报错。
+        // 那种报错不能顶掉 userInitiated 归类,否则安静收尾的会话会凭空冒出断线横幅
+        guard !userInitiatedDisconnect, case .connected = state else { return }
+        DebugLog.append("session force-terminated host=\(livenessLabel()) cause=\(String(describing: error))")
+        forcedTermination = error
+        // 只 cancel 退不出半开连接:读写循环挂在等远端回包上,那个 await 既不完成也不接受
+        // 取消。先关掉底层连接,让挂着的 future 报错,runSession 才能走到既有收尾。
+        // 借用同一连接的其它 pane 也会一起收到错误 —— 连接本就失效,集体抛错比各自再探一次快。
+        sessionTask?.cancel()
+        connection?.forceCloseNow()
+    }
+
+    /// 起探测循环(仅远端会话)。它是独立 Task,不随 sessionTask 取消,收尾时由 connect() 显式 cancel
+    private func startLivenessLoop(client: SSHClient) {
+        guard !spec.isLocal, livenessTask == nil else { return }
+        livenessTask = Task { [weak self, client] in
+            await self?.runLivenessLoop(client: client)
+        }
+    }
+
+    /// 系统唤醒后网卡未必立刻好,先缓一跳再探 —— 当场探会把好连接误判成死的
+    func probeLivenessAfterWake() {
+        guard !spec.isLocal else { return }
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(LivenessTiming.wakeGrace))
+            guard let self, case .connected = self.state else { return }
+            self.livenessGate.armForWake(at: Date())
+        }
+    }
+
+    /// 与读写循环并行的探测循环:平时只是睡着,被武装了才开一条 exec 通道问服务器还在不在
+    private nonisolated func runLivenessLoop(client: SSHClient) async {
+        while !Task.isCancelled {
+            do {
+                try await Task.sleep(for: .seconds(LivenessTiming.poll))
+            } catch {
+                return  // 会话正在结束
+            }
+            guard await self.takeProbeDemand() else { continue }
+            let label = await self.livenessLabel()
+            var gotReply = false
+            for attempt in 0 ..< LivenessTiming.probeAttempts {
+                if attempt > 0 { try? await Task.sleep(for: .seconds(LivenessTiming.probeRetryGap)) }
+                if await self.probeOnce(client: client, label: label) == .responded {
+                    gotReply = true
+                    break
+                }
+            }
+            guard gotReply else {
+                await self.noteLivenessFailure()
+                await self.forceTerminate(with: SessionError.unresponsive)
+                return
+            }
+            await self.noteLivenessOK()
+        }
+    }
+
+    /// 一次探测:开 exec 通道跑 `true`,输出不进终端,用户屏幕不受影响。
+    /// 只对"完全没回音"负责 —— 报错(堡垒机禁用 exec、通道开不了)说明 SSH 层还在说话,
+    /// 算有回音,真断的链路交给被动路径去判,免得在这里误杀好连接。
+    private nonisolated func probeOnce(client: SSHClient, label: String) async -> LivenessProbe {
+        let box = LivenessReplyBox()
+        Task { [box, client] in
+            let outcome: LivenessProbe
+            do {
+                _ = try await client.executeCommand("true", maxResponseSize: 1024, mergeStreams: true)
+                outcome = .responded
+            } catch {
+                DebugLog.append("liveness probe reply host=\(label) error=\(String(describing: error))")
+                outcome = .responded
+            }
+            box.set(outcome)
+        }
+        // 半开连接上这条 exec 可能永远挂着,所以超时后单方面下结论、不等它收尾:
+        // 拿 task group 等它就得 await 全部子任务,反而把整个会话一起挂住
+        let deadline = Date().addingTimeInterval(LivenessTiming.probeTimeout)
+        while Date() < deadline {
+            if let outcome = box.get() { return outcome }
+            try? await Task.sleep(for: .milliseconds(100))
+        }
+        return .noReply
     }
 
     // MARK: - 主机密钥决策(known_hosts)
@@ -1086,6 +1229,9 @@ final class TerminalSession: Identifiable {
                 self.connectedAt = Date()
                 self.everConnected = true
                 self.reconnectAttempt = 0
+                // 新通道一律从"活着"起算:否则刚连上就被上一轮的静默记录误判成可疑
+                self.livenessGate.markAlive(at: Date())
+                self.startLivenessLoop(client: client)
                 self.focusTerminal()
                 // 端口转发绑在连接层:仅拥有者建立,借用会话复用同一连接不重复绑定
                 if !self.isBorrower {
@@ -1096,13 +1242,21 @@ final class TerminalSession: Identifiable {
 
             // 单一消费者串行写入,保证按键与 resize 的顺序
             let stdinPump = Task {
-                for await event in stream {
-                    switch event {
-                    case .bytes(let bytes):
-                        try await outbound.write(ByteBuffer(bytes: bytes))
-                    case .resize(let cols, let rows):
-                        try await outbound.changeSize(cols: cols, rows: rows, pixelWidth: 0, pixelHeight: 0)
+                do {
+                    for await event in stream {
+                        switch event {
+                        case .bytes(let bytes):
+                            try await outbound.write(ByteBuffer(bytes: bytes))
+                        case .resize(let cols, let rows):
+                            try await outbound.changeSize(cols: cols, rows: rows, pixelWidth: 0, pixelHeight: 0)
+                        }
                     }
+                } catch {
+                    // 收尾期 stdinPump 被 cancel 时,在途的写也会抛,那不是写失败
+                    guard !Task.isCancelled else { return }
+                    // 写不进去 = 通道已经死了。以前这条 Task 没人 await,错误被丢掉、
+                    // 后续键入在无消费者的流里无声堆积,用户只看到"按什么都没反应"
+                    await MainActor.run { self.forceTerminate(with: error) }
                 }
             }
             defer { stdinPump.cancel() }
@@ -1135,6 +1289,8 @@ final class TerminalSession: Identifiable {
             }
             defer { loginActions.cancel() }
 
+            // 读循环:通道关闭/网络异常都会在这里抛错或返回,是断线的被动来源。
+            // 半开连接(没有 FIN/RST)抛不出来,由 runLivenessLoop 主动判定后取消本任务
             for try await chunk in inbound {
                 let buffer: ByteBuffer
                 switch chunk {
@@ -1396,6 +1552,9 @@ extension TerminalSession: TerminalViewDelegate {
                 return
             }
             _ = stdinWriter?.yield(.bytes(bytes))
+            // 半开连接上这几行等于石沉大海:静默够久之后的键入先记下,
+            // 短时间没有回显就去探一次连接(见 runLivenessLoop)
+            armEchoWatchIfNeeded()
             // 广播输入:把本 pane 的键入同步到同标签其它 pane
             SessionManager.shared.broadcastInput(from: id, bytes: bytes)
         }
@@ -1500,5 +1659,29 @@ private final class LockedDataBuffer: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         return data
+    }
+}
+
+private enum LivenessProbe: Sendable {
+    case responded
+    case noReply
+}
+
+/// 探测结果信箱。executeCommand 在半开连接上可能永不返回,读取方超时后自己下结论、不等它,
+/// 否则会话就被这条挂着的探测拖住
+private final class LivenessReplyBox: @unchecked Sendable {
+    private let lock = NSLock()
+    private var outcome: LivenessProbe?
+
+    func set(_ outcome: LivenessProbe) {
+        lock.lock()
+        defer { lock.unlock() }
+        if self.outcome == nil { self.outcome = outcome }
+    }
+
+    func get() -> LivenessProbe? {
+        lock.lock()
+        defer { lock.unlock() }
+        return outcome
     }
 }

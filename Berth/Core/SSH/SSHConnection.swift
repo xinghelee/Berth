@@ -27,6 +27,23 @@ final class SSHConnection {
 
     func retain() { refCount += 1 }
 
+    /// 已判定对端死亡时用它:不等引用归零,直接关掉底层连接和跳板。
+    ///
+    /// 半开连接上光 `sessionTask.cancel()` 退不出来 —— 读写循环正挂在等远端回包上,
+    /// 而远端永远不会回,那个 await 既不完成也不接受取消。关掉 channel 能让所有挂着的
+    /// future 立刻报错,循环才走得到既有收尾(断线横幅 + 自动重连)。
+    /// 共享这条连接的分屏会话会一起收到错误:链路本来就已失效,让它们尽快抛比各自再探一次快。
+    func forceCloseNow() {
+        guard !closed else { return }
+        closed = true
+        let client = self.client
+        let jumps = self.jumpClients
+        Task.detached {
+            try? await client.close()
+            for jump in jumps.reversed() { try? await jump.close() }
+        }
+    }
+
     /// 释放一个引用;归零即真正关闭底层连接。幂等。
     func release() {
         guard !closed else { return }

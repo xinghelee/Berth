@@ -11,6 +11,22 @@ import UniformTypeIdentifiers
 final class SessionManager {
     static let shared = SessionManager()
 
+    @ObservationIgnored private var wakeObserver: NSObjectProtocol?
+
+    init() {
+        // 合盖睡眠是半开连接的头号成因:服务器 ClientAliveInterval 或 NAT 状态早把链路清了,
+        // 本机这边 TCP 却还以为连着。唤醒后让每个在连的会话各探一次,
+        // 免得用户回来敲键只看到"毫无反应"(延迟与判定细节见 TerminalSession.runLivenessLoop)
+        wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                guard let self else { return }
+                for session in self.sessions { session.probeLivenessAfterWake() }
+            }
+        }
+    }
+
     /// 所有活跃会话(跨全部标签的池,供 liveState / 查找 / 连接复用)
     private(set) var sessions: [TerminalSession] = []
     /// 标签页(每个是一棵分屏树)

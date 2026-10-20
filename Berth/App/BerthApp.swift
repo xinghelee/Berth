@@ -56,6 +56,7 @@ struct BerthApp: App {
                     await M2AcceptanceTest.runAICommandIfRequested(container: container)
                     await M2AcceptanceTest.runAIChatIfRequested(container: container)
                     await LocalShellAcceptanceTest.runIfRequested()
+                    await LivenessAcceptanceTest.runIfRequested()
                     await DashboardAcceptanceTest.runIfRequested(container: container)
                     // 并发跑:不挡在启动链前头,否则截不到会话恢复后的画面
                     Task { await WindowSnapshot.runIfRequested() }
