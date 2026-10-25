@@ -1,0 +1,11 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="pillar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f2f5fa"/>
+      <stop offset="1" stop-color="#c3cfe2"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(512 512) scale(1.243) translate(-512 -512)">
+    <path d="M 356 764 V 448 A 156 156 0 0 1 668 448 V 764 Z" fill="url(#pillar)"/>
+  </g>
+</svg>
