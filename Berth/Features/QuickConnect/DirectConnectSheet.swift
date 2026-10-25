@@ -33,6 +33,8 @@ struct DirectConnectSheet: View {
                         Text("私钥文件").tag(AuthMethodKind.privateKeyFile)
                     }
                     .pickerStyle(.segmented)
+                    // 分段控件放不下标签时会换行并向左溢出(英文下首段被截,issue #50);Section 标题已说明
+                    .labelsHidden()
 
                     if authMethod == .password {
                         SecureField("密码", text: $password)
