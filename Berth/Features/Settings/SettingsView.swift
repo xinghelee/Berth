@@ -27,6 +27,7 @@ struct SettingsView: View {
     @AppStorage(SettingsKeys.tabFontSize) private var tabFontSize: Double = 12
     @AppStorage(SettingsKeys.terminalFontFamily) private var fontFamily = ""
     private let monoFamilies = TerminalFontPrefs.availableMonospacedFamilies()
+    @AppStorage(SettingsKeys.scrollbackLines) private var scrollbackLines = ScrollbackPrefs.defaultLines
     @AppStorage(SettingsKeys.cursorShape) private var cursorShape = CursorPrefs.shapeBlock
     @AppStorage(SettingsKeys.cursorBlink) private var cursorBlink = true
     @AppStorage(SettingsKeys.copyOnSelect) private var copyOnSelect = false
@@ -187,6 +188,14 @@ struct SettingsView: View {
                 }
                 .pickerStyle(.segmented)
                 Toggle("光标闪烁", isOn: $cursorBlink)
+                Picker("回滚缓冲", selection: $scrollbackLines) {
+                    ForEach(ScrollbackPrefs.choices, id: \.self) { lines in
+                        Text("\(lines.formatted()) 行").tag(lines)
+                    }
+                }
+                .onChange(of: scrollbackLines) { _, _ in ScrollbackPrefs.growAllSessions() }
+                Text("终端可往上翻看的历史行数,SSH 与本地 Shell 通用。调大立即作用于已开会话,调小对新会话生效。")
+                    .font(.caption).foregroundStyle(.secondary)
                 Toggle("选中即复制到剪贴板", isOn: $copyOnSelect)
                 Toggle("中键粘贴", isOn: $middleClickPaste)
                 Text("⌘点击可打开终端里的链接;双击选词、三击选行。")

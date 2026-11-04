@@ -90,6 +90,15 @@ enum WindowSnapshot {
         }
         try? await Task.sleep(for: .seconds(delay))
         capture(to: path)
+        // issue #52:回滚缓冲里最老的一行 + 当前上限写到 <path>.top.txt,验 seq 灌满后保留了多少
+        if env["BERTH_SNAPSHOT_DUMP_TOP"] == "1", let terminal = SessionManager.shared.selected?.terminalView.getTerminal() {
+            // 修剪过后 scroll-invariant 行号的下界会上移到 totalLinesTrimmed
+            var lower = 0
+            while terminal.getScrollInvariantLine(row: lower) == nil, lower < 200_000 { lower += 1 }
+            let top = terminal.getScrollInvariantLine(row: lower)?.translateToString(trimRight: true) ?? ""
+            let text = "scrollback=\(terminal.options.scrollback) top=\(top)\n"
+            try? text.write(toFile: (path as NSString).deletingPathExtension + ".top.txt", atomically: true, encoding: .utf8)
+        }
         // issue #14:标题栏布局要连着看侧栏收/放两态 —— 再截 <path>.collapsed.png
         // 和 <path>.reexpanded.png,验证收起后标签条还在、展开后能复原
         if env["BERTH_SNAPSHOT_TOGGLE_SIDEBAR"] == "1" {

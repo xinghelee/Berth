@@ -9436,6 +9436,36 @@
           }
         }
       }
+    },
+    "回滚缓冲": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scrollback"
+          }
+        }
+      }
+    },
+    "%@ 行": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ lines"
+          }
+        }
+      }
+    },
+    "终端可往上翻看的历史行数,SSH 与本地 Shell 通用。调大立即作用于已开会话,调小对新会话生效。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How many lines of history you can scroll back through, for both SSH and local shell sessions. Increasing it applies to open sessions right away; decreasing it applies to new sessions."
+          }
+        }
+      }
     }
   },
   "version": "1.0"
