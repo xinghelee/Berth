@@ -114,15 +114,13 @@ struct HostEditorView: View {
                 }
 
                 Section("认证") {
-                    Picker("认证方式", selection: $authMethod) {
-                        Text("密码").tag(AuthMethodKind.password)
-                        Text("私钥文件").tag(AuthMethodKind.privateKeyFile)
-                        Text("密钥库").tag(AuthMethodKind.storedKey)
-                        Text("Agent").tag(AuthMethodKind.agent)
-                    }
-                    .pickerStyle(.segmented)
-                    // 分段控件放不下标签时会换行并向左溢出(英文下首段被截,issue #50);Section 标题已说明
-                    .labelsHidden()
+                    // 撑满整行等宽分段(issue #51);不带标签,Section 标题已说明(issue #50)
+                    FillSegmentedPicker(selection: $authMethod, options: [
+                        (AuthMethodKind.password, String(localized: "密码")),
+                        (AuthMethodKind.privateKeyFile, String(localized: "私钥文件")),
+                        (AuthMethodKind.storedKey, String(localized: "密钥库")),
+                        (AuthMethodKind.agent, String(localized: "Agent")),
+                    ])
 
                     switch authMethod {
                     case .password:
