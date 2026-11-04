@@ -116,6 +116,7 @@ targets:
       - path: Berth/Core/Services/KeyStore.swift
       - path: Berth/Core/Services/HostReachability.swift
       - path: Berth/Core/Terminal/TerminalTheme.swift
+      - path: Berth/Core/Terminal/ScrollbackPrefs.swift
       - path: Berth/Features/Sidebar/DistroIcon.swift
       - path: Berth/Features/Settings/SettingsKeys.swift
       - path: Berth/Resources

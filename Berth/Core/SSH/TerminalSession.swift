@@ -161,6 +161,7 @@ final class TerminalSession: Identifiable {
         terminalView.font = TerminalFontPrefs.resolved()
         ThemeStore.shared.apply(to: terminalView)
         CursorPrefs.apply(to: terminalView)
+        ScrollbackPrefs.apply(to: terminalView)
         terminalView.terminalDelegate = self
         view.focusSessionID = id
         view.isLocalSession = spec.isLocal

@@ -358,6 +358,7 @@ private struct TerminalHostingView: UIViewRepresentable {
         let view = SwiftTerm.TerminalView(frame: .zero)
         view.terminalDelegate = context.coordinator
         ThemeStore.shared.apply(to: view)
+        ScrollbackPrefs.apply(to: view)
         view.backgroundColor = ThemeStore.shared.current.backgroundNSColor
 
         session.onOutput = { [weak view] bytes in
