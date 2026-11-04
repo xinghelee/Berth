@@ -112,6 +112,9 @@ struct SidebarView: View {
         .sheet(isPresented: $isCreatingHost) {
             HostEditorView(host: nil, defaultGroupID: spacesActive ? selectedSpace?.id : nil)
         }
+        #if DEBUG
+        .onReceive(NotificationCenter.default.publisher(for: .berthDebugOpenNewHost)) { _ in isCreatingHost = true }
+        #endif
         .sheet(item: $editingHost, onDismiss: { duplicateOrigin = nil }) { host in
             HostEditorView(
                 host: host,
