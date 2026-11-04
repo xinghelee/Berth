@@ -75,6 +75,19 @@ enum WindowSnapshot {
             SessionManager.shared.selected?.sendText(typed + "\n")
         }
         let delay = Double(env["BERTH_SNAPSHOT_DELAY"] ?? "3") ?? 3
+        // 主机编辑器 sheet(issue #51 表单贴边):走侧栏「+」同一条 .sheet 路径弹出,截挂在主窗口上的真实 sheet
+        if env["BERTH_SNAPSHOT_HOST_EDITOR"] == "1",
+           let main = NSApp.windows.first(where: { $0.isVisible && $0.identifier == MainWindowRaiser.identifier }) {
+            NotificationCenter.default.post(name: .berthDebugOpenNewHost, object: nil)
+            try? await Task.sleep(for: .seconds(delay))
+            if let sheet = main.attachedSheet,
+               let frameView = sheet.contentView?.superview ?? sheet.contentView,
+               let rep = frameView.bitmapImageRepForCachingDisplay(in: frameView.bounds) {
+                frameView.cacheDisplay(in: frameView.bounds, to: rep)
+                try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: path))
+            }
+            return
+        }
         try? await Task.sleep(for: .seconds(delay))
         capture(to: path)
         // issue #14:标题栏布局要连着看侧栏收/放两态 —— 再截 <path>.collapsed.png
@@ -114,5 +127,8 @@ enum WindowSnapshot {
         guard let png = rep.representation(using: .png, properties: [:]) else { return }
         try? png.write(to: URL(fileURLWithPath: path))
     }
+}
+extension Notification.Name {
+    static let berthDebugOpenNewHost = Notification.Name("BerthDebugOpenNewHost")
 }
 #endif
