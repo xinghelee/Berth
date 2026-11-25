@@ -60,7 +60,9 @@ struct LivenessGate {
     /// 说明管道通着,这次怀疑直接作废(命令本来就静默、远端在等输入都属正常)
     mutating func takeProbeDemand(outputAt: Date?, at now: Date) -> Bool {
         guard let since = pendingEchoSince else { return false }
-        if let outputAt, outputAt >= since {
+        // 不用 Date 的 >= / <=:Xcode 27.2 SDK 把它们标成 @backDeployed(before: macOS 27.2),
+        // 而部分 27.2 系统(如 26B5091g)的 Foundation 并没导出该符号,弱引用为空 → 跳到 0 崩溃
+        if let outputAt, !(outputAt < since) {
             pendingEchoSince = nil
             return false
         }
